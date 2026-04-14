@@ -1,0 +1,49 @@
+import kotlin.time.Instant;
+import snd.komf.mediaserver.download.DownloadedChapterId;
+import snd.komf.sources.MangaSourceId;
+
+CREATE TABLE DownloadedChapter (
+    id              TEXT AS DownloadedChapterId NOT NULL,
+    sourceId        TEXT AS MangaSourceId NOT NULL,
+    mangaId         TEXT NOT NULL,
+    mangaTitle      TEXT NOT NULL,
+    chapterId       TEXT NOT NULL,
+    chapterNumber   TEXT NOT NULL,
+    volumeNumber    TEXT,
+    language        TEXT,
+    filePath        TEXT NOT NULL,
+    fileSize        INTEGER NOT NULL,
+    pageCount       INTEGER NOT NULL,
+    downloadedAt    INTEGER AS Instant NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX dc_source_idx ON DownloadedChapter(sourceId);
+CREATE INDEX dc_manga_idx ON DownloadedChapter(mangaId);
+CREATE INDEX dc_downloaded_at_idx ON DownloadedChapter(downloadedAt);
+
+findAll:
+SELECT * FROM DownloadedChapter ORDER BY downloadedAt DESC LIMIT ? OFFSET ?;
+
+countAll:
+SELECT COUNT() FROM DownloadedChapter;
+
+get:
+SELECT * FROM DownloadedChapter WHERE id = ?;
+
+findByMangaId:
+SELECT * FROM DownloadedChapter WHERE mangaId = ? AND sourceId = ? ORDER BY chapterNumber ASC;
+
+findByChapterId:
+SELECT * FROM DownloadedChapter WHERE chapterId = ? AND sourceId = ?;
+
+totalSize:
+SELECT COALESCE(SUM(fileSize), 0) FROM DownloadedChapter;
+
+save:
+INSERT OR REPLACE INTO DownloadedChapter VALUES ?;
+
+delete:
+DELETE FROM DownloadedChapter WHERE id = ?;
+
+deleteAll:
+DELETE FROM DownloadedChapter;

@@ -1,0 +1,26 @@
+services:
+  kometamanga:
+    image: ghcr.io/icosisenpai/kometamanga:latest
+    # build: .  # uncomment to build from source instead of pulling
+    container_name: kometamanga
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    volumes:
+      - ./config:/config
+      # ── Library folders ──
+      # Mount each Komga library to a path under /libraries/ so KometaManga
+      # can download directly into them. Add as many as you need.
+      - /path/to/komga/manga:/libraries/manga
+      # - /path/to/komga/webtoon:/libraries/webtoon
+      # - /path/to/komga/light-novels:/libraries/light-novels
+      # - /path/to/komga/comics:/libraries/comics
+    environment:
+      - KOMF_CONFIG_DIR=/config
+      - JAVA_TOOL_OPTIONS=-Xmx512m
+    networks:
+      - kometahub
+
+networks:
+  kometahub:
+    external: true

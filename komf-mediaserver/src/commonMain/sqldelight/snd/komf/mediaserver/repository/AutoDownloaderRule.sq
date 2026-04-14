@@ -1,0 +1,39 @@
+import snd.komf.mediaserver.download.auto.AutoDownloaderRuleId;
+import snd.komf.sources.MangaSourceId;
+
+CREATE TABLE AutoDownloaderRule (
+    id                  TEXT AS AutoDownloaderRuleId NOT NULL,
+    sourceId            TEXT AS MangaSourceId NOT NULL,
+    mangaId             TEXT NOT NULL,
+    mangaTitle          TEXT NOT NULL,
+    language            TEXT,
+    scanlator           TEXT,
+    lastChapterNumber   REAL,
+    enabled             INTEGER NOT NULL DEFAULT 1,
+    komgaLibraryId      TEXT,
+    komgaLibraryPath    TEXT,
+    PRIMARY KEY (id)
+);
+CREATE INDEX adr_source_idx ON AutoDownloaderRule(sourceId);
+CREATE INDEX adr_manga_idx ON AutoDownloaderRule(mangaId);
+
+findAll:
+SELECT * FROM AutoDownloaderRule ORDER BY mangaTitle ASC;
+
+findEnabled:
+SELECT * FROM AutoDownloaderRule WHERE enabled = 1;
+
+get:
+SELECT * FROM AutoDownloaderRule WHERE id = ?;
+
+save:
+INSERT OR REPLACE INTO AutoDownloaderRule VALUES ?;
+
+updateLastChapter:
+UPDATE AutoDownloaderRule SET lastChapterNumber = ? WHERE id = ?;
+
+delete:
+DELETE FROM AutoDownloaderRule WHERE id = ?;
+
+deleteAll:
+DELETE FROM AutoDownloaderRule;

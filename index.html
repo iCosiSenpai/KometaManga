@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KometaManga | Editorial Landing</title>
+  <meta
+    name="description"
+    content="KometaManga is an open source manga companion with a dark editorial look, built for readers, collectors, and developers."
+  />
+  <meta name="theme-color" content="#09090b" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: "#09090b",
+            paper: "#f4f4f5",
+            panel: "#111827",
+            line: "#27272a",
+            accent: "#ef4444",
+            accentSoft: "#f87171",
+            accentGlow: "#fb7185",
+            cyanFlash: "#22d3ee"
+          },
+          boxShadow: {
+            panel: "0 18px 50px rgba(0,0,0,0.45)",
+            glow: "0 0 0 1px rgba(239,68,68,0.35), 0 10px 35px rgba(239,68,68,0.15)"
+          },
+          letterSpacing: {
+            manga: "0.22em"
+          }
+        }
+      }
+    };
+  </script>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  />
+</head>
+<body class="bg-ink text-paper antialiased selection:bg-accent/30 selection:text-white">
+  <div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(239,68,68,0.14),_transparent_26%),radial-gradient(circle_at_bottom_right,_rgba(34,211,238,0.10),_transparent_24%)]"></div>
+  <div class="fixed inset-0 -z-10 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:26px_26px] opacity-[0.08]"></div>
+
+  <header class="sticky top-0 z-50 border-b border-white/10 bg-ink/80 backdrop-blur-xl">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
+      <a href="#home" class="flex items-center gap-3">
+        <span class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-accent/40 bg-white/5 text-accent">
+          <i class="fa-solid fa-book-open"></i>
+        </span>
+        <span class="text-lg font-black uppercase tracking-manga text-white">KometaManga</span>
+      </a>
+
+      <div class="hidden items-center gap-8 md:flex">
+        <a href="#features" class="text-sm uppercase tracking-[0.18em] text-zinc-300 transition hover:text-white" data-i18n="navFeatures">Features</a>
+        <a href="#installazione" class="text-sm uppercase tracking-[0.18em] text-zinc-300 transition hover:text-white" data-i18n="navInstall">Install</a>
+        <a href="https://github.com/iCosiSenpai/KometaManga" target="_blank" rel="noopener noreferrer" class="text-sm uppercase tracking-[0.18em] text-zinc-300 transition hover:text-white">GitHub</a>
+      </div>
+
+      <a
+        href="https://github.com/iCosiSenpai/KometaManga"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:border-accent/40 hover:bg-white/10 md:hidden"
+      >
+        <i class="fa-brands fa-github"></i>
+        Repo
+      </a>
+    </nav>
+  </header>
+
+  <main id="home">
+    <section class="relative overflow-hidden">
+      <div class="mx-auto grid max-w-7xl gap-14 px-5 py-20 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-28">
+        <div class="relative">
+          <div class="mb-6 inline-flex items-center gap-3 rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-xs font-bold uppercase tracking-manga text-accentSoft shadow-glow">
+            <span class="h-2 w-2 rounded-full bg-accent"></span>
+            <span data-i18n="badge">Open Source Manga Toolkit</span>
+          </div>
+
+          <p class="mb-4 text-sm font-semibold uppercase tracking-[0.28em] text-zinc-500" data-i18n="eyebrow">
+            Library. Reading. Control.
+          </p>
+
+          <h1 class="max-w-4xl text-4xl font-black uppercase leading-none text-white sm:text-5xl lg:text-7xl">
+            <span data-i18n="heroTitleLine1">Read and manage your manga</span>
+            <span class="block text-accent" data-i18n="heroTitleLine2">like a true night edition</span>
+          </h1>
+
+          <p class="mt-6 max-w-2xl text-lg leading-8 text-zinc-300" data-i18n="heroDescription">
+            KometaManga is an open source project inspired by manga editorial layouts: fast, focused, visual, and built to organize your collection with a sharper and more technical style.
+          </p>
+
+          <div class="mt-10 flex flex-col gap-4 sm:flex-row">
+            <a
+              href="https://github.com/iCosiSenpai/KometaManga/releases/latest"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center rounded-none border border-accent bg-accent px-7 py-4 text-sm font-extrabold uppercase tracking-[0.2em] text-white transition duration-300 hover:-translate-y-1 hover:bg-accentSoft hover:shadow-glow"
+              data-i18n="ctaPrimary"
+            >
+              Download Latest Release
+            </a>
+
+            <a
+              href="https://github.com/iCosiSenpai/KometaManga"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center gap-3 rounded-none border border-white/15 bg-white/5 px-7 py-4 text-sm font-extrabold uppercase tracking-[0.2em] text-white transition duration-300 hover:-translate-y-1 hover:border-cyanFlash/40 hover:bg-white/10"
+            >
+              <i class="fa-brands fa-github text-base"></i>
+              <span data-i18n="ctaSecondary">View on GitHub</span>
+            </a>
+          </div>
+
+          <div class="mt-12 grid gap-4 sm:grid-cols-3">
+            <div class="border-l-4 border-accent bg-white/5 p-4">
+              <p class="text-xs uppercase tracking-manga text-zinc-500" data-i18n="statOneLabel">Open</p>
+              <p class="mt-2 text-2xl font-black text-white">100%</p>
+            </div>
+            <div class="border-l-4 border-cyanFlash bg-white/5 p-4">
+              <p class="text-xs uppercase tracking-manga text-zinc-500" data-i18n="statTwoLabel">Dark UI</p>
+              <p class="mt-2 text-2xl font-black text-white" data-i18n="statTwoValue">Native</p>
+            </div>
+            <div class="border-l-4 border-white bg-white/5 p-4">
+              <p class="text-xs uppercase tracking-manga text-zinc-500" data-i18n="statThreeLabel">Workflow</p>
+              <p class="mt-2 text-2xl font-black text-white" data-i18n="statThreeValue">Fast</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative">
+          <div class="absolute -left-8 top-10 hidden h-32 w-32 border border-white/10 lg:block"></div>
+          <div class="absolute -right-4 bottom-8 hidden h-24 w-24 border border-accent/20 lg:block"></div>
+
+          <div class="grid gap-4">
+            <div class="rotate-[-2deg] border border-white/10 bg-zinc-950 p-4 shadow-panel transition duration-300 hover:rotate-0">
+              <div class="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
+                <span class="text-xs font-bold uppercase tracking-manga text-accentSoft">Panel 01</span>
+                <span class="text-xs uppercase tracking-[0.2em] text-zinc-500" data-i18n="panelCollection">Collection</span>
+              </div>
+              <div class="aspect-[4/3] bg-[linear-gradient(135deg,rgba(239,68,68,0.25),rgba(255,255,255,0.03))] p-5">
+                <div class="flex h-full flex-col justify-between border border-white/10 p-5">
+                  <div>
+                    <p class="text-xs uppercase tracking-manga text-zinc-400" data-i18n="panelNowReading">Now Reading</p>
+                    <h2 class="mt-3 text-3xl font-black uppercase leading-tight text-white" data-i18n="panelTitle">
+                      Night Archive
+                    </h2>
+                  </div>
+                  <p class="max-w-xs text-sm leading-6 text-zinc-300" data-i18n="panelDescription">
+                    Track chapters, volumes, and recent reads in a clean dashboard built for long sessions.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div class="rotate-[1.5deg] border border-white/10 bg-white/5 p-5 shadow-panel transition duration-300 hover:rotate-0">
+                <p class="text-xs font-bold uppercase tracking-manga text-cyanFlash">Panel 02</p>
+                <h3 class="mt-3 text-xl font-black uppercase text-white" data-i18n="readingFlowTitle">Reading Flow</h3>
+                <p class="mt-3 text-sm leading-6 text-zinc-400" data-i18n="readingFlowDescription">
+                  Smooth, fast, and ready for long reading sessions.
+                </p>
+              </div>
+
+              <div class="rotate-[-1deg] border border-white/10 bg-white/5 p-5 shadow-panel transition duration-300 hover:rotate-0">
+                <p class="text-xs font-bold uppercase tracking-manga text-accentSoft">Panel 03</p>
+                <h3 class="mt-3 text-xl font-black uppercase text-white" data-i18n="devFriendlyTitle">Dev Friendly</h3>
+                <p class="mt-3 text-sm leading-6 text-zinc-400" data-i18n="devFriendlyDescription">
+                  Easy to inspect, extend, and improve with the community.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-ink"></div>
+    </section>
+
+    <section id="features" class="mx-auto max-w-7xl px-5 py-20 lg:px-8">
+      <div class="mb-12 max-w-3xl">
+        <p class="text-sm font-semibold uppercase tracking-manga text-accentSoft" data-i18n="featuresEyebrow">Features</p>
+        <h2 class="mt-4 text-3xl font-black uppercase leading-tight text-white sm:text-5xl" data-i18n="featuresTitle">
+          Three pillars for a modern manga library
+        </h2>
+      </div>
+
+      <div class="grid gap-6 lg:grid-cols-3">
+        <article class="group border border-white/10 bg-white/5 p-8 transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:bg-white/[0.08] hover:shadow-glow">
+          <div class="flex items-center justify-between">
+            <span class="text-3xl text-accent"><i class="fa-solid fa-code-branch"></i></span>
+            <span class="text-xs font-bold uppercase tracking-manga text-zinc-500">01</span>
+          </div>
+          <h3 class="mt-8 text-2xl font-black uppercase text-white" data-i18n="featureOneTitle">Open Source</h3>
+          <p class="mt-4 leading-7 text-zinc-400" data-i18n="featureOneDescription">
+            Open code, transparent decisions, and a base that welcomes forks and contributions.
+          </p>
+        </article>
+
+        <article class="group border border-white/10 bg-white/5 p-8 transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:bg-white/[0.08] hover:shadow-glow">
+          <div class="flex items-center justify-between">
+            <span class="text-3xl text-accent"><i class="fa-solid fa-panorama"></i></span>
+            <span class="text-xs font-bold uppercase tracking-manga text-zinc-500">02</span>
+          </div>
+          <h3 class="mt-8 text-2xl font-black uppercase text-white" data-i18n="featureTwoTitle">Clean Interface</h3>
+          <p class="mt-4 leading-7 text-zinc-400" data-i18n="featureTwoDescription">
+            A dark editorial aesthetic inspired by manga layouts, without sacrificing clarity.
+          </p>
+        </article>
+
+        <article class="group border border-white/10 bg-white/5 p-8 transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:bg-white/[0.08] hover:shadow-glow">
+          <div class="flex items-center justify-between">
+            <span class="text-3xl text-accent"><i class="fa-solid fa-bolt"></i></span>
+            <span class="text-xs font-bold uppercase tracking-manga text-zinc-500">03</span>
+          </div>
+          <h3 class="mt-8 text-2xl font-black uppercase text-white" data-i18n="featureThreeTitle">Light and Fast</h3>
+          <p class="mt-4 leading-7 text-zinc-400" data-i18n="featureThreeDescription">
+            Responsive structure, quick loading, and a workflow that stays out of the reader's way.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="installazione" class="mx-auto max-w-7xl px-5 py-20 lg:px-8">
+      <div class="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+        <div class="border border-white/10 bg-white/5 p-8">
+          <p class="text-sm font-semibold uppercase tracking-manga text-accentSoft" data-i18n="installEyebrow">Install / Usage</p>
+          <h2 class="mt-4 text-3xl font-black uppercase leading-tight text-white" data-i18n="installTitle">
+            Jump into the project quickly
+          </h2>
+          <p class="mt-5 leading-7 text-zinc-400" data-i18n="installDescription">
+            KometaManga works both for users who want to try it right away and for developers who want to build it locally.
+          </p>
+
+          <div class="mt-8 space-y-5">
+            <div class="border-l-4 border-accent pl-4">
+              <p class="text-sm font-bold uppercase tracking-[0.18em] text-white" data-i18n="stepOneTitle">01. Clone the repository</p>
+              <p class="mt-1 text-sm text-zinc-400" data-i18n="stepOneDescription">Grab the source code and prepare your local environment.</p>
+            </div>
+            <div class="border-l-4 border-cyanFlash pl-4">
+              <p class="text-sm font-bold uppercase tracking-[0.18em] text-white" data-i18n="stepTwoTitle">02. Install dependencies</p>
+              <p class="mt-1 text-sm text-zinc-400" data-i18n="stepTwoDescription">Set up everything needed for build and development.</p>
+            </div>
+            <div class="border-l-4 border-white pl-4">
+              <p class="text-sm font-bold uppercase tracking-[0.18em] text-white" data-i18n="stepThreeTitle">03. Run and customize</p>
+              <p class="mt-1 text-sm text-zinc-400" data-i18n="stepThreeDescription">Start the project and adapt it to your reading workflow.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="overflow-hidden border border-white/10 bg-zinc-950 shadow-panel">
+          <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
+            <div class="flex items-center gap-2">
+              <span class="h-3 w-3 rounded-full bg-red-500"></span>
+              <span class="h-3 w-3 rounded-full bg-yellow-400"></span>
+              <span class="h-3 w-3 rounded-full bg-green-500"></span>
+            </div>
+            <span class="text-xs font-bold uppercase tracking-manga text-zinc-500" data-i18n="terminalLabel">Terminal / Build</span>
+          </div>
+
+          <pre class="overflow-x-auto p-6 text-sm leading-8 text-zinc-300"><code><span class="text-accent">$</span> git clone https://github.com/iCosiSenpai/KometaManga.git
+<span class="text-accent">$</span> cd KometaManga
+<span class="text-accent">$</span> npm install
+<span class="text-accent">$</span> npm run build
+<span class="text-accent">$</span> npm run start
+
+<span class="text-zinc-500" data-i18n="terminalNote"># Or download the latest release directly
+# and check the repository README for the full setup.</span></code></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-white/10 bg-black/30">
+    <div class="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-8 text-sm text-zinc-400 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+      <p data-i18n="footerCopyright">&copy; 2026 KometaManga. All rights reserved.</p>
+      <p class="uppercase tracking-[0.18em]" data-i18n="footerCredits">Developed by iCosiSenpai</p>
+      <a
+        href="https://github.com/iCosiSenpai/KometaManga"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-2 transition hover:text-white"
+      >
+        <i class="fa-brands fa-github"></i>
+        <span data-i18n="footerRepo">GitHub Repository</span>
+      </a>
+    </div>
+  </footer>
+
+  <script>
+    const messages = {
+      en: {
+        pageTitle: "KometaManga | Editorial Landing",
+        pageDescription: "KometaManga is an open source manga companion with a dark editorial look, built for readers, collectors, and developers.",
+        navFeatures: "Features",
+        navInstall: "Install",
+        badge: "Open Source Manga Toolkit",
+        eyebrow: "Library. Reading. Control.",
+        heroTitleLine1: "Read and manage your manga",
+        heroTitleLine2: "like a true night edition",
+        heroDescription: "KometaManga is an open source project inspired by manga editorial layouts: fast, focused, visual, and built to organize your collection with a sharper and more technical style.",
+        ctaPrimary: "Download Latest Release",
+        ctaSecondary: "View on GitHub",
+        statOneLabel: "Open",
+        statTwoLabel: "Dark UI",
+        statTwoValue: "Native",
+        statThreeLabel: "Workflow",
+        statThreeValue: "Fast",
+        panelCollection: "Collection",
+        panelNowReading: "Now Reading",
+        panelTitle: "Night Archive",
+        panelDescription: "Track chapters, volumes, and recent reads in a clean dashboard built for long sessions.",
+        readingFlowTitle: "Reading Flow",
+        readingFlowDescription: "Smooth, fast, and ready for long reading sessions.",
+        devFriendlyTitle: "Dev Friendly",
+        devFriendlyDescription: "Easy to inspect, extend, and improve with the community.",
+        featuresEyebrow: "Features",
+        featuresTitle: "Three pillars for a modern manga library",
+        featureOneTitle: "Open Source",
+        featureOneDescription: "Open code, transparent decisions, and a base that welcomes forks and contributions.",
+        featureTwoTitle: "Clean Interface",
+        featureTwoDescription: "A dark editorial aesthetic inspired by manga layouts, without sacrificing clarity.",
+        featureThreeTitle: "Light and Fast",
+        featureThreeDescription: "Responsive structure, quick loading, and a workflow that stays out of the reader's way.",
+        installEyebrow: "Install / Usage",
+        installTitle: "Jump into the project quickly",
+        installDescription: "KometaManga works both for users who want to try it right away and for developers who want to build it locally.",
+        stepOneTitle: "01. Clone the repository",
+        stepOneDescription: "Grab the source code and prepare your local environment.",
+        stepTwoTitle: "02. Install dependencies",
+        stepTwoDescription: "Set up everything needed for build and development.",
+        stepThreeTitle: "03. Run and customize",
+        stepThreeDescription: "Start the project and adapt it to your reading workflow.",
+        terminalLabel: "Terminal / Build",
+        terminalNote: "# Or download the latest release directly\n# and check the repository README for the full setup.",
+        footerCopyright: "© 2026 KometaManga. All rights reserved.",
+        footerCredits: "Developed by iCosiSenpai",
+        footerRepo: "GitHub Repository"
+      },
+      it: {
+        pageTitle: "KometaManga | Landing Editoriale",
+        pageDescription: "KometaManga è un progetto open source dedicato al mondo manga, con uno stile editoriale dark pensato per lettori, collezionisti e sviluppatori.",
+        navFeatures: "Caratteristiche",
+        navInstall: "Installazione",
+        badge: "Open Source Manga Toolkit",
+        eyebrow: "Libreria. Lettura. Controllo.",
+        heroTitleLine1: "Leggi e gestisci i tuoi manga",
+        heroTitleLine2: "come una vera edizione notturna",
+        heroDescription: "KometaManga è un progetto open source ispirato all'estetica editoriale dei manga: rapido, essenziale, visivo e costruito per organizzare la tua collezione con uno stile più tecnico e deciso.",
+        ctaPrimary: "Scarica Ultima Release",
+        ctaSecondary: "Guarda su GitHub",
+        statOneLabel: "Open",
+        statTwoLabel: "Dark UI",
+        statTwoValue: "Nativa",
+        statThreeLabel: "Workflow",
+        statThreeValue: "Rapido",
+        panelCollection: "Collezione",
+        panelNowReading: "In Lettura",
+        panelTitle: "Night Archive",
+        panelDescription: "Traccia capitoli, volumi e letture recenti in una dashboard pulita costruita per sessioni lunghe.",
+        readingFlowTitle: "Reading Flow",
+        readingFlowDescription: "Esperienza fluida, veloce e pronta per lunghe sessioni di lettura.",
+        devFriendlyTitle: "Dev Friendly",
+        devFriendlyDescription: "Facile da ispezionare, estendere e migliorare con la community.",
+        featuresEyebrow: "Caratteristiche",
+        featuresTitle: "Tre pilastri per una libreria manga moderna",
+        featureOneTitle: "Open Source",
+        featureOneDescription: "Codice aperto, decisioni trasparenti e una base pronta per fork e contributi.",
+        featureTwoTitle: "Interfaccia Pulita",
+        featureTwoDescription: "Un'estetica dark editoriale ispirata al manga, senza sacrificare chiarezza e leggibilità.",
+        featureThreeTitle: "Leggero e Veloce",
+        featureThreeDescription: "Struttura reattiva, caricamento rapido e un workflow che non interrompe la lettura.",
+        installEyebrow: "Installazione / Uso",
+        installTitle: "Entra subito nel progetto",
+        installDescription: "KometaManga funziona sia per chi vuole provarlo subito sia per chi preferisce buildarlo localmente.",
+        stepOneTitle: "01. Clona il repository",
+        stepOneDescription: "Recupera il codice sorgente e prepara l'ambiente locale.",
+        stepTwoTitle: "02. Installa le dipendenze",
+        stepTwoDescription: "Configura tutto il necessario per build e sviluppo.",
+        stepThreeTitle: "03. Avvia e personalizza",
+        stepThreeDescription: "Lancia il progetto e adattalo al tuo workflow di lettura.",
+        terminalLabel: "Terminale / Build",
+        terminalNote: "# Oppure scarica direttamente l'ultima release\n# e consulta il README del repository per la configurazione completa.",
+        footerCopyright: "© 2026 KometaManga. Tutti i diritti riservati.",
+        footerCredits: "Sviluppato da iCosiSenpai",
+        footerRepo: "Repository GitHub"
+      }
+    };
+
+    const browserLanguage = (navigator.language || navigator.userLanguage || "en").toLowerCase();
+    const locale = browserLanguage.startsWith("it") ? "it" : "en";
+    const copy = messages[locale];
+
+    document.documentElement.lang = locale;
+    document.title = copy.pageTitle;
+    document.querySelector('meta[name="description"]').setAttribute("content", copy.pageDescription);
+
+    document.querySelectorAll("[data-i18n]").forEach((element) => {
+      const key = element.getAttribute("data-i18n");
+      if (!key || !(key in copy)) return;
+      element.textContent = copy[key];
+    });
+  </script>
+</body>
+</html>

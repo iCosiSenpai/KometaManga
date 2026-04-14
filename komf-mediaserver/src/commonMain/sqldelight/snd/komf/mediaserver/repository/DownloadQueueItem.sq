@@ -1,0 +1,55 @@
+import kotlin.time.Instant;
+import snd.komf.mediaserver.download.DownloadItemId;
+import snd.komf.mediaserver.download.DownloadItemStatus;
+import snd.komf.sources.MangaSourceId;
+
+CREATE TABLE DownloadQueueItem (
+    id              TEXT AS DownloadItemId NOT NULL,
+    sourceId        TEXT AS MangaSourceId NOT NULL,
+    mangaId         TEXT NOT NULL,
+    mangaTitle      TEXT NOT NULL,
+    chapterId       TEXT NOT NULL,
+    chapterNumber   TEXT NOT NULL,
+    volumeNumber    TEXT,
+    language        TEXT,
+    status          TEXT AS DownloadItemStatus NOT NULL,
+    progress        INTEGER,
+    totalPages      INTEGER,
+    error           TEXT,
+    createdAt       INTEGER AS Instant NOT NULL,
+    updatedAt       INTEGER AS Instant NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX dqi_status_idx ON DownloadQueueItem(status);
+CREATE INDEX dqi_source_idx ON DownloadQueueItem(sourceId);
+CREATE INDEX dqi_created_at_idx ON DownloadQueueItem(createdAt);
+
+findAll:
+SELECT * FROM DownloadQueueItem ORDER BY createdAt ASC;
+
+findByStatus:
+SELECT * FROM DownloadQueueItem WHERE status = ? ORDER BY createdAt ASC;
+
+get:
+SELECT * FROM DownloadQueueItem WHERE id = ?;
+
+countByStatus:
+SELECT COUNT() FROM DownloadQueueItem WHERE status = ?;
+
+save:
+INSERT OR REPLACE INTO DownloadQueueItem VALUES ?;
+
+updateStatus:
+UPDATE DownloadQueueItem SET status = ?, error = ?, updatedAt = ? WHERE id = ?;
+
+updateProgress:
+UPDATE DownloadQueueItem SET progress = ?, totalPages = ?, updatedAt = ? WHERE id = ?;
+
+delete:
+DELETE FROM DownloadQueueItem WHERE id = ?;
+
+deleteByStatus:
+DELETE FROM DownloadQueueItem WHERE status = ?;
+
+deleteAll:
+DELETE FROM DownloadQueueItem;

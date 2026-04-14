@@ -1,0 +1,70 @@
+.gradle
+!gradle/wrapper/gradle-wrapper.jar
+build/
+**/build/
+!src/**/build/
+
+### intellij idea ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springbeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### netbeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### vs code ###
+.vscode/
+
+### mac os ###
+.ds_store
+
+database.sqlite
+debug_html.txt
+.env
+*.env
+!.env.example
+application.yml
+application.yml.*
+*.bak
+
+### kotlin ###
+kls_database.db
+
+### frontend build output in JAR resources ###
+komf-app/src/main/resources/komelia/
+komf-app/src/main/resources/frontend/
+
+### generated files ###
+*.d.ts.map
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
+### sensitive files ###
+cookies.txt
+
+### smoke test logs ###
+smoke-backend.*.log
+kls-classpath*
+
+### neovim ###
+.nvim.lua

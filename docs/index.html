@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KometaManga</title>
+    <meta name="description" content="KometaManga — Komga companion for manga downloads, metadata workflows, source browsing, and automated import pipelines." />
+    <link rel="icon" type="image/png" href="logo.png" />
+    <style>
+      :root {
+        --bg: #08090c;
+        --surface: rgba(255,255,255,0.035);
+        --surface-2: rgba(255,255,255,0.06);
+        --border: rgba(255,255,255,0.08);
+        --border-strong: rgba(255,255,255,0.14);
+        --text: #eef0f4;
+        --muted: #8b929e;
+        --accent: #ff5a36;
+        --accent-2: #ffbf47;
+        --glow: rgba(255,90,54,0.25);
+      }
+
+      *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+      html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+
+      body{
+        font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+        color:var(--text);
+        background:var(--bg);
+        min-height:100vh;
+        overflow-x:hidden;
+      }
+
+      /* ambient bg */
+      body::before{
+        content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+        background:
+          radial-gradient(ellipse 60% 40% at 15% 8%,rgba(255,90,54,.12),transparent),
+          radial-gradient(ellipse 50% 35% at 85% 12%,rgba(255,191,71,.08),transparent),
+          radial-gradient(ellipse 40% 30% at 50% 90%,rgba(255,90,54,.06),transparent);
+      }
+
+      .shell{width:min(1140px,calc(100% - 40px));margin:0 auto;position:relative;z-index:1}
+
+      /* ─── NAV ─── */
+      nav{
+        display:flex;align-items:center;justify-content:space-between;
+        padding:20px 0;
+      }
+      .nav-brand{display:flex;align-items:center;gap:16px;font-weight:700;font-size:18px;letter-spacing:-0.02em}
+      .nav-brand img{width:112px;height:112px;border-radius:18px}
+      .brand-wordmark{display:block;height:112px;width:auto;max-width:620px;object-fit:contain}
+      .brand-wordmark-mobile{display:none;height:66px;width:auto;max-width:300px;object-fit:contain}
+      .nav-links{display:flex;align-items:center;gap:6px}
+      .nav-links a,.lang-btn{
+        padding:8px 14px;border-radius:10px;font-size:13px;font-weight:500;
+        color:var(--muted);border:1px solid transparent;
+        transition:all .15s;cursor:pointer;background:none;text-decoration:none;
+      }
+      .nav-links a:hover,.lang-btn:hover{color:var(--text);background:var(--surface);border-color:var(--border)}
+      .lang-btn.active{color:var(--accent);border-color:rgba(255,90,54,.25);background:rgba(255,90,54,.08)}
+
+      /* ─── HERO ─── */
+      .hero{
+        display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;
+        padding:64px 0 40px;
+      }
+      .hero-text{display:flex;flex-direction:column;gap:20px}
+      .badge{
+        display:inline-flex;align-items:center;gap:8px;width:fit-content;
+        padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;
+        letter-spacing:.06em;text-transform:uppercase;color:var(--accent);
+        border:1px solid rgba(255,90,54,.2);background:rgba(255,90,54,.06);
+      }
+      .badge::before{
+        content:'';width:7px;height:7px;border-radius:50%;
+        background:var(--accent);box-shadow:0 0 12px var(--glow);
+      }
+      .hero h1{
+        font-size:clamp(40px,7.5vw,76px);line-height:.92;
+        letter-spacing:-.05em;font-weight:800;
+      }
+      .hero h1 span{
+        background:linear-gradient(135deg,var(--accent),var(--accent-2));
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+        background-clip:text;
+      }
+      .hero-desc{font-size:17px;line-height:1.7;color:var(--muted);max-width:480px}
+      .hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:4px}
+      .btn{
+        display:inline-flex;align-items:center;justify-content:center;gap:8px;
+        min-height:46px;padding:0 22px;border-radius:13px;font-weight:600;font-size:14px;
+        border:1px solid var(--border);background:var(--surface);color:var(--text);
+        transition:all .18s;text-decoration:none;cursor:pointer;
+      }
+      .btn:hover{transform:translateY(-1px);border-color:var(--border-strong);background:var(--surface-2)}
+      .btn.primary{
+        background:linear-gradient(135deg,var(--accent),#ff7d47);
+        border-color:transparent;color:#0a0c10;
+      }
+      .btn.primary:hover{box-shadow:0 8px 32px var(--glow)}
+      .hero-visual{position:relative;display:flex;justify-content:center}
+      .hero-visual img{max-width:100%;height:auto;max-height:560px;filter:drop-shadow(0 20px 60px rgba(0,0,0,.5))}
+
+      /* ─── FEATURES GRID ─── */
+      .features{padding:48px 0 64px}
+      .section-label{
+        font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+        color:var(--accent);margin-bottom:12px;
+      }
+      .section-title{font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-.03em;margin-bottom:40px}
+      .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+      .feat-card{
+        padding:28px 24px;border-radius:20px;
+        border:1px solid var(--border);background:var(--surface);
+        transition:border-color .2s,background .2s;
+      }
+      .feat-card:hover{border-color:var(--border-strong);background:var(--surface-2)}
+      .feat-icon{
+        width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+        margin-bottom:16px;font-size:20px;
+      }
+      .feat-icon.orange{background:rgba(255,90,54,.1);border:1px solid rgba(255,90,54,.15)}
+      .feat-icon.amber{background:rgba(255,191,71,.1);border:1px solid rgba(255,191,71,.15)}
+      .feat-icon.sky{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.15)}
+      .feat-icon.emerald{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.15)}
+      .feat-icon.violet{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.15)}
+      .feat-icon.rose{background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.15)}
+      .feat-card h3{font-size:16px;font-weight:700;margin-bottom:8px;letter-spacing:-.01em}
+      .feat-card p{font-size:14px;line-height:1.6;color:var(--muted)}
+
+      /* ─── SHOWCASE ─── */
+      .showcase{
+        display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;
+        padding:64px 0;
+      }
+      .showcase.flip{direction:rtl}
+      .showcase.flip>*{direction:ltr}
+      .showcase-text{display:flex;flex-direction:column;gap:14px}
+      .showcase-text h2{font-size:clamp(24px,3.5vw,34px);font-weight:800;letter-spacing:-.03em}
+      .showcase-text p{font-size:15px;line-height:1.7;color:var(--muted)}
+      .showcase-visual{display:flex;justify-content:center}
+      .showcase-visual img{max-width:100%;height:auto;max-height:620px;border-radius:16px;filter:drop-shadow(0 16px 48px rgba(0,0,0,.4))}
+
+      /* ─── STACK ─── */
+      .stack-section{padding:40px 0 72px}
+      .stack-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+      .chip{
+        padding:10px 18px;border-radius:12px;font-size:13px;font-weight:600;
+        border:1px solid var(--border);background:var(--surface);color:var(--muted);
+        transition:all .15s;
+      }
+      .chip:hover{color:var(--text);border-color:var(--border-strong)}
+
+      /* ─── FOOTER ─── */
+      footer{
+        padding:32px 0;border-top:1px solid var(--border);
+        display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+        font-size:13px;color:var(--muted);
+      }
+      footer a{color:var(--accent);text-decoration:none}
+      footer a:hover{text-decoration:underline}
+
+      /* ─── RESPONSIVE ─── */
+      @media(max-width:860px){
+        .hero{grid-template-columns:1fr;text-align:center}
+        .hero-text{align-items:center}
+        .hero-desc{max-width:100%}
+        .hero-visual{margin-top:20px}
+        .feat-grid{grid-template-columns:1fr}
+        .showcase,.showcase.flip{grid-template-columns:1fr;text-align:center;direction:ltr}
+        .showcase-text{align-items:center}
+      }
+      @media(max-width:640px){
+        .hero-actions{justify-content:center}
+        .nav-links a.hide-mobile{display:none}
+        .brand-wordmark{display:none}
+        .brand-wordmark-mobile{display:block}
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+
+      <!-- NAV -->
+      <nav>
+        <div class="nav-brand">
+          <img src="logo.png" alt="KometaManga logo" />
+          <img src="name.png" alt="KometaManga" class="brand-wordmark" />
+          <img src="nameshort.png" alt="KometaManga" class="brand-wordmark-mobile" />
+        </div>
+        <div class="nav-links">
+          <a href="https://github.com/iCosiSenpai/KometaManga" class="hide-mobile">GitHub</a>
+          <a href="https://github.com/iCosiSenpai/KometaManga/releases" data-en="Releases" data-it="Versioni">Releases</a>
+          <button class="lang-btn active" onclick="setLang('en')" id="btn-en">EN</button>
+          <button class="lang-btn" onclick="setLang('it')" id="btn-it">IT</button>
+        </div>
+      </nav>
+
+      <!-- HERO -->
+      <section class="hero">
+        <div class="hero-text">
+          <div class="badge" data-en="Komga Companion" data-it="Companion per Komga"></div>
+          <h1 data-en="Download.<br>Organize.<br><span>Import.</span>" data-it="Scarica.<br>Organizza.<br><span>Importa.</span>"></h1>
+          <p class="hero-desc" data-en="A focused companion for Komga: browse manga sources, download chapters, package CBZ with metadata, and auto-import — all from one operational surface." data-it="Un companion dedicato a Komga: esplora le fonti manga, scarica i capitoli, prepara CBZ con metadati e importa tutto in automatico da un'unica interfaccia operativa."></p>
+          <div class="hero-actions">
+            <a class="btn primary" href="https://github.com/iCosiSenpai/KometaManga" data-en="View on GitHub" data-it="Apri su GitHub"></a>
+            <a class="btn" href="https://github.com/iCosiSenpai/KometaManga/releases" data-en="Download" data-it="Scarica"></a>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <img src="hero.png" alt="KometaManga mascot" />
+        </div>
+      </section>
+
+      <!-- FEATURES -->
+      <section class="features">
+        <div class="section-label" data-en="Features" data-it="Funzionalità"></div>
+        <h2 class="section-title" data-en="Everything you need to manage manga" data-it="Tutto il necessario per gestire i manga"></h2>
+        <div class="feat-grid">
+          <div class="feat-card">
+            <div class="feat-icon orange">🔍</div>
+            <h3 data-en="Source Browsing" data-it="Fonti Manga"></h3>
+            <p data-en="Search and browse manga across MangaDex, ComicK, MangaFire, WeebCentral, MangaPill and more from a unified interface." data-it="Cerca e sfoglia manga su MangaDex, ComicK, MangaFire, WeebCentral, MangaPill e altre fonti da un'unica interfaccia."></p>
+          </div>
+          <div class="feat-card">
+            <div class="feat-icon amber">📦</div>
+            <h3 data-en="CBZ Packaging" data-it="Pacchetti CBZ"></h3>
+            <p data-en="Chapters are automatically packaged into CBZ archives with ComicInfo.xml metadata, ready for Komga import." data-it="I capitoli vengono impacchettati automaticamente in archivi CBZ con metadati ComicInfo.xml, pronti per essere importati in Komga."></p>
+          </div>
+          <div class="feat-card">
+            <div class="feat-icon sky">⚡</div>
+            <h3 data-en="Auto Import" data-it="Import Automatico"></h3>
+            <p data-en="Downloaded chapters are placed in Komga-compatible library paths and trigger automatic library scans." data-it="I capitoli scaricati vengono salvati nei percorsi libreria compatibili con Komga e avviano le scansioni in automatico."></p>
+          </div>
+          <div class="feat-card">
+            <div class="feat-icon emerald">🤖</div>
+            <h3 data-en="Auto-Downloader" data-it="Download Automatico"></h3>
+            <p data-en="Periodically checks for new chapters and downloads them automatically. Follow manga with one click, configure intervals, and get notifications." data-it="Controlla periodicamente la presenza di nuovi capitoli e li scarica automaticamente. Segui i manga con un clic, configura gli intervalli e ricevi notifiche."></p>
+          </div>
+          <div class="feat-card">
+            <div class="feat-icon violet">🔧</div>
+            <h3 data-en="Hybrid Config" data-it="Configurazione Ibrida"></h3>
+            <p data-en="Settings work via UI, YAML, or environment variables. Env vars override and lock fields in the dashboard." data-it="Le impostazioni si gestiscono da interfaccia, YAML o variabili d'ambiente. Le variabili d'ambiente hanno priorità e bloccano i campi nella dashboard."></p>
+          </div>
+          <div class="feat-card">
+            <div class="feat-icon rose">📊</div>
+            <h3 data-en="Monitoring" data-it="Monitoraggio"></h3>
+            <p data-en="Track download queues, job status, logs, and source health from a unified operational dashboard." data-it="Monitora code di download, stato dei job, log e salute delle fonti da una dashboard operativa unificata."></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHOWCASE 1 -->
+      <section class="showcase">
+        <div class="showcase-text">
+          <div class="section-label" data-en="Sources" data-it="Fonti"></div>
+          <h2 data-en="Browse multiple sources, filter by language" data-it="Esplora più fonti, filtra per lingua"></h2>
+          <p data-en="Connect to MangaDex, ComicK, MangaFire, WeebCentral, MangaPill and more. Filter sources by language, search across all providers simultaneously, and queue chapters for download with a single click." data-it="Collegati a MangaDex, ComicK, MangaFire, WeebCentral, MangaPill e altre fonti. Filtra per lingua, cerca su tutti i provider in parallelo e metti in coda i capitoli con un solo clic."></p>
+        </div>
+        <div class="showcase-visual">
+          <img src="vertical1.png" alt="KometaManga mascot browsing" />
+        </div>
+      </section>
+
+      <!-- SHOWCASE 2 -->
+      <section class="showcase flip">
+        <div class="showcase-text">
+          <div class="section-label" data-en="Pipeline" data-it="Pipeline"></div>
+          <h2 data-en="From source to Komga, fully automated" data-it="Dalla fonte a Komga, completamente automatizzato"></h2>
+          <p data-en="The download pipeline fetches pages, packages CBZ archives, writes ComicInfo metadata, places files in Komga library paths, and triggers library scans — all without manual intervention." data-it="La pipeline di download recupera le pagine, crea archivi CBZ, scrive i metadati ComicInfo, posiziona i file nei percorsi libreria di Komga e attiva le scansioni — tutto senza intervento manuale."></p>
+        </div>
+        <div class="showcase-visual">
+          <img src="vertical2.png" alt="KometaManga mascot pipeline" />
+        </div>
+      </section>
+
+      <!-- KOMETAHUB -->
+      <section class="stack-section" style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 3rem;">
+        <div class="section-label" style="color: #a78bfa;">KometaHub</div>
+        <h2 class="section-title" data-en="Part of something bigger" data-it="Parte di qualcosa di più grande"></h2>
+          <p style="color: rgba(255,255,255,0.55); max-width: 600px; margin: 0 auto 2rem; line-height: 1.6;"
+           data-en="KometaManga is the first app in the KometaHub suite — a growing collection of self-hosted tools for manga, anime, and media management. More apps coming soon."
+           data-it="KometaManga è la prima app della suite KometaHub: una collezione in crescita di strumenti self-hosted per manga, anime e gestione dei media. Altre app arriveranno presto."></p>
+        <div class="stack-row" style="gap: 1rem;">
+          <span class="chip" style="background: rgba(167,139,250,0.12); color: #a78bfa; border: 1px solid rgba(167,139,250,0.2);">✅ KometaManga</span>
+          <span class="chip" style="background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.4); border: 1px dashed rgba(255,255,255,0.1);" data-en="🔜 KometaReader" data-it="🔜 KometaReader">🔜 KometaReader</span>
+          <span class="chip" style="background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.4); border: 1px dashed rgba(255,255,255,0.1);" data-en="🔜 KometaWatcher" data-it="🔜 KometaWatcher">🔜 KometaWatcher</span>
+        </div>
+      </section>
+
+      <!-- STACK -->
+      <section class="stack-section">
+        <div class="section-label" data-en="Stack" data-it="Tecnologie">Stack</div>
+        <h2 class="section-title" data-en="Built for self-hosting" data-it="Progettato per il self-hosting"></h2>
+        <div class="stack-row">
+          <span class="chip">Kotlin + Ktor</span>
+          <span class="chip">React + TypeScript</span>
+          <span class="chip">Vite</span>
+          <span class="chip">Tailwind CSS</span>
+          <span class="chip">Docker</span>
+          <span class="chip">SQLDelight</span>
+          <span class="chip">TanStack Query</span>
+          <span class="chip">GitHub Actions</span>
+        </div>
+      </section>
+
+      <!-- FOOTER -->
+      <footer>
+        <span data-en="KometaManga — a focused komf fork for manga-first workflows. Follow, download, and import automatically." data-it="KometaManga — un fork dedicato di Komf per workflow incentrati sui manga. Segui, scarica e importa in automatico."></span>
+        <span>
+          <a href="https://github.com/iCosiSenpai/KometaManga">GitHub</a> ·
+          <a href="https://github.com/iCosiSenpai/KometaManga/releases" data-en="Releases" data-it="Versioni">Releases</a> ·
+          <a href="https://github.com/iCosiSenpai/KometaManga/blob/main/LICENSE" data-en="MIT License" data-it="Licenza MIT">MIT License</a>
+        </span>
+      </footer>
+
+    </div>
+
+    <script>
+      (function() {
+        var lang = /^it\b/i.test(navigator.language || '') ? 'it' : 'en';
+        function apply(l) {
+          document.querySelectorAll('[data-' + l + ']').forEach(function(el) {
+            var val = el.getAttribute('data-' + l);
+            if (el.tagName === 'A' || el.tagName === 'BUTTON') {
+              if (el.hasAttribute('href') || el.tagName === 'BUTTON') el.innerHTML = val;
+              else el.textContent = val;
+            } else {
+              el.innerHTML = val;
+            }
+          });
+          document.getElementById('btn-en').className = 'lang-btn' + (l === 'en' ? ' active' : '');
+          document.getElementById('btn-it').className = 'lang-btn' + (l === 'it' ? ' active' : '');
+          document.documentElement.lang = l;
+        }
+        window.setLang = apply;
+        apply(lang);
+      })();
+    </script>
+  </body>
+</html>

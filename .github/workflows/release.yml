@@ -1,0 +1,85 @@
+name: Create Release on Tag
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build fat JAR
+        run: |
+          chmod +x gradlew
+          ./gradlew :komf-app:shadowJar --no-daemon
+
+      - name: Prepare JAR for upload
+        run: cp komf-app/build/libs/komf-app-*-all.jar komf-app-${{ steps.version.outputs.VERSION }}-all.jar
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git tag --sort=-v:refname | head -n2 | tail -n1)
+          if [ -z "$PREV_TAG" ] || [ "$PREV_TAG" = "$GITHUB_REF_NAME" ]; then
+            echo "CHANGELOG=Initial release" >> "$GITHUB_OUTPUT"
+          else
+            {
+              echo 'CHANGELOG<<EOF'
+              git log --pretty=format:"- %s (%h)" "$PREV_TAG"..."$GITHUB_REF_NAME" --no-merges
+              echo ''
+              echo 'EOF'
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: KometaManga v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## What's Changed
+
+            ${{ steps.changelog.outputs.CHANGELOG }}
+
+            ---
+            **Docker:**
+            ```
+            docker pull ghcr.io/icosisenpai/kometamanga:${{ steps.version.outputs.VERSION }}
+            ```
+
+            **JAR (requires Java 17+):**
+            ```
+            java -jar komf-app-${{ steps.version.outputs.VERSION }}-all.jar /path/to/config
+            ```
+          files: komf-app-${{ steps.version.outputs.VERSION }}-all.jar
+          draft: false
+          prerelease: false

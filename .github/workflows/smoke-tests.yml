@@ -1,0 +1,80 @@
+name: Smoke Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+    inputs:
+      require_connected:
+        description: "Require real Komga connection"
+        type: boolean
+        default: false
+
+concurrency:
+  group: smoke-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Fix Gradle wrapper permissions
+        run: chmod +x gradlew
+
+      - name: Run smoke test (boot and API availability)
+        shell: pwsh
+        run: |
+          ./scripts/smoke-test.ps1 -Build
+
+      - name: Run smoke test with real Komga (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.require_connected == true
+        shell: pwsh
+        env:
+          # These secrets are optional — set them in repo Settings > Secrets if needed
+          KOMF_KOMGA_BASE_URI: ${{ secrets.KOMF_KOMGA_BASE_URI || '' }}
+          KOMF_KOMGA_USER: ${{ secrets.KOMF_KOMGA_USER || '' }}
+          KOMF_KOMGA_PASSWORD: ${{ secrets.KOMF_KOMGA_PASSWORD || '' }}
+        run: |
+          ./scripts/smoke-test.ps1 -Build -RequireConnected
+
+      - name: Verify Docker image builds
+        run: |
+          docker build -t kometamanga-smoke:test .
+          docker run --rm -d --name km-smoke -p 18085:8085 kometamanga-smoke:test
+          echo "Waiting for container to start..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:18085/api/config > /dev/null 2>&1; then
+              echo "Docker container healthy after ${i}s"
+              docker stop km-smoke
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Docker container did not become healthy in 30s"
+          docker logs km-smoke
+          docker stop km-smoke
+          exit 1

@@ -1,0 +1,14 @@
+.git
+.github
+.gradle
+.idea
+.vscode
+**/build
+**/.kotlin
+**/.DS_Store
+**/*.log
+**/node_modules
+Komelia
+database.sqlite
+smoke-backend.stdout.log
+smoke-backend.stderr.log

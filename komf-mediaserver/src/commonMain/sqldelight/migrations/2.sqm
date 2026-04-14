@@ -1,0 +1,11 @@
+CREATE TABLE NotificationLog (
+    id          INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    jobId       TEXT,
+    channel     TEXT NOT NULL,
+    url         TEXT NOT NULL,
+    status      TEXT NOT NULL,
+    errorMessage TEXT,
+    sentAt      INTEGER NOT NULL
+);
+CREATE INDEX notification_log_job_id_idx ON NotificationLog(jobId);
+CREATE INDEX notification_log_sent_at_idx ON NotificationLog(sentAt);
