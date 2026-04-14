@@ -92,7 +92,7 @@ export function LibrariesPage() {
     <div className="animate-fade-in">
       <PageHeader
         title="Libraries"
-        description="Your Komga libraries — configuration overview, metadata actions, and recent activity."
+        description="Komga library configuration, metadata actions, and recent activity."
       />
 
       {libraries.length === 0 ? (
@@ -103,16 +103,16 @@ export function LibrariesPage() {
         />
       ) : (
         <>
-          <div className="mb-5 flex flex-wrap gap-4">
-            <div className="flex items-center gap-2 rounded-lg border border-ink-800/40 bg-ink-900/40 px-3 py-2">
-              <LibraryIcon className="h-4 w-4 text-accent-400" />
+          <div className="mb-5 flex flex-wrap gap-2.5">
+            <div className="flex items-center gap-2 rounded-xl border border-ink-800/30 bg-ink-900/30 px-3 py-2">
+              <LibraryIcon className="h-3.5 w-3.5 text-accent-400" />
               <span className="text-xs text-ink-400">
                 <span className="font-semibold text-ink-200">{libraries.length}</span>{' '}
                 {libraries.length === 1 ? 'library' : 'libraries'}
               </span>
             </div>
-            <div className="flex items-center gap-2 rounded-lg border border-ink-800/40 bg-ink-900/40 px-3 py-2">
-              <HardDrive className="h-4 w-4 text-violet-400" />
+            <div className="flex items-center gap-2 rounded-xl border border-ink-800/30 bg-ink-900/30 px-3 py-2">
+              <HardDrive className="h-3.5 w-3.5 text-violet-400" />
               <span className="text-xs text-ink-400">
                 <span className="font-semibold text-ink-200">{totalRoots}</span> root{' '}
                 {totalRoots === 1 ? 'path' : 'paths'}
@@ -284,8 +284,8 @@ function LibraryCard({
         {/* Header row */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent-600/10">
-              <LibraryIcon className="h-6 w-6 text-accent-400" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-600/10 ring-1 ring-accent-500/10">
+              <LibraryIcon className="h-5 w-5 text-accent-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">

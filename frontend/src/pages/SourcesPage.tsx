@@ -576,44 +576,40 @@ export function SourcesPage() {
   }
 
   return (
-    <div className="animate-page-in font-jpSans space-y-6 pb-10">
+    <div className="animate-page-in font-jpSans space-y-5 pb-10">
       <div aria-live="polite" className="sr-only">
         {isSearching
           ? `${totalDirectoryMatches} grouped matches across ${activeSourceIds.length} active sources`
           : `${filteredSources.length} sources ready to search`}
       </div>
 
-      <section className="relative overflow-hidden rounded-[30px] border border-ink-800/50 bg-ink-900/70 px-5 py-6 shadow-card sm:px-6">
+      <section className="relative overflow-hidden rounded-2xl border border-ink-800/40 bg-ink-900/60 px-5 py-5 shadow-card sm:px-6">
         <div className="pointer-events-none absolute inset-0 opacity-100">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(248,113,113,0.10),transparent_34%),radial-gradient(circle_at_80%_16%,rgba(125,211,252,0.10),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.03),transparent_38%)]" />
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(248,113,113,0.06),transparent_34%),radial-gradient(circle_at_80%_16%,rgba(125,211,252,0.06),transparent_24%)]" />
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         </div>
 
-        <div className="relative grid gap-6 xl:grid-cols-[1.05fr_0.95fr] xl:items-end">
-          <div className="space-y-5">
+        <div className="relative grid gap-5 xl:grid-cols-[1.05fr_0.95fr] xl:items-end">
+          <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-ink-800/60 bg-ink-950/70 px-3 py-1 font-opsMono text-[11px] uppercase tracking-[0.24em] text-ink-400">
-                Browse Sources
-              </span>
-              <StatusBadge label={`${filteredSources.length} visible`} tone="neutral" />
+              <StatusBadge label={`${filteredSources.length} sources`} tone="neutral" />
               <StatusBadge
-                label={healthSummary.red > 0 ? `${healthSummary.red} down` : 'health mostly clear'}
+                label={healthSummary.red > 0 ? `${healthSummary.red} down` : 'all healthy'}
                 tone={healthSummary.red > 0 ? 'danger' : 'success'}
               />
               <StatusBadge label={activeLanguageLabel} tone="neutral" />
             </div>
 
-            <div className="max-w-3xl space-y-3">
-              <h1 className="font-jpSerif text-3xl font-semibold tracking-[-0.04em] text-ink-50 sm:text-4xl xl:text-[3.35rem] xl:leading-[1.04]">
-                Find a series, compare mirrors, then open the source that actually has the chapters.
+            <div className="max-w-2xl space-y-2">
+              <h1 className="font-jpSerif text-2xl font-semibold tracking-[-0.03em] text-ink-50 sm:text-3xl">
+                Browse Sources
               </h1>
-              <p className="max-w-2xl text-sm leading-7 text-ink-300 sm:text-base">
-                Search first, filter with intent, and see the same title grouped across sources instead
-                of buried in duplicate result cards.
+              <p className="max-w-xl text-sm leading-relaxed text-ink-400">
+                Search across sources, compare mirrors, and queue chapters for download.
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-2.5 sm:grid-cols-3">
               <OverviewTile
                 label="Active sources"
                 value={`${activeSourceIds.length}/${filteredSources.length}`}
@@ -622,38 +618,32 @@ export function SourcesPage() {
               <OverviewTile
                 label="Raw hits"
                 value={isSearching ? `${totalCount}` : '--'}
-                note={isSearching ? 'Total entries returned by the search' : 'Waiting for a query'}
+                note={isSearching ? 'Total entries from search' : 'Waiting for a query'}
               />
               <OverviewTile
                 label="Grouped titles"
                 value={isSearching ? `${totalDirectoryMatches}` : '--'}
-                note={isSearching ? 'Merged by title across mirrors' : 'Compare-ready once you search'}
+                note={isSearching ? 'Merged across mirrors' : 'Compare-ready once you search'}
               />
             </div>
           </div>
           <form
             onSubmit={handleSearch}
-            className="relative overflow-hidden rounded-[28px] border border-ink-800/60 bg-ink-950/80 p-5 shadow-[0_20px_50px_-30px_rgba(0,0,0,0.48)]"
+            className="relative overflow-hidden rounded-2xl border border-ink-800/50 bg-ink-950/70 p-4 shadow-lg sm:p-5"
           >
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent_28%)]" />
-            <div className="relative space-y-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-opsMono text-[11px] uppercase tracking-[0.22em] text-ink-500">
-                    Search
-                  </p>
-                  <h2 className="mt-1 font-jpSerif text-2xl font-semibold text-ink-50">
-                    Start from the title, not from the source list.
-                  </h2>
-                </div>
-                <span className="rounded-full border border-ink-800/60 bg-ink-950/80 px-2.5 py-1 font-opsMono text-[10px] uppercase tracking-[0.2em] text-ink-500">
-                  Ctrl K
+            <div className="relative space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-sm font-medium text-ink-300">
+                  Search manga
+                </h2>
+                <span className="rounded-md border border-ink-800/50 bg-ink-950/60 px-2 py-0.5 font-mono text-[10px] text-ink-600">
+                  Ctrl+K
                 </span>
               </div>
 
-              <div className="rounded-[22px] border border-ink-800/60 bg-ink-900/65 p-3">
-                <div className="flex items-center gap-3 rounded-[18px] border border-ink-800/70 bg-ink-950/90 px-3 py-3">
-                  <Search className="h-4 w-4 shrink-0 text-ink-300" />
+              <div className="rounded-xl border border-ink-800/50 bg-ink-900/50 p-2.5">
+                <div className="flex items-center gap-3 rounded-lg border border-ink-800/60 bg-ink-950/80 px-3 py-2.5">
+                  <Search className="h-4 w-4 shrink-0 text-ink-400" />
                   <input
                     ref={inputRef}
                     type="text"

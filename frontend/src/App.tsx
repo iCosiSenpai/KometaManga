@@ -15,7 +15,7 @@ const KomgaPage = lazy(() => import('@/pages/KomgaPage').then(m => ({ default: m
 const LogsPage = lazy(() => import('@/pages/LogsPage').then(m => ({ default: m.LogsPage })))
 const SourcesPage = lazy(() => import('@/pages/SourcesPage').then(m => ({ default: m.SourcesPage })))
 const DownloadsPage = lazy(() => import('@/pages/DownloadsPage').then(m => ({ default: m.DownloadsPage })))
-const AutoDownloaderPage = lazy(() => import('@/pages/AutoDownloaderPage').then(m => ({ default: m.AutoDownloaderPage })))
+// Auto-downloader is now integrated into the Downloads page
 
 const EventListenerSettings = lazy(() => import('@/pages/settings/EventListenerSettings').then(m => ({ default: m.EventListenerSettings })))
 const ProcessingSettings = lazy(() => import('@/pages/settings/ProcessingSettings').then(m => ({ default: m.ProcessingSettings })))
@@ -97,7 +97,7 @@ export default function App() {
         <Route path="/" element={<ErrorBoundary><Suspense fallback={<PageSpinner />}><DashboardPage /></Suspense></ErrorBoundary>} />
         <Route path="/sources" element={<ErrorBoundary><Suspense fallback={<PageSpinner />}><SourcesPage /></Suspense></ErrorBoundary>} />
         <Route path="/downloads" element={<ErrorBoundary><Suspense fallback={<PageSpinner />}><DownloadsPage /></Suspense></ErrorBoundary>} />
-        <Route path="/auto-downloader" element={<ErrorBoundary><Suspense fallback={<PageSpinner />}><AutoDownloaderPage /></Suspense></ErrorBoundary>} />
+        <Route path="/auto-downloader" element={<Navigate to="/downloads" replace />} />
         <Route path="/libraries" element={<ErrorBoundary><Suspense fallback={<PageSpinner />}><LibrariesPage /></Suspense></ErrorBoundary>} />
         <Route path="/jobs" element={<ErrorBoundary><Suspense fallback={<PageSpinner />}><JobsPage /></Suspense></ErrorBoundary>} />
         <Route path="/komga" element={<ErrorBoundary><Suspense fallback={<PageSpinner />}><KomgaPage /></Suspense></ErrorBoundary>} />

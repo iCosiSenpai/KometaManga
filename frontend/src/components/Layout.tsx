@@ -22,7 +22,6 @@ import {
   PanelLeftOpen,
   BookOpen,
   Download,
-  Repeat,
   MessageSquare,
   LogOut,
 } from 'lucide-react'
@@ -30,19 +29,21 @@ import { clsx } from 'clsx'
 
 const NAV_SECTIONS = [
   {
+    label: 'Main',
     items: [
       { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
       { to: '/libraries', icon: Library, label: 'Libraries' },
     ],
   },
   {
+    label: 'Manga',
     items: [
       { to: '/sources', icon: BookOpen, label: 'Browse Sources' },
       { to: '/downloads', icon: Download, label: 'Downloads' },
-      { to: '/auto-downloader', icon: Repeat, label: 'Auto-Downloader' },
     ],
   },
   {
+    label: 'System',
     items: [
       { to: '/settings', icon: Settings, label: 'Settings' },
       { to: '/jobs', icon: Activity, label: 'Jobs' },
@@ -50,6 +51,7 @@ const NAV_SECTIONS = [
     ],
   },
   {
+    label: 'Integration',
     items: [
       { to: '/komga', icon: Tv2, label: 'Komga' },
     ],
@@ -130,7 +132,7 @@ export function Layout() {
       {/* Mobile hamburger */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className="fixed left-3 top-3 z-40 rounded-xl bg-ink-900/90 p-2.5 text-ink-300 shadow-lg backdrop-blur-sm active:scale-95 md:hidden"
+        className="fixed left-3 top-3 z-40 rounded-xl border border-ink-800/40 bg-ink-900/95 p-2.5 text-ink-300 shadow-lg backdrop-blur-md active:scale-95 md:hidden"
         aria-label="Open menu"
       >
         <Menu className="h-5 w-5" />
@@ -147,10 +149,10 @@ export function Layout() {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-ink-800/50 bg-ink-950/95 backdrop-blur-sm transition-all duration-200',
+          'fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-ink-800/40 bg-ink-950/98 backdrop-blur-md transition-all duration-300 ease-out',
           'md:translate-x-0 md:z-30',
-          collapsed ? 'md:w-[96px]' : 'md:w-80',
-          'w-64',
+          collapsed ? 'md:w-[80px]' : 'md:w-72',
+          'w-72',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
         )}
         role="navigation"
@@ -165,24 +167,24 @@ export function Layout() {
         />
 
         {/* Logo + mobile close */}
-        <div className="relative z-10 flex h-24 items-center justify-between border-b border-ink-800/50 px-4">
+        <div className="relative z-10 flex h-20 items-center justify-between border-b border-ink-800/30 px-4">
           <NavLink to="/" className="flex items-center gap-3 overflow-hidden" onClick={closeSidebar}>
             <img
               src="/logo.png"
               alt="KometaManga"
-              className="h-16 w-16 shrink-0 rounded-lg"
+              className="h-12 w-12 shrink-0 rounded-xl shadow-lg shadow-accent-600/10"
             />
             {!effectiveCollapsed && (
               <>
                 <img
                   src="/name.png"
                   alt="KometaManga"
-                  className="hidden h-16 w-auto max-w-[260px] object-contain md:block"
+                  className="hidden h-12 w-auto max-w-[200px] object-contain md:block"
                 />
                 <img
                   src="/nameshort.png"
                   alt="KometaManga"
-                  className="h-16 w-auto max-w-[160px] object-contain md:hidden"
+                  className="h-12 w-auto max-w-[140px] object-contain md:hidden"
                 />
               </>
             )}
@@ -200,7 +202,12 @@ export function Layout() {
         <nav className="relative z-10 flex-1 overflow-y-auto px-3 py-4">
           {NAV_SECTIONS.map((section, si) => (
             <div key={si}>
-              {si > 0 && <div className="my-3 mx-2 h-px bg-ink-800/40" />}
+              {si > 0 && <div className="my-3 mx-2 h-px bg-ink-800/30" />}
+              {!effectiveCollapsed && section.label && (
+                <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-600">
+                  {section.label}
+                </p>
+              )}
               <div className="space-y-0.5">
                 {section.items.map(({ to, icon: Icon, label, ...rest }) => (
                   <NavItem
@@ -219,7 +226,7 @@ export function Layout() {
         </nav>
 
         {/* Footer */}
-        <div className="relative z-10 shrink-0 border-t border-ink-800/50 px-3 py-2 md:px-5 md:py-4 space-y-2 md:space-y-3">
+        <div className="relative z-10 shrink-0 border-t border-ink-800/30 px-3 py-2 md:px-4 md:py-3 space-y-1.5 md:space-y-2">
           {/* Collapse toggle (desktop only) */}
           <button
             onClick={toggleCollapsed}
@@ -275,84 +282,68 @@ export function Layout() {
 
           {/* ── Desktop-only: full support section ── */}
           {!effectiveCollapsed && (
-            <div className="hidden md:block space-y-3">
+            <div className="hidden md:block space-y-2.5">
               {/* Version & update check */}
               <VersionBadge />
 
-          {/* Support section */}
-          <div className="relative overflow-hidden rounded-xl border border-ink-800/30 bg-gradient-to-br from-accent-600/5 via-violet-600/5 to-amber-600/5 p-3">
-            <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-accent-500/5 blur-2xl" />
-            <div className="absolute -left-4 -bottom-4 h-16 w-16 rounded-full bg-amber-500/5 blur-2xl" />
-            <div className="relative">
-              <div className="mb-2.5 flex items-center gap-2">
-                <Heart className="h-3.5 w-3.5 text-accent-400" />
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">
-                  Support
-                </span>
-              </div>
-              <div className="flex gap-2">
+              {/* Support & Donate */}
+              <div className="flex gap-1.5">
                 <a
                   href="https://github.com/iCosiSenpai/KometaManga/issues/new"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 ring-1 ring-emerald-500/10 transition-all hover:bg-emerald-500/20 hover:ring-emerald-500/25 hover:shadow-[0_0_12px_-3px_rgba(16,185,129,0.15)]"
+                  className="group flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-500/8 px-2 py-1.5 text-[11px] font-medium text-emerald-400 transition-all hover:bg-emerald-500/15"
+                  title="Send Feedback"
                 >
-                  <MessageSquare className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
+                  <MessageSquare className="h-3 w-3" />
                   Feedback
                 </a>
-              </div>
-              <div className="flex gap-2">
                 <a
                   href="https://buymeacoffee.com/icosisenpai"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-300 ring-1 ring-amber-500/10 transition-all hover:bg-amber-500/20 hover:ring-amber-500/25 hover:shadow-[0_0_12px_-3px_rgba(251,191,36,0.15)]"
+                  className="group flex items-center justify-center rounded-lg bg-amber-500/8 px-2 py-1.5 text-amber-400 transition-all hover:bg-amber-500/15"
+                  title="Buy me a coffee"
                 >
-                  <Coffee className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
-                  Coffee
+                  <Coffee className="h-3 w-3" />
                 </a>
                 <a
                   href="https://paypal.me/AlessioCosi"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-500/10 px-3 py-2 text-xs font-medium text-blue-300 ring-1 ring-blue-500/10 transition-all hover:bg-blue-500/20 hover:ring-blue-500/25 hover:shadow-[0_0_12px_-3px_rgba(59,130,246,0.15)]"
+                  className="group flex items-center justify-center rounded-lg bg-blue-500/8 px-2 py-1.5 text-blue-400 transition-all hover:bg-blue-500/15"
+                  title="PayPal"
                 >
-                  <Heart className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
-                  PayPal
+                  <Heart className="h-3 w-3" />
                 </a>
               </div>
-            </div>
-          </div>
 
-          {/* Credits */}
-          <div className="space-y-1 px-1">
-            <p className="text-[11px] text-ink-500">
-              Based on{' '}
-              <a href="https://github.com/Snd-R/Komf" target="_blank" rel="noopener noreferrer" className="text-ink-400 hover:text-accent-400 transition-colors">
-                Komf by Snd-R <ExternalLink className="inline h-2.5 w-2.5" />
-              </a>
-            </p>
-            <p className="text-[11px] text-ink-500">
-              Made with <Heart className="inline h-2.5 w-2.5 text-red-400" /> by{' '}
-              <a href="https://github.com/iCosiSenpai" target="_blank" rel="noopener noreferrer" className="text-ink-400 hover:text-accent-400 transition-colors">
-                iCosiSenpai
-              </a>
-            </p>
-            <p className="mt-1.5 text-[10px] text-ink-600">
-              Part of{' '}
-              <a href="https://icosisenpai.github.io/KometaManga/" target="_blank" rel="noopener noreferrer" className="text-purple-400/70 hover:text-purple-300 transition-colors font-medium">
-                KometaHub
-              </a>
-              {' '}· More apps coming soon
-            </p>
-          </div>
+              {/* Credits */}
+              <div className="space-y-0.5 px-1">
+                <p className="text-[10px] text-ink-600">
+                  Based on{' '}
+                  <a href="https://github.com/Snd-R/Komf" target="_blank" rel="noopener noreferrer" className="text-ink-500 hover:text-accent-400 transition-colors">
+                    Komf by Snd-R
+                  </a>
+                  {' · '}
+                  <a href="https://github.com/iCosiSenpai" target="_blank" rel="noopener noreferrer" className="text-ink-500 hover:text-accent-400 transition-colors">
+                    iCosiSenpai
+                  </a>
+                </p>
+                <p className="text-[10px] text-ink-600">
+                  Part of{' '}
+                  <a href="https://icosisenpai.github.io/KometaManga/" target="_blank" rel="noopener noreferrer" className="text-purple-400/60 hover:text-purple-300 transition-colors font-medium">
+                    KometaHub
+                  </a>
+                </p>
+              </div>
             </div>
           )}
         </div>
       </aside>
 
       {/* Main content */}
-      <main className={clsx('relative z-10 flex-1 transition-all duration-200', collapsed ? 'md:ml-[96px]' : 'md:ml-80')} role="main">
+      <main className={clsx('relative z-10 flex-1 transition-all duration-300 ease-out', collapsed ? 'md:ml-[80px]' : 'md:ml-72')} role="main">
         <div className="mx-auto max-w-6xl px-4 pb-8 pt-14 md:px-10 md:py-8">
           <Breadcrumb />
           <Outlet />
@@ -365,7 +356,7 @@ export function Layout() {
         alt=""
         aria-hidden
         className="pointer-events-none fixed bottom-0 z-[1] hidden h-[70vh] max-h-[850px] w-auto select-none object-contain opacity-80 xl:block"
-        style={{ left: collapsed ? 112 : 336 }}
+        style={{ left: collapsed ? 96 : 304 }}
       />
       <img
         src="/vertical3.png"
@@ -400,7 +391,7 @@ function NavItem({
       title={collapsed ? label : undefined}
       className={({ isActive }) =>
         clsx(
-          'flex items-center rounded-xl text-sm font-medium transition-all duration-150 active:scale-[0.97]',
+          'group relative flex items-center rounded-xl text-sm font-medium transition-all duration-150 active:scale-[0.97]',
           collapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-3 md:py-2.5',
           isActive
             ? 'bg-accent-600/10 text-accent-400'
@@ -408,8 +399,15 @@ function NavItem({
         )
       }
     >
-      <Icon className="h-[18px] w-[18px] shrink-0" />
-      {!collapsed && label}
+      {({ isActive }: { isActive: boolean }) => (
+        <>
+          {isActive && (
+            <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent-500 transition-all" />
+          )}
+          <Icon className="h-[18px] w-[18px] shrink-0" />
+          {!collapsed && <span>{label}</span>}
+        </>
+      )}
     </NavLink>
   )
 }
@@ -518,7 +516,6 @@ const ROUTE_LABELS: Record<string, string> = {
   '/libraries': 'Libraries',
   '/sources': 'Browse Sources',
   '/downloads': 'Downloads',
-  '/auto-downloader': 'Auto-Downloader',
   '/jobs': 'Jobs',
   '/komga': 'Komga',
   '/logs': 'Logs',

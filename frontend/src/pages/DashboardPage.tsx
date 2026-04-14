@@ -18,7 +18,6 @@ import {
   Library,
   Radio,
   RefreshCcw,
-  Repeat,
   Shield,
   XCircle,
 } from 'lucide-react'
@@ -102,24 +101,17 @@ const COMMAND_ACTIONS = [
   },
   {
     to: '/downloads',
-    label: 'Download Queue',
-    note: 'Watch imports, failures, and throughput.',
+    label: 'Downloads & Auto',
+    note: 'Queue, history, and auto-download rules in one place.',
     icon: <Download className="h-4 w-4" />,
     tone: 'sky' as const,
-  },
-  {
-    to: '/auto-downloader',
-    label: 'Auto-Downloader',
-    note: 'Tune rule coverage and unattended flow.',
-    icon: <Repeat className="h-4 w-4" />,
-    tone: 'amber' as const,
   },
   {
     to: '/jobs',
     label: 'Jobs',
     note: 'Inspect metadata runs and recent failures.',
     icon: <Activity className="h-4 w-4" />,
-    tone: 'ink' as const,
+    tone: 'amber' as const,
   },
   {
     to: '/libraries',
@@ -288,16 +280,13 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="font-ops animate-page-in space-y-6 pb-10">
-      <section className="rounded-[28px] border border-ink-800/50 bg-ink-900/70 p-5 shadow-card sm:p-6">
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+    <div className="font-ops animate-page-in space-y-5 pb-10">
+      <section className="rounded-2xl border border-ink-800/40 bg-ink-900/60 p-5 shadow-card sm:p-6">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-ink-800/60 bg-ink-950/60 px-3 py-1 font-opsMono text-[11px] uppercase tracking-[0.24em] text-ink-400">
-                Ops Overview
-              </span>
               <StatusFlag tone={isConnected ? 'emerald' : 'red'} label={isConnected ? 'Komga online' : 'Komga offline'} />
-              <span className="rounded-full border border-ink-800/60 bg-ink-950/60 px-3 py-1 text-xs text-ink-400">
+              <span className="rounded-full border border-ink-800/50 bg-ink-950/50 px-2.5 py-0.5 font-mono text-[11px] text-ink-500">
                 v{version?.current ?? '...'}
               </span>
               {version?.updateAvailable && (
@@ -305,31 +294,30 @@ export function DashboardPage() {
                   href="https://github.com/iCosiSenpai/KometaManga/releases"
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-full border border-accent-700/40 bg-accent-950/30 px-3 py-1 text-xs text-accent-300 transition-colors hover:bg-accent-950/50"
+                  className="rounded-full border border-emerald-700/30 bg-emerald-950/20 px-2.5 py-0.5 text-[11px] font-medium text-emerald-400 transition-colors hover:bg-emerald-950/40"
                 >
-                  Update {version.latest} available
+                  {version.latest} available
                 </a>
               )}
             </div>
 
-            <div className="space-y-2">
-              <h1 className="max-w-3xl text-3xl font-semibold tracking-[-0.04em] text-ink-50 sm:text-4xl">
-                Run the instance from one compact, readable operations surface.
+            <div className="space-y-1.5">
+              <h1 className="max-w-2xl text-2xl font-semibold tracking-[-0.03em] text-ink-50 sm:text-3xl">
+                Operations Dashboard
               </h1>
-              <p className="max-w-3xl text-sm leading-7 text-ink-400 sm:text-base">
-                The dashboard is now built for triage first: queue pressure, unhealthy sources,
-                job activity, storage, and configuration posture without the theatrical chrome.
+              <p className="max-w-2xl text-sm leading-relaxed text-ink-400">
+                Queue pressure, source health, job activity, storage, and configuration at a glance.
               </p>
             </div>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-2">
-            <InlineAction to="/sources" icon={<BookOpen className="h-4 w-4" />} label="Open source search" />
-            <InlineAction to="/jobs" icon={<Activity className="h-4 w-4" />} label="Inspect jobs" />
+          <div className="flex gap-2">
+            <InlineAction to="/sources" icon={<BookOpen className="h-4 w-4" />} label="Search sources" />
+            <InlineAction to="/jobs" icon={<Activity className="h-4 w-4" />} label="View jobs" />
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-5 grid gap-2.5 md:grid-cols-2 xl:grid-cols-5">
           <KpiTile label="Libraries" value={String(libraries.length)} note={`${libraryRootCount} root paths`} tone="ink" />
           <KpiTile label="Queue" value={String(queueSize)} note={`${completedToday} completed today`} tone="accent" />
           <KpiTile label="Recent runs" value={String(jobStats.running)} note={`${jobStats.failed} failed in the recent window`} tone="amber" />
@@ -345,7 +333,7 @@ export function DashboardPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
         <div className="space-y-6">
-          <Card className="rounded-[28px] border-ink-800/50 bg-ink-900/65 p-5 sm:p-6">
+          <Card className="rounded-2xl border-ink-800/40 bg-ink-900/50 p-5 sm:p-6">
             <SectionHeader
               eyebrow="Quick Actions"
               title="Common moves"
@@ -358,7 +346,7 @@ export function DashboardPage() {
             </div>
           </Card>
 
-          <Card className="rounded-[28px] border-ink-800/50 bg-ink-900/65 p-5 sm:p-6">
+          <Card className="rounded-2xl border-ink-800/40 bg-ink-900/50 p-5 sm:p-6">
             <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
               <SectionHeader
                 eyebrow="Runtime"
@@ -380,7 +368,7 @@ export function DashboardPage() {
                   <TimelineRow key={job.id} job={job} />
                 ))}
                 {recentJobs.length === 0 && (
-                  <div className="rounded-[22px] border border-dashed border-ink-800/50 px-4 py-6 text-sm text-ink-500">
+                  <div className="rounded-xl border border-dashed border-ink-800/50 px-4 py-6 text-sm text-ink-500">
                     No recent jobs have been recorded yet.
                   </div>
                 )}
@@ -388,7 +376,7 @@ export function DashboardPage() {
             </div>
           </Card>
 
-          <Card className="rounded-[28px] border-ink-800/50 bg-ink-900/65 p-5 sm:p-6">
+          <Card className="rounded-2xl border-ink-800/40 bg-ink-900/50 p-5 sm:p-6">
             <SectionHeader
               eyebrow="Sources"
               title="Health matrix"
@@ -406,7 +394,7 @@ export function DashboardPage() {
                 <SourceHealthRow key={entry.sourceId} entry={entry} />
               ))}
               {sourceRows.length === 0 && (
-                <div className="rounded-[22px] border border-dashed border-ink-800/50 px-4 py-6 text-sm text-ink-500">
+                <div className="rounded-xl border border-dashed border-ink-800/50 px-4 py-6 text-sm text-ink-500">
                   Health monitor has not produced source data yet.
                 </div>
               )}
@@ -415,7 +403,7 @@ export function DashboardPage() {
         </div>
 
         <div className="space-y-6">
-          <Card className="rounded-[28px] border-ink-800/50 bg-ink-900/65 p-5 sm:p-6">
+          <Card className="rounded-2xl border-ink-800/40 bg-ink-900/50 p-5 sm:p-6">
             <SectionHeader
               eyebrow="System"
               title="Posture"
@@ -437,7 +425,7 @@ export function DashboardPage() {
                 note={`${failedDownloads} failed download${failedDownloads === 1 ? '' : 's'}`}
               />
               <SystemRow
-                icon={<Repeat className="h-4 w-4" />}
+                icon={<Download className="h-4 w-4" />}
                 label="Auto-downloader"
                 value={`${activeRules} active rules`}
                 tone={activeRules > 0 ? 'emerald' : 'ink'}
@@ -467,7 +455,7 @@ export function DashboardPage() {
             </div>
           </Card>
 
-          <Card className="rounded-[28px] border-ink-800/50 bg-ink-900/65 p-5 sm:p-6">
+          <Card className="rounded-2xl border-ink-800/40 bg-ink-900/50 p-5 sm:p-6">
             <SectionHeader
               eyebrow="Storage"
               title="Disk and release"
@@ -499,7 +487,7 @@ export function DashboardPage() {
             </a>
           </Card>
 
-          <Card className="rounded-[28px] border-ink-800/50 bg-ink-900/65 p-5 sm:p-6">
+          <Card className="rounded-2xl border-ink-800/40 bg-ink-900/50 p-5 sm:p-6">
             <div className="flex items-start justify-between gap-3">
               <SectionHeader
                 eyebrow="Libraries"
@@ -520,7 +508,7 @@ export function DashboardPage() {
                 <LibraryRow key={library.id} library={library} />
               ))}
               {libraries.length === 0 && (
-                <div className="rounded-[22px] border border-dashed border-ink-800/50 px-4 py-6 text-sm text-ink-500">
+                <div className="rounded-xl border border-dashed border-ink-800/50 px-4 py-6 text-sm text-ink-500">
                   No libraries available from Komga.
                 </div>
               )}
@@ -565,7 +553,7 @@ function InlineAction({
   return (
     <Link
       to={to}
-      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-ink-800/60 bg-ink-950/70 px-4 py-3 text-sm font-medium text-ink-100 transition-colors hover:border-ink-700 hover:bg-ink-950"
+      className="inline-flex items-center justify-center gap-2 rounded-xl border border-ink-800/50 bg-ink-950/60 px-3.5 py-2.5 text-sm font-medium text-ink-200 transition-all hover:border-ink-700/60 hover:bg-ink-900/60 hover:text-ink-100"
     >
       {icon}
       {label}
@@ -587,7 +575,7 @@ function KpiTile({
   return (
     <div
       className={clsx(
-        'rounded-[22px] border px-4 py-4',
+        'rounded-xl border px-4 py-4',
         tone === 'ink' && 'border-ink-800/60 bg-ink-950/70',
         tone === 'accent' && 'border-accent-800/40 bg-accent-950/20',
         tone === 'amber' && 'border-amber-900/40 bg-amber-950/10',
@@ -631,7 +619,7 @@ function CommandAction(_: {
     <Link
       to={_.to}
       className={clsx(
-        'group rounded-[22px] border px-4 py-4 transition-all duration-200 hover:-translate-y-0.5',
+        'group rounded-xl border px-4 py-4 transition-all duration-200 hover:-translate-y-0.5',
         _.tone === 'accent' && 'border-accent-800/40 bg-accent-950/15 hover:bg-accent-950/25',
         _.tone === 'sky' && 'border-sky-900/40 bg-sky-950/10 hover:bg-sky-950/20',
         _.tone === 'amber' && 'border-amber-900/40 bg-amber-950/10 hover:bg-amber-950/20',
@@ -657,7 +645,7 @@ function MiniStat(_: {
   tone: 'emerald' | 'amber' | 'red'
 }) {
   return (
-    <div className="rounded-[20px] border border-ink-800/60 bg-ink-950/65 px-4 py-3">
+    <div className="rounded-xl border border-ink-800/60 bg-ink-950/65 px-4 py-3">
       <p className="font-opsMono text-[10px] uppercase tracking-[0.2em] text-ink-500">{_.label}</p>
       <p
         className={clsx(
@@ -681,7 +669,7 @@ function TimelineRow(_: {
   return (
     <Link
       to="/jobs"
-      className="flex items-start gap-3 rounded-[22px] border border-ink-800/50 bg-ink-950/55 px-4 py-3 transition-colors hover:bg-ink-950/75"
+      className="flex items-start gap-3 rounded-xl border border-ink-800/50 bg-ink-950/55 px-4 py-3 transition-colors hover:bg-ink-950/75"
     >
       <div className="mt-0.5">{JOB_META[job.status].icon}</div>
       <div className="min-w-0 flex-1">
@@ -708,7 +696,7 @@ function SourceHealthRow({
   const meta = HEALTH_META[entry.status]
 
   return (
-    <div className="grid gap-3 rounded-[22px] border border-ink-800/50 bg-ink-950/55 px-4 py-3 md:grid-cols-[1.2fr_0.8fr_0.6fr]">
+    <div className="grid gap-3 rounded-xl border border-ink-800/50 bg-ink-950/55 px-4 py-3 md:grid-cols-[1.2fr_0.8fr_0.6fr]">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <span className={clsx('h-2.5 w-2.5 rounded-full', meta.dot)} />
@@ -738,7 +726,7 @@ function SystemRow(_: {
   tone: 'emerald' | 'red' | 'amber' | 'ink'
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-[22px] border border-ink-800/50 bg-ink-950/55 px-4 py-3">
+    <div className="flex items-start gap-3 rounded-xl border border-ink-800/50 bg-ink-950/55 px-4 py-3">
       <div
         className={clsx(
           'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border',
@@ -772,7 +760,7 @@ function ReadoutBlock(_: {
   note: string
 }) {
   return (
-    <div className="rounded-[22px] border border-ink-800/50 bg-ink-950/55 px-4 py-4">
+    <div className="rounded-xl border border-ink-800/50 bg-ink-950/55 px-4 py-4">
       <div className="flex items-center gap-2 text-ink-400">
         {_.icon}
         <span className="font-opsMono text-[10px] uppercase tracking-[0.18em]">{_.label}</span>
@@ -787,7 +775,7 @@ function LibraryRow(_: {
   library: { id: string; name: string; roots: string[] }
 }) {
   return (
-    <div className="rounded-[22px] border border-ink-800/50 bg-ink-950/55 px-4 py-3">
+    <div className="rounded-xl border border-ink-800/50 bg-ink-950/55 px-4 py-3">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-ink-800/60 bg-ink-900/70 text-ink-300">
           <Library className="h-4 w-4" />
@@ -845,14 +833,14 @@ function Sparkline(_: { data: SparklineDay[] }) {
 
   if (_.data.length === 0) {
     return (
-      <div className="rounded-[24px] border border-dashed border-white/10 bg-black/20 p-5 text-sm text-ink-400">
+      <div className="rounded-xl border border-dashed border-white/10 bg-black/20 p-5 text-sm text-ink-400">
         No recent job telemetry yet.
       </div>
     )
   }
 
   return (
-    <div className="rounded-[24px] border border-white/10 bg-black/20 p-4">
+    <div className="rounded-xl border border-white/10 bg-black/20 p-4">
       <div className="flex h-36 items-end gap-2">
         {_.data.map((entry) => {
           const completedHeight = (entry.completed / maxValue) * 110

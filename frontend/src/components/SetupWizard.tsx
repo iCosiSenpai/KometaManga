@@ -17,7 +17,6 @@ import {
   FolderOpen,
   Library,
   Loader2,
-  Zap,
   BookOpen,
   Search,
   ChevronDown,
@@ -253,79 +252,80 @@ export function SetupWizard({ defaultBaseUri, onComplete }: SetupWizardProps) {
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink-950 py-6 sm:py-10">
       {/* Animated gradient blobs */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 left-1/2 h-[800px] w-[800px] -translate-x-1/2 rounded-full bg-accent-600/8 blur-3xl animate-pulse" />
-        <div className="absolute -bottom-1/2 left-1/4 h-[600px] w-[600px] rounded-full bg-violet-600/8 blur-3xl" />
-        <div className="absolute right-0 top-1/4 h-[400px] w-[400px] rounded-full bg-amber-600/5 blur-3xl" />
+        <div className="absolute -top-1/3 left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-accent-600/6 blur-[120px] animate-pulse" />
+        <div className="absolute -bottom-1/3 left-1/4 h-[500px] w-[500px] rounded-full bg-violet-600/5 blur-[100px]" />
+        <div className="absolute right-0 top-1/3 h-[350px] w-[350px] rounded-full bg-amber-600/4 blur-[80px]" />
       </div>
 
       {/* Central setup layout */}
       <div className="relative z-10 flex w-full max-w-5xl items-start justify-center px-4">
         <div className="w-full max-w-xl px-2 sm:px-6">
           {/* Top brand row */}
-          <div className="mb-6 flex items-center justify-center gap-4 sm:mb-7 sm:gap-5">
-            <div className="relative h-20 w-20 sm:h-24 sm:w-24">
-              <div className="absolute inset-0 rounded-2xl bg-accent-500/20 blur-xl" />
+          <div className="mb-6 flex flex-col items-center gap-3 sm:mb-7">
+            <div className="relative h-16 w-16 sm:h-20 sm:w-20">
+              <div className="absolute inset-0 rounded-2xl bg-accent-500/15 blur-xl" />
               <img
                 src="/logo.png"
                 alt="KometaManga"
-                className="relative h-20 w-20 rounded-2xl shadow-lg shadow-accent-600/30 sm:h-24 sm:w-24"
+                className="relative h-16 w-16 rounded-2xl shadow-lg shadow-accent-600/20 sm:h-20 sm:w-20"
               />
             </div>
             <img
               src="/name.png"
               alt="KometaManga"
-              className="h-10 w-auto object-contain sm:h-12"
+              className="h-8 w-auto object-contain sm:h-10"
             />
           </div>
 
         {/* Step indicator */}
         {step !== 'welcome' && step !== 'done' && (
-          <div className="mb-8 flex items-center justify-center gap-2">
-            {(['account', 'server', 'credentials', 'downloads', 'bridge', 'providers'] as const).map((s, i) => {
+          <div className="mb-8">
+            {(() => {
               const stepOrder = ['account', 'server', 'credentials', 'downloads', 'bridge', 'providers'] as const
+              const stepLabels = ['Account', 'Server', 'Credentials', 'Downloads', 'Extras', 'Providers']
               const currentIdx = stepOrder.indexOf(step as typeof stepOrder[number])
-              const isCompleted = i < currentIdx
-              const isCurrent = step === s
-              const isBridge = s === 'bridge'
-              const isProviders = s === 'providers'
-              // Show a divider before the optional section
+              const progress = ((currentIdx) / (stepOrder.length - 1)) * 100
               return (
-                <div key={s} className="flex items-center gap-2">
-                  {isBridge && (
-                    <div className="mx-1 h-4 w-px bg-ink-700" />
-                  )}
-                <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${
-                      isCurrent
-                      ? 'bg-accent-600 text-white'
-                        : isCompleted
-                        ? 'bg-emerald-600/20 text-emerald-400'
-                        : 'bg-ink-800 text-ink-500'
-                  }`}
-                    title={s === 'bridge' ? 'Extras' : s === 'providers' ? 'Providers' : undefined}
-                >
-                    {isCompleted ? (
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                  ) : isBridge ? (
-                    <Zap className="h-3.5 w-3.5" />
-                  ) : isProviders ? (
-                    <Search className="h-3.5 w-3.5" />
-                  ) : (
-                    i + 1
-                  )}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-[11px] text-ink-500">
+                    <span>Step {currentIdx + 1} of {stepOrder.length}</span>
+                    <span className="font-medium text-ink-300">{stepLabels[currentIdx]}</span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink-800/50">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-accent-600 to-accent-500 transition-all duration-500 ease-out"
+                      style={{ width: `${Math.max(progress, 8)}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between">
+                    {stepOrder.map((s, i) => {
+                      const isCompleted = i < currentIdx
+                      const isCurrent = i === currentIdx
+                      return (
+                        <div
+                          key={s}
+                          className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-all ${
+                            isCurrent
+                              ? 'bg-accent-600 text-white ring-2 ring-accent-500/30'
+                              : isCompleted
+                                ? 'bg-emerald-600/20 text-emerald-400'
+                                : 'bg-ink-800/60 text-ink-600'
+                          }`}
+                        >
+                          {isCompleted ? <CheckCircle2 className="h-3 w-3" /> : i + 1}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-                  {i < stepOrder.length - 1 && !isBridge && (
-                    <div className={`h-px w-6 sm:w-8 ${i === 3 ? 'bg-transparent' : 'bg-ink-800'}`} />
-                  )}
-              </div>
               )
-            })}
+            })()}
           </div>
         )}
 
         {/* Card */}
-        <div className="relative rounded-3xl border border-ink-800/50 bg-ink-900/80 p-9 shadow-2xl shadow-black/40 backdrop-blur-sm md:p-10">
-          <div className="pointer-events-none absolute -inset-px rounded-2xl bg-gradient-to-br from-accent-500/10 via-transparent to-violet-500/10 opacity-50" />
+        <div className="relative rounded-3xl border border-ink-800/40 bg-ink-900/90 p-7 shadow-2xl shadow-black/50 backdrop-blur-md sm:p-9">
+          <div className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-br from-accent-500/8 via-transparent to-violet-500/8 opacity-60" />
           {step === 'welcome' && (
             <WelcomeStep onNext={() => setStep('account')} />
           )}
@@ -430,13 +430,17 @@ export function SetupWizard({ defaultBaseUri, onComplete }: SetupWizardProps) {
 function WelcomeStep({ onNext }: { onNext: () => void }) {
   return (
     <div className="text-center">
-      <Sparkles className="mx-auto mb-4 h-10 w-10 text-accent-400" />
-      <h2 className="mb-2 font-display text-xl font-bold text-ink-100">
-        Welcome to KometaManga!
+      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-600/10 ring-1 ring-accent-500/20">
+        <Sparkles className="h-7 w-7 text-accent-400" />
+      </div>
+      <h2 className="mb-2 font-display text-2xl font-bold text-ink-100">
+        Welcome to KometaManga
       </h2>
-      <p className="mb-6 text-sm leading-relaxed text-ink-400">
-        Let's get you set up. First, we'll create your admin account,
-        then connect to your Komga server. This will only take a minute.
+      <p className="mb-2 text-sm leading-relaxed text-ink-400">
+        Your Komga companion for metadata, downloads, and automation.
+      </p>
+      <p className="mb-6 text-xs text-ink-500">
+        We'll set up your account, connect to Komga, and configure providers. Takes about a minute.
       </p>
       <Button size="lg" onClick={onNext} className="w-full">
         Get Started <ArrowRight className="h-4 w-4" />
@@ -867,18 +871,31 @@ function DownloadsStep({
 function DoneStep({ onComplete }: { onComplete: () => void }) {
   return (
     <div className="text-center">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600/20">
+      <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-600/15 ring-1 ring-emerald-500/20">
         <CheckCircle2 className="h-8 w-8 text-emerald-400" />
       </div>
-      <h2 className="mb-2 font-display text-xl font-bold text-ink-100">You're all set!</h2>
-      <p className="mb-6 text-sm leading-relaxed text-ink-400">
-        KometaManga is connected to your Komga server. You can now manage metadata,
-        configure providers, and set up notifications from the dashboard.
+      <h2 className="mb-2 font-display text-2xl font-bold text-ink-100">You're all set!</h2>
+      <p className="mb-4 text-sm leading-relaxed text-ink-400">
+        KometaManga is connected and ready. Browse sources, download manga, and let the auto-downloader handle the rest.
       </p>
-      <p className="mb-4 text-xs text-ink-500">
-        Fine-tune providers, notifications, processing rules, and more in{' '}
-        <span className="font-medium text-ink-300">Settings</span>.
-      </p>
+      <div className="mb-6 grid grid-cols-2 gap-2 text-left">
+        <div className="rounded-xl bg-ink-800/30 px-3 py-2">
+          <p className="text-[11px] font-medium text-ink-300">Browse Sources</p>
+          <p className="text-[10px] text-ink-500">Search & download manga</p>
+        </div>
+        <div className="rounded-xl bg-ink-800/30 px-3 py-2">
+          <p className="text-[11px] font-medium text-ink-300">Auto-Downloader</p>
+          <p className="text-[10px] text-ink-500">Track & auto-fetch chapters</p>
+        </div>
+        <div className="rounded-xl bg-ink-800/30 px-3 py-2">
+          <p className="text-[11px] font-medium text-ink-300">Metadata</p>
+          <p className="text-[10px] text-ink-500">14+ providers for covers & info</p>
+        </div>
+        <div className="rounded-xl bg-ink-800/30 px-3 py-2">
+          <p className="text-[11px] font-medium text-ink-300">Settings</p>
+          <p className="text-[10px] text-ink-500">Notifications, scheduler & more</p>
+        </div>
+      </div>
       <Button size="lg" onClick={onComplete} className="w-full">
         Go to Dashboard <ArrowRight className="h-4 w-4" />
       </Button>

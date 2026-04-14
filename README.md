@@ -114,14 +114,16 @@ Mount the same host folders that Komga reads:
 # Single library
 volumes:
   - ./config:/config
-  - /volume3/libreria:/libraries/main
+  - /path/to/manga/library:/libraries/main
 
 # Multiple libraries
 volumes:
   - ./config:/config
-  - /volume3/libreria:/libraries/manga
-  - /volume3/comics:/libraries/comics
+  - /path/to/manga/library:/libraries/manga
+  - /path/to/comics/library:/libraries/comics
 ```
+
+Replace `/path/to/manga/library` and `/path/to/comics/library` with the actual host paths where your Komga libraries live (e.g. `/data/manga`, `/srv/comics`, `/volume1/media/manga`).
 
 Set **Download directory** in the UI to the container path (e.g. `/libraries/main`).
 
@@ -248,7 +250,7 @@ Then restart: `docker compose restart kometamanga`
 
 ### Downloads don't appear in Komga
 
-- The download directory must point to a path **inside a mounted Komga library folder**. For example, if you mounted `/volume3/libreria:/libraries/main`, set the download dir to `/libraries/main`.
+- The download directory must point to a path **inside a mounted Komga library folder**. For example, if you mounted `/path/to/manga/library:/libraries/main`, set the download dir to `/libraries/main`.
 - Enable **Auto-scan after download** in Settings → Download Config so Komga picks up new files immediately.
 
 ### Jobs page doesn't update in real time
