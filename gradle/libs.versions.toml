@@ -28,7 +28,7 @@ sqlite-jdbc = "3.50.3.0"
 tika = "3.2.3"
 twelveMonkeys = "3.12.0"
 velocity = "2.4.1"
-xmlutil = "0.91.2"
+xmlutil = "0.91.3"
 
 [libraries]
 cache4k = { module = "io.github.reactivecircus.cache4k:cache4k", version.ref = "cache4k" }
