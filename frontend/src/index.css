@@ -1,0 +1,147 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overscroll-behavior-y: none;
+    padding:
+      env(safe-area-inset-top)
+      env(safe-area-inset-right)
+      env(safe-area-inset-bottom)
+      env(safe-area-inset-left);
+  }
+
+  /* Prevent 300ms tap delay on touch devices */
+  a, button, [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* Scrollbar styling — auto-hide after 2s */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0);
+    border-radius: 3px;
+    transition: background 0.3s;
+  }
+
+  html.is-scrolling ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  html.is-scrolling ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  html.is-scrolling * {
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  }
+}
+
+@layer components {
+  .text-gradient {
+    @apply bg-gradient-to-r from-accent-400 to-accent-600 bg-clip-text text-transparent;
+  }
+
+  /* Smooth page transitions for lazy-loaded routes */
+  .animate-page-in {
+    animation: pageIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Light mode overrides — recolor semantic grays via CSS custom properties */
+html.light {
+  --tw-bg-ink-950: #f7f7f8;
+  --tw-bg-ink-900: #eeeef0;
+  color-scheme: light;
+}
+
+html.light body {
+  background: #f7f7f8;
+  color: #18181b;
+}
+
+/* Light: sidebar, cards, inputs */
+html.light .bg-ink-950 { background-color: #f7f7f8; }
+html.light .bg-ink-950\/80 { background-color: rgba(247,247,248,0.95); }
+html.light .bg-ink-950\/95 { background-color: rgba(247,247,248,0.97); }
+html.light .bg-ink-950\/50 { background-color: rgba(247,247,248,0.5); }
+html.light .bg-ink-950\/30 { background-color: rgba(238,238,240,0.3); }
+html.light .bg-ink-900 { background-color: #ffffff; }
+html.light .bg-ink-900\/50 { background-color: rgba(255,255,255,0.5); }
+html.light .bg-ink-900\/30 { background-color: rgba(255,255,255,0.3); }
+html.light .bg-ink-900\/95 { background-color: rgba(255,255,255,0.95); }
+html.light .bg-ink-800 { background-color: #eeeef0; }
+html.light .bg-ink-800\/50 { background-color: rgba(238,238,240,0.5); }
+html.light .bg-ink-800\/60 { background-color: rgba(238,238,240,0.6); }
+html.light .bg-ink-800\/30 { background-color: rgba(238,238,240,0.3); }
+html.light .bg-ink-800\/20 { background-color: rgba(238,238,240,0.2); }
+
+/* Light: text */
+html.light .text-ink-100 { color: #18181b; }
+html.light .text-ink-200 { color: #27272a; }
+html.light .text-ink-300 { color: #3f3f46; }
+html.light .text-ink-400 { color: #52525b; }
+html.light .text-ink-500 { color: #71717a; }
+html.light .text-ink-600 { color: #a1a1aa; }
+
+/* Light: borders */
+html.light .border-ink-700 { border-color: #d4d4d8; }
+html.light .border-ink-800\/50 { border-color: rgba(212,212,216,0.5); }
+html.light .border-ink-800\/60 { border-color: rgba(212,212,216,0.6); }
+html.light .border-ink-800\/40 { border-color: rgba(212,212,216,0.4); }
+html.light .border-ink-800\/30 { border-color: rgba(212,212,216,0.3); }
+
+/* Light: placeholder */
+html.light .placeholder-ink-600::placeholder { color: #a1a1aa; }
+html.light .placeholder\:text-ink-600::placeholder { color: #a1a1aa; }
+
+/* Light: scrollbar */
+html.light.is-scrolling ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); }
+html.light.is-scrolling ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
+html.light.is-scrolling * { scrollbar-color: rgba(0, 0, 0, 0.15) transparent; }
+
+/* Light: shadow adjustments */
+html.light .shadow-2xl { box-shadow: 0 20px 60px -12px rgba(0,0,0,0.15); }
+html.light .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08); }

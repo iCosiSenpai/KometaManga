@@ -1,0 +1,25 @@
+import kotlin.time.Instant;
+
+CREATE TABLE NotificationLog (
+    id          INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    jobId       TEXT,
+    channel     TEXT NOT NULL,
+    url         TEXT NOT NULL,
+    status      TEXT NOT NULL,
+    errorMessage TEXT,
+    sentAt      INTEGER AS Instant NOT NULL
+);
+CREATE INDEX notification_log_job_id_idx ON NotificationLog(jobId);
+CREATE INDEX notification_log_sent_at_idx ON NotificationLog(sentAt);
+
+findAll:
+SELECT * FROM NotificationLog ORDER BY sentAt DESC LIMIT ? OFFSET ?;
+
+countAll:
+SELECT COUNT() FROM NotificationLog;
+
+save:
+INSERT INTO NotificationLog (jobId, channel, url, status, errorMessage, sentAt) VALUES (?, ?, ?, ?, ?, ?);
+
+deleteAllBeforeDate:
+DELETE FROM NotificationLog WHERE sentAt <= ?;

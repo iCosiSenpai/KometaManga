@@ -1,0 +1,53 @@
+CREATE TABLE DownloadQueueItem (
+    id              TEXT NOT NULL,
+    sourceId        TEXT NOT NULL,
+    mangaId         TEXT NOT NULL,
+    mangaTitle      TEXT NOT NULL,
+    chapterId       TEXT NOT NULL,
+    chapterNumber   TEXT NOT NULL,
+    volumeNumber    TEXT,
+    language        TEXT,
+    status          TEXT NOT NULL,
+    progress        INTEGER,
+    totalPages      INTEGER,
+    error           TEXT,
+    createdAt       INTEGER NOT NULL,
+    updatedAt       INTEGER NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX dqi_status_idx ON DownloadQueueItem(status);
+CREATE INDEX dqi_source_idx ON DownloadQueueItem(sourceId);
+CREATE INDEX dqi_created_at_idx ON DownloadQueueItem(createdAt);
+
+CREATE TABLE DownloadedChapter (
+    id              TEXT NOT NULL,
+    sourceId        TEXT NOT NULL,
+    mangaId         TEXT NOT NULL,
+    mangaTitle      TEXT NOT NULL,
+    chapterId       TEXT NOT NULL,
+    chapterNumber   TEXT NOT NULL,
+    volumeNumber    TEXT,
+    language        TEXT,
+    filePath        TEXT NOT NULL,
+    fileSize        INTEGER NOT NULL,
+    pageCount       INTEGER NOT NULL,
+    downloadedAt    INTEGER NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX dc_source_idx ON DownloadedChapter(sourceId);
+CREATE INDEX dc_manga_idx ON DownloadedChapter(mangaId);
+CREATE INDEX dc_downloaded_at_idx ON DownloadedChapter(downloadedAt);
+
+CREATE TABLE AutoDownloaderRule (
+    id                  TEXT NOT NULL,
+    sourceId            TEXT NOT NULL,
+    mangaId             TEXT NOT NULL,
+    mangaTitle          TEXT NOT NULL,
+    language            TEXT,
+    scanlator           TEXT,
+    lastChapterNumber   REAL,
+    enabled             INTEGER NOT NULL DEFAULT 1,
+    PRIMARY KEY (id)
+);
+CREATE INDEX adr_source_idx ON AutoDownloaderRule(sourceId);
+CREATE INDEX adr_manga_idx ON AutoDownloaderRule(mangaId);

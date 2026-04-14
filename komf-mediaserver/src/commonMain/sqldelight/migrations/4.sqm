@@ -1,0 +1,2 @@
+ALTER TABLE AutoDownloaderRule ADD COLUMN komgaLibraryId TEXT;
+ALTER TABLE AutoDownloaderRule ADD COLUMN komgaLibraryPath TEXT;
