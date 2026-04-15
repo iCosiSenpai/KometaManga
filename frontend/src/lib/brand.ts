@@ -19,6 +19,8 @@ const LANG_TO_CC: Record<string, string> = {
   th: 'th',
   vi: 'vn',
   id: 'id',
+  pl: 'pl',
+  tr: 'tr',
 }
 
 export const LANG_LABELS: Record<string, string> = {
@@ -39,6 +41,8 @@ export const LANG_LABELS: Record<string, string> = {
   th: 'Thai',
   vi: 'Vietnamese',
   id: 'Indonesian',
+  pl: 'Polish',
+  tr: 'Turkish',
 }
 
 export function langToCountryCode(langCode: string): string | null {
@@ -68,7 +72,7 @@ export const SOURCE_BRAND: Record<MangaSourceId, SourceBrand> = {
     blurb: 'Open catalog, clean metadata, reliable for deep discovery.',
     siteUrl: 'https://mangadex.org',
     mangaBaseUrl: 'https://mangadex.org/title/',
-    iconUrl: 'https://www.google.com/s2/favicons?domain=mangadex.org&sz=64',
+    iconUrl: '/sources/mangadex.png',
     accentText: 'text-orange-300',
     accentSoft: 'bg-orange-500/10 text-orange-200',
     accentGlow: 'from-orange-500/18 via-orange-500/5 to-transparent',
@@ -79,7 +83,7 @@ export const SOURCE_BRAND: Record<MangaSourceId, SourceBrand> = {
     blurb: 'Fast mirrors, broad catalog, strong scanlator variety.',
     siteUrl: 'https://comick.io',
     mangaBaseUrl: 'https://comick.io/comic/',
-    iconUrl: 'https://www.google.com/s2/favicons?domain=comick.io&sz=64',
+    iconUrl: '/sources/comick.png',
     accentText: 'text-rose-300',
     accentSoft: 'bg-rose-500/10 text-rose-200',
     accentGlow: 'from-rose-500/18 via-rose-500/5 to-transparent',
@@ -90,7 +94,7 @@ export const SOURCE_BRAND: Record<MangaSourceId, SourceBrand> = {
     blurb: 'Italian-first comfort zone with dependable browsing rhythm.',
     siteUrl: 'https://www.mangaworld.ac',
     mangaBaseUrl: 'https://www.mangaworld.ac/manga/',
-    iconUrl: 'https://www.google.com/s2/favicons?domain=mangaworld.ac&sz=64',
+    iconUrl: '/sources/mangaworld.png',
     accentText: 'text-emerald-300',
     accentSoft: 'bg-emerald-500/10 text-emerald-200',
     accentGlow: 'from-emerald-500/18 via-emerald-500/5 to-transparent',
@@ -101,7 +105,7 @@ export const SOURCE_BRAND: Record<MangaSourceId, SourceBrand> = {
     blurb: 'Mirror-heavy fallback lane for broad chapter availability.',
     siteUrl: 'https://weebcentral.com',
     mangaBaseUrl: 'https://weebcentral.com/series/',
-    iconUrl: 'https://www.google.com/s2/favicons?domain=weebcentral.com&sz=64',
+    iconUrl: '/sources/weebcentral.png',
     accentText: 'text-cyan-300',
     accentSoft: 'bg-cyan-500/10 text-cyan-200',
     accentGlow: 'from-cyan-500/18 via-cyan-500/5 to-transparent',
@@ -112,7 +116,7 @@ export const SOURCE_BRAND: Record<MangaSourceId, SourceBrand> = {
     blurb: 'Direct and fast. Great when you want clean no-nonsense reads.',
     siteUrl: 'https://mangapill.com',
     mangaBaseUrl: 'https://mangapill.com/manga/',
-    iconUrl: 'https://www.google.com/s2/favicons?domain=mangapill.com&sz=64',
+    iconUrl: '/sources/mangapill.png',
     accentText: 'text-pink-300',
     accentSoft: 'bg-pink-500/10 text-pink-200',
     accentGlow: 'from-pink-500/18 via-pink-500/5 to-transparent',
@@ -123,7 +127,7 @@ export const SOURCE_BRAND: Record<MangaSourceId, SourceBrand> = {
     blurb: 'Polished covers, broad genres, good visual browsing cadence.',
     siteUrl: 'https://mangafire.to',
     mangaBaseUrl: 'https://mangafire.to/manga/',
-    iconUrl: 'https://www.google.com/s2/favicons?domain=mangafire.to&sz=64',
+    iconUrl: '/sources/mangafire.png',
     accentText: 'text-amber-300',
     accentSoft: 'bg-amber-500/10 text-amber-200',
     accentGlow: 'from-amber-500/18 via-amber-500/5 to-transparent',

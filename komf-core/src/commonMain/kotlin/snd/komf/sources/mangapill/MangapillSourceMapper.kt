@@ -35,7 +35,7 @@ object MangapillSourceMapper {
                 ?: card.selectFirst("div.font-black")?.text()?.trim()
                 ?: return@mapNotNull null
 
-            val coverUrl = card.selectFirst("img")?.let(::extractImageUrl)
+            val coverUrl = card.selectFirst("img")?.let(::extractImageUrl)?.let { resolveUrl(card, it) }
 
             MangaSearchResult(
                 id = mangaUrl,
@@ -58,6 +58,7 @@ object MangapillSourceMapper {
         val coverUrl = (root?.selectFirst("div:first-child > img")
             ?: document.selectFirst("div.container img"))
             ?.let(::extractImageUrl)
+            ?.let { resolveUrl(root ?: document.body(), it) }
 
         val description = root?.selectFirst("div:last-child > div:nth-child(2) > p")?.text()?.trim()
             ?: document.select("div.container p").firstOrNull { it.text().length > 40 }?.text()?.trim()
@@ -110,6 +111,16 @@ object MangapillSourceMapper {
                 headers = mapOf("Referer" to "$BASE_URL/"),
             )
         }
+    }
+
+    private fun resolveUrl(root: Element, url: String): String {
+        if (url.startsWith("http")) return url
+        val base = root.baseUri().takeIf { it.isNotBlank() } ?: BASE_URL
+        return if (url.startsWith("/")) {
+            val schemeEnd = base.indexOf("//")
+            val host = if (schemeEnd >= 0) base.substring(0, base.indexOf('/', schemeEnd + 2).let { if (it < 0) base.length else it }) else base
+            "$host$url"
+        } else "$BASE_URL/$url"
     }
 
     private fun extractImageUrl(img: Element): String? {

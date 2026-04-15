@@ -860,7 +860,6 @@ export function SourcesPage() {
                   key={entry.key}
                   entry={entry}
                   onOpenLead={() => handleMangaClick(entry.lead)}
-                  onOpenVariant={handleMangaClick}
                 />
               ))}
             </div>
@@ -904,11 +903,9 @@ function SourceLandingCard({
 function MangaShelfCard({
   entry,
   onOpenLead,
-  onOpenVariant,
 }: {
   entry: DirectoryEntry
   onOpenLead: () => void
-  onOpenVariant: (result: MangaSearchResultDto) => void
 }) {
   const { lead } = entry
   const meta = SOURCE_BRAND[lead.sourceId]
@@ -965,29 +962,6 @@ function MangaShelfCard({
           </div>
         </div>
       </button>
-
-      {/* Mirror chips — exclude lead to avoid duplication */}
-      {entry.variants.length > 1 && (
-        <div className="mt-1.5 flex flex-wrap gap-1">
-          {entry.variants
-            .filter((v) => !(v.sourceId === lead.sourceId && v.id === lead.id))
-            .map((variant) => {
-              const variantMeta = SOURCE_BRAND[variant.sourceId]
-              return (
-                <button
-                  key={`${variant.sourceId}-${variant.id}`}
-                  type="button"
-                  onClick={() => onOpenVariant(variant)}
-                  className="flex items-center gap-1 rounded-md bg-ink-900/40 px-1.5 py-0.5 text-[10px] text-ink-400 transition-colors hover:bg-ink-800/60 hover:text-ink-200"
-                  title={`Open on ${variantMeta.label}`}
-                >
-                  <SourceIcon sourceId={variant.sourceId} size={10} />
-                  {variantMeta.label}
-                </button>
-              )
-            })}
-        </div>
-      )}
     </div>
   )
 }

@@ -119,7 +119,7 @@ export function AboutPage() {
               className="inline-block transition-transform hover:scale-[1.03]"
             >
               <img
-                src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+                src="/donate/bmc.png"
                 alt="Buy Me a Coffee"
                 height={48}
                 className="h-12 w-auto rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
@@ -133,7 +133,7 @@ export function AboutPage() {
               className="inline-block transition-transform hover:scale-[1.03]"
             >
               <img
-                src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"
+                src="/donate/paypal.gif"
                 alt="Donate with PayPal"
                 className="h-12 w-auto rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
               />

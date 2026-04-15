@@ -22,7 +22,7 @@ class MangapillSourceClient(
                 append("Referer", "$BASE_URL/")
             }
         }.bodyAsText()
-        return Ksoup.parse(html)
+        return Ksoup.parse(html, BASE_URL)
     }
 
     suspend fun getMangaDetails(mangaUrl: String): Document {
@@ -32,7 +32,7 @@ class MangapillSourceClient(
                 append("Referer", "$BASE_URL/")
             }
         }.bodyAsText()
-        return Ksoup.parse(html)
+        return Ksoup.parse(html, BASE_URL)
     }
 
     suspend fun getChapterPages(chapterUrl: String): Document {
@@ -42,6 +42,6 @@ class MangapillSourceClient(
                 append("Referer", "$BASE_URL/")
             }
         }.bodyAsText()
-        return Ksoup.parse(html)
+        return Ksoup.parse(html, BASE_URL)
     }
 }
