@@ -518,8 +518,14 @@ export function SourcesPage() {
           if (window.history.state?.kometaDetail) window.history.back()
           else setSelectedManga(null)
         }}
-        onDownload={(sourceId, mangaId, chapterIds) => {
-          downloadMutation.mutate({ sourceId, mangaId, chapterIds })
+        onDownload={(sourceId, mangaId, chapterIds, target) => {
+          downloadMutation.mutate({
+            sourceId,
+            mangaId,
+            chapterIds,
+            libraryPath: target?.libraryPath ?? null,
+            libraryId: target?.libraryId ?? null,
+          })
         }}
         downloadLoading={downloadMutation.isPending}
       />

@@ -30,6 +30,7 @@ import snd.komf.mediaserver.config.MetadataProcessingConfig
 import snd.komf.mediaserver.config.MetadataUpdateConfig
 import snd.komf.mediaserver.download.AutoDownloaderConfig
 import snd.komf.mediaserver.download.DownloadConfig
+import snd.komf.mediaserver.download.DownloadTarget
 import snd.komf.mediaserver.metadata.PublisherTagNameConfig
 import snd.komf.notifications.apprise.AppriseConfig
 import snd.komf.notifications.discord.DiscordConfig
@@ -483,6 +484,15 @@ class AppConfigUpdateMapper {
             autoScanAfterDownload = patch.autoScanAfterDownload.getOrNull() ?: config.autoScanAfterDownload,
             cbzCompression = patch.cbzCompression.getOrNull() ?: config.cbzCompression,
             concurrentPageDownloads = patch.concurrentPageDownloads.getOrNull() ?: config.concurrentPageDownloads,
+            extraTargets = patch.extraTargets.getOrNull()?.map {
+                DownloadTarget(
+                    id = it.id,
+                    name = it.name,
+                    containerPath = it.containerPath,
+                    komgaLibraryId = it.komgaLibraryId,
+                    komgaLibraryPath = it.komgaLibraryPath,
+                )
+            } ?: config.extraTargets,
         )
     }
 

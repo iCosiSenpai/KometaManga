@@ -233,6 +233,7 @@ data class DownloadConfigUpdateRequest(
     val autoScanAfterDownload: PatchValue<Boolean> = PatchValue.Unset,
     val cbzCompression: PatchValue<Boolean> = PatchValue.Unset,
     val concurrentPageDownloads: PatchValue<Int> = PatchValue.Unset,
+    val extraTargets: PatchValue<List<DownloadTargetDto>> = PatchValue.Unset,
 )
 
 @Serializable

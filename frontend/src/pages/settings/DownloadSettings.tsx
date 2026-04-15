@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { api, KomfConfig } from '@/api/client'
+import { api, KomfConfig, DownloadTarget } from '@/api/client'
 import { useAutoSave } from '@/hooks/useAutoSave'
 import { PageHeader } from '@/components/PageHeader'
 import { PageSpinner } from '@/components/Spinner'
@@ -12,7 +12,7 @@ import {
   TextField,
   SaveIndicator,
 } from '@/components/settings/SettingsFields'
-import { CheckCircle2, XCircle, Loader2, FolderOpen, Library } from 'lucide-react'
+import { CheckCircle2, XCircle, Loader2, FolderOpen, Library, Plus, Trash2 } from 'lucide-react'
 import { clsx } from 'clsx'
 
 function EnvManagedHint({ envName }: { envName: string }) {
@@ -41,7 +41,9 @@ function DownloadForm({ config }: { config: KomfConfig }) {
     autoScanAfterDownload: true,
     cbzCompression: false,
     concurrentPageDownloads: 5,
+    extraTargets: [],
   }
+  const extraTargets = dl.extraTargets ?? []
 
   return (
     <div className="animate-fade-in">
@@ -65,6 +67,16 @@ function DownloadForm({ config }: { config: KomfConfig }) {
                 },
               })
             }
+          />
+        </SettingsSection>
+
+        <SettingsSection
+          title="Extra Libraries"
+          description="Add additional target libraries for different content types (webtoon, western comics, light novels, ...). When downloading a chapter you'll be able to pick which target to write it into. The default target above is always available."
+        >
+          <ExtraTargetsEditor
+            targets={extraTargets}
+            onChange={(next) => save({ download: { ...dl, extraTargets: next } })}
           />
         </SettingsSection>
 
@@ -201,6 +213,156 @@ function DirTester({ path }: { path: string }) {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+/* ─── Extra download targets editor ─── */
+
+function ExtraTargetsEditor({
+  targets,
+  onChange,
+}: {
+  targets: DownloadTarget[]
+  onChange: (next: DownloadTarget[]) => void
+}) {
+  const librariesQuery = useQuery({
+    queryKey: ['libraries'],
+    queryFn: api.getLibraries,
+    staleTime: 60_000 * 5,
+    retry: 1,
+  })
+  const libraries = librariesQuery.data ?? []
+
+  const [draftName, setDraftName] = useState('')
+  const [draftLibId, setDraftLibId] = useState<string | null>(null)
+  const [draftContainerPath, setDraftContainerPath] = useState('')
+
+  const canAdd = draftName.trim() !== '' && draftContainerPath.trim() !== ''
+
+  function addTarget() {
+    if (!canAdd) return
+    const lib = libraries.find((l) => l.id === draftLibId) ?? null
+    const next: DownloadTarget = {
+      id:
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      name: draftName.trim(),
+      containerPath: draftContainerPath.trim(),
+      komgaLibraryId: lib?.id ?? null,
+      komgaLibraryPath: lib?.roots[0] ?? null,
+    }
+    onChange([...targets, next])
+    setDraftName('')
+    setDraftLibId(null)
+    setDraftContainerPath('')
+  }
+
+  function removeTarget(id: string) {
+    onChange(targets.filter((t) => t.id !== id))
+  }
+
+  return (
+    <div className="space-y-4">
+      {targets.length > 0 && (
+        <ul className="space-y-2">
+          {targets.map((t) => {
+            const lib = libraries.find((l) => l.id === t.komgaLibraryId)
+            return (
+              <li
+                key={t.id}
+                className="flex items-start justify-between gap-3 rounded-lg border border-ink-800/50 bg-ink-900/40 px-3 py-2.5"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-ink-100">{t.name}</p>
+                  <p className="mt-0.5 truncate font-mono text-[11px] text-ink-500">
+                    {t.containerPath}
+                  </p>
+                  {lib && (
+                    <p className="mt-0.5 flex items-center gap-1 text-[11px] text-ink-600">
+                      <Library className="h-3 w-3" />
+                      Komga: {lib.name}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => removeTarget(t.id)}
+                  className="text-ink-500 hover:text-red-400"
+                  title="Remove target"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+
+      <div className="rounded-lg border border-dashed border-ink-800/60 bg-ink-900/20 p-3">
+        <p className="mb-2 text-xs font-medium text-ink-400">Add a target</p>
+        <div className="space-y-2">
+          <input
+            type="text"
+            placeholder="Name (e.g. Webtoon, Light Novels, Comics)"
+            value={draftName}
+            onChange={(e) => setDraftName(e.target.value)}
+            className="w-full rounded-md border border-ink-800 bg-ink-950/60 px-3 py-2 text-sm text-ink-100 placeholder-ink-600 outline-none focus:border-accent-500"
+          />
+
+          {libraries.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {libraries.map((lib) => {
+                const isSelected = draftLibId === lib.id
+                return (
+                  <button
+                    key={lib.id}
+                    type="button"
+                    onClick={() => {
+                      const next = isSelected ? null : lib.id
+                      setDraftLibId(next)
+                      if (next && !draftContainerPath.trim()) {
+                        setDraftContainerPath(lib.roots[0] ?? '')
+                      }
+                    }}
+                    className={clsx(
+                      'rounded-md px-2.5 py-1 text-xs transition-colors',
+                      isSelected
+                        ? 'bg-accent-600/20 text-accent-300 ring-1 ring-accent-500/30'
+                        : 'bg-ink-800/50 text-ink-400 hover:bg-ink-800 hover:text-ink-200',
+                    )}
+                  >
+                    {lib.name}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          <input
+            type="text"
+            placeholder="Container path (e.g. /libraries/main/Webtoon)"
+            value={draftContainerPath}
+            onChange={(e) => setDraftContainerPath(e.target.value)}
+            className="w-full rounded-md border border-ink-800 bg-ink-950/60 px-3 py-2 font-mono text-xs text-ink-100 placeholder-ink-600 outline-none focus:border-accent-500"
+          />
+
+          <button
+            type="button"
+            onClick={addTarget}
+            disabled={!canAdd}
+            className={clsx(
+              'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+              canAdd
+                ? 'bg-accent-600 text-white hover:bg-accent-500'
+                : 'cursor-not-allowed bg-ink-800/50 text-ink-600',
+            )}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add target
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

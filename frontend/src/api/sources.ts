@@ -84,6 +84,7 @@ export interface DownloadRequestDto {
   mangaId: string
   chapterIds: string[]
   libraryPath?: string | null
+  libraryId?: string | null
 }
 
 export interface DownloadQueueItemDto {

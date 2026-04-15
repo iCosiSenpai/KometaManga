@@ -397,6 +397,14 @@ export interface SchedulerConfig {
   autoMatchIntervalHours: number
 }
 
+export interface DownloadTarget {
+  id: string
+  name: string
+  containerPath: string
+  komgaLibraryId: string | null
+  komgaLibraryPath: string | null
+}
+
 export interface DownloadConfig {
   downloadDir: string
   komgaLibraryId: string | null
@@ -404,6 +412,7 @@ export interface DownloadConfig {
   autoScanAfterDownload: boolean
   cbzCompression: boolean
   concurrentPageDownloads: number
+  extraTargets: DownloadTarget[]
 }
 
 export interface AutoDownloaderConfig {

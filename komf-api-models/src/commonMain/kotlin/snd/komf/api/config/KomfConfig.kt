@@ -28,6 +28,15 @@ data class SchedulerConfigDto(
 )
 
 @Serializable
+data class DownloadTargetDto(
+    val id: String,
+    val name: String,
+    val containerPath: String,
+    val komgaLibraryId: String? = null,
+    val komgaLibraryPath: String? = null,
+)
+
+@Serializable
 data class DownloadConfigDto(
     val downloadDir: String,
     val komgaLibraryId: String? = null,
@@ -35,6 +44,7 @@ data class DownloadConfigDto(
     val autoScanAfterDownload: Boolean,
     val cbzCompression: Boolean,
     val concurrentPageDownloads: Int,
+    val extraTargets: List<DownloadTargetDto> = emptyList(),
 )
 
 @Serializable

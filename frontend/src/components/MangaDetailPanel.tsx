@@ -15,7 +15,7 @@ import {
   Search,
   Sparkles,
 } from 'lucide-react'
-import { api, imageProxyUrl } from '@/api/client'
+import { api, imageProxyUrl, type DownloadTarget } from '@/api/client'
 import type { MangaChapterDto, MangaSourceId } from '@/api/sources'
 import { Card } from '@/components/Card'
 import { Button } from '@/components/Button'
@@ -33,7 +33,12 @@ interface MangaDetailPanelProps {
   initialCoverUrl?: string | null
   initialLanguage?: string | null
   onBack: () => void
-  onDownload: (sourceId: MangaSourceId, mangaId: string, chapterIds: string[]) => void
+  onDownload: (
+    sourceId: MangaSourceId,
+    mangaId: string,
+    chapterIds: string[],
+    target?: { libraryPath: string | null; libraryId: string | null },
+  ) => void
   downloadLoading?: boolean
 }
 
@@ -87,6 +92,56 @@ export function MangaDetailPanel({
     queryKey: ['manga-details', sourceId, mangaId],
     queryFn: () => api.getMangaDetails(sourceId, mangaId),
   })
+
+  const configQuery = useQuery({
+    queryKey: ['config'],
+    queryFn: api.getConfig,
+    staleTime: 60_000,
+  })
+
+  const downloadTargets = useMemo<DownloadTarget[]>(() => {
+    const dl = configQuery.data?.download
+    if (!dl) return []
+    const defaultTarget: DownloadTarget = {
+      id: 'default',
+      name: 'Default',
+      containerPath: dl.downloadDir,
+      komgaLibraryId: dl.komgaLibraryId,
+      komgaLibraryPath: dl.komgaLibraryPath,
+    }
+    return [defaultTarget, ...(dl.extraTargets ?? [])]
+  }, [configQuery.data])
+
+  const [selectedTargetId, setSelectedTargetId] = useState<string>(
+    () => localStorage.getItem('kometa.lastDownloadTargetId') ?? 'default',
+  )
+
+  useEffect(() => {
+    if (downloadTargets.length === 0) return
+    if (!downloadTargets.some((t) => t.id === selectedTargetId)) {
+      setSelectedTargetId(downloadTargets[0]!.id)
+    }
+  }, [downloadTargets, selectedTargetId])
+
+  const activeTarget = useMemo(
+    () => downloadTargets.find((t) => t.id === selectedTargetId) ?? downloadTargets[0] ?? null,
+    [downloadTargets, selectedTargetId],
+  )
+
+  const resolveTargetPayload = useCallback(() => {
+    if (!activeTarget) return undefined
+    // Default target leaves libraryPath unset so the backend falls back to its configured downloadDir.
+    if (activeTarget.id === 'default') {
+      return {
+        libraryPath: activeTarget.komgaLibraryPath,
+        libraryId: activeTarget.komgaLibraryId,
+      }
+    }
+    return {
+      libraryPath: activeTarget.containerPath,
+      libraryId: activeTarget.komgaLibraryId,
+    }
+  }, [activeTarget])
 
   const chaptersQuery = useQuery({
     queryKey: ['manga-chapters', sourceId, mangaId, languageFilter],
@@ -195,9 +250,12 @@ export function MangaDetailPanel({
 
   const handleDownload = useCallback(() => {
     if (selectedChapters.size === 0) return
-    onDownload(sourceId, mangaId, Array.from(selectedChapters))
+    if (activeTarget) {
+      localStorage.setItem('kometa.lastDownloadTargetId', activeTarget.id)
+    }
+    onDownload(sourceId, mangaId, Array.from(selectedChapters), resolveTargetPayload())
     setSelectedChapters(new Set())
-  }, [mangaId, onDownload, selectedChapters, sourceId])
+  }, [activeTarget, mangaId, onDownload, resolveTargetPayload, selectedChapters, sourceId])
 
   const selectedCount = selectedChapters.size
   const chapterCount = sortedChapters.length
@@ -257,7 +315,15 @@ export function MangaDetailPanel({
           followMutation.mutate(undefined, {
             onSuccess: () => {
               if (downloadExisting && sortedChapters.length > 0) {
-                onDownload(sourceId, mangaId, sortedChapters.map((ch) => ch.id))
+                if (activeTarget) {
+                  localStorage.setItem('kometa.lastDownloadTargetId', activeTarget.id)
+                }
+                onDownload(
+                  sourceId,
+                  mangaId,
+                  sortedChapters.map((ch) => ch.id),
+                  resolveTargetPayload(),
+                )
               }
             },
           })
@@ -289,6 +355,9 @@ export function MangaDetailPanel({
         followLoading={followMutation.isPending || unfollowMutation.isPending}
         onDownloadSelected={handleDownload}
         downloadLoading={downloadLoading}
+        downloadTargets={downloadTargets}
+        selectedTargetId={selectedTargetId}
+        onSelectTarget={setSelectedTargetId}
       />
 
       {(detailsQuery.isError || rulesQuery.isError) && (
@@ -485,6 +554,9 @@ function DetailHero({
   followLoading,
   onDownloadSelected,
   downloadLoading,
+  downloadTargets,
+  selectedTargetId,
+  onSelectTarget,
 }: {
   sourceMeta: SourceMetaEntry
   sourceId: MangaSourceId
@@ -510,6 +582,9 @@ function DetailHero({
   followLoading: boolean
   onDownloadSelected: () => void
   downloadLoading?: boolean
+  downloadTargets: DownloadTarget[]
+  selectedTargetId: string
+  onSelectTarget: (id: string) => void
 }) {
   return (
     <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#070b16] shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_32px_120px_rgba(0,0,0,0.45)]">
@@ -653,6 +728,20 @@ function DetailHero({
                 <Download className="h-4 w-4" />
                 {selectedCount > 0 ? `Download ${selectedCount}` : 'Select chapters'}
               </Button>
+              {downloadTargets.length > 1 && (
+                <select
+                  value={selectedTargetId}
+                  onChange={(e) => onSelectTarget(e.target.value)}
+                  title="Download target library"
+                  className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-ink-200 outline-none transition-colors hover:bg-white/10 focus:border-accent-500"
+                >
+                  {downloadTargets.map((t) => (
+                    <option key={t.id} value={t.id} className="bg-ink-900 text-ink-100">
+                      → {t.name}
+                    </option>
+                  ))}
+                </select>
+              )}
               <a
                 href={`${sourceMeta.mangaBaseUrl}${mangaId}`}
                 target="_blank"

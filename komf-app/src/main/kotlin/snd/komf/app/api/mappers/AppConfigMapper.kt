@@ -8,6 +8,7 @@ import snd.komf.api.config.AutoDownloaderConfigDto
 import snd.komf.api.config.BookMetadataConfigDto
 import snd.komf.api.config.DiscordConfigDto
 import snd.komf.api.config.DownloadConfigDto
+import snd.komf.api.config.DownloadTargetDto
 import snd.komf.api.config.EnvLocksDto
 import snd.komf.api.config.EventListenerConfigDto
 import snd.komf.api.config.KomfConfig
@@ -342,6 +343,15 @@ class AppConfigMapper {
             autoScanAfterDownload = config.autoScanAfterDownload,
             cbzCompression = config.cbzCompression,
             concurrentPageDownloads = config.concurrentPageDownloads,
+            extraTargets = config.extraTargets.map {
+                DownloadTargetDto(
+                    id = it.id,
+                    name = it.name,
+                    containerPath = it.containerPath,
+                    komgaLibraryId = it.komgaLibraryId,
+                    komgaLibraryPath = it.komgaLibraryPath,
+                )
+            },
         )
     }
 

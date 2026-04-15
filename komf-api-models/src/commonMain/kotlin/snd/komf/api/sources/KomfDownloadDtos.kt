@@ -8,6 +8,7 @@ data class KomfDownloadRequestDto(
     val mangaId: String,
     val chapterIds: List<String>,
     val libraryPath: String? = null,
+    val libraryId: String? = null,
 )
 
 @Serializable

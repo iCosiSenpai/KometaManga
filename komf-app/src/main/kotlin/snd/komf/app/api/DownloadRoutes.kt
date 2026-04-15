@@ -57,6 +57,7 @@ class DownloadRoutes(
                     mangaId = request.mangaId,
                     chapterIds = request.chapterIds,
                     libraryPath = request.libraryPath,
+                    libraryId = request.libraryId,
                 )
                 call.respond(HttpStatusCode.Accepted, items.map { it.toDto() })
             }
