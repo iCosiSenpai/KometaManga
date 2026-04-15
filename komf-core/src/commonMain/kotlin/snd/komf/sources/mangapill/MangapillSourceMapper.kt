@@ -15,13 +15,21 @@ object MangapillSourceMapper {
     private val chapterNumberRegex = Regex("""chapter[- ](\d+(?:\.\d+)?)""", RegexOption.IGNORE_CASE)
 
     fun parseSearchResults(document: Document): List<MangaSearchResult> {
-        return document.select(".grid > div:not([class])").mapNotNull { element ->
-            val link = element.selectFirst("a") ?: return@mapNotNull null
+        // Search results are in a grid like: div.my-3.grid > div (no class) > a + div
+        // Each item has: <a href="/manga/..."><figure><img/></figure></a>
+        //                 <div class="flex..."><a href="/manga/..."><div class="font-black">Title</div></a></div>
+        return document.select("div.grid a[href^=/manga/]").mapNotNull { link ->
             val url = link.attr("href")
-            val title = element.selectFirst("div[class] > a")?.text()
-                ?: element.selectFirst("a:not(:first-child)")?.text()
-                ?: return@mapNotNull null
-            val coverUrl = element.selectFirst("img")?.let { img ->
+            if (!url.startsWith("/manga/")) return@mapNotNull null
+
+            // Skip duplicate links (each card has 2 links with same href - cover and title)
+            // We want the one that contains the title text (the second one with font-black div)
+            val titleDiv = link.selectFirst("div.font-black") ?: return@mapNotNull null
+            val title = titleDiv.text().takeIf { it.isNotBlank() } ?: return@mapNotNull null
+
+            // Find the cover image from the sibling <a> element (the cover link)
+            val parentDiv = link.parent()?.parent() ?: return@mapNotNull null
+            val coverUrl = parentDiv.selectFirst("img")?.let { img ->
                 img.attr("data-src").takeIf { it.isNotBlank() }
                     ?: img.attr("src").takeIf { it.isNotBlank() }
             }
@@ -32,30 +40,38 @@ object MangapillSourceMapper {
                 coverUrl = coverUrl,
                 sourceId = MangaSourceId.MANGAPILL,
             )
-        }
+        }.distinctBy { it.id }
     }
 
     fun parseMangaDetails(document: Document, mangaId: String): MangaDetails {
-        val container = document.selectFirst("div.container")
+        // The manga detail page structure:
+        // div.container > div.flex > [div (cover img), div.flex-col (info)]
+        // There are multiple div.container on the page (header, notice, content).
+        // We find the right one by looking for the one that contains h1.
+        val container = document.select("div.container").firstOrNull { it.selectFirst("h1") != null }
 
-        val title = document.selectFirst("h1")?.text()
-            ?: document.selectFirst("title")?.text()?.substringBefore(" - Mangapill")
+        val title = container?.selectFirst("h1")?.text()
+            ?: document.selectFirst("title")?.text()?.substringBefore(" Manga - Mangapill")
             ?: "Unknown"
 
-        val coverUrl = container?.selectFirst("div:first-child > div:first-child > img")?.let { img ->
+        // Cover image: div.container > div.flex > div (first child with img) > img
+        val coverUrl = container?.selectFirst("div.flex img")?.let { img ->
             img.attr("data-src").takeIf { it.isNotBlank() }
                 ?: img.attr("src").takeIf { it.isNotBlank() }
         }
 
-        val description = container
-            ?.selectFirst("div:first-child > div:last-child > div:nth-child(2) > p")
-            ?.text()
+        // Description: inside a <p> tag with class text--secondary or text-sm
+        val description = container?.selectFirst("p.text--secondary")?.text()
+            ?: container?.selectFirst("div.mb-3 > p")?.text()
 
+        // Genres: links with href containing "genre"
         val genres = document.select("a[href*=genre]").map { it.text() }
 
-        val statusText = container
-            ?.selectFirst("div div:first-child > div:last-child > div:nth-child(3) > div:nth-child(2) > div")
-            ?.text()
+        // Status: in a grid with label "Status" followed by a div with the value
+        // Structure: div.grid > div > label "Status" + div "publishing"
+        val statusText = container?.select("div.grid > div")
+            ?.firstOrNull { it.selectFirst("label")?.text()?.equals("Status", ignoreCase = true) == true }
+            ?.selectFirst("label ~ div")?.text()
         val status = parseStatus(statusText)
 
         return MangaDetails(
@@ -70,7 +86,8 @@ object MangapillSourceMapper {
     }
 
     fun parseChapters(document: Document, mangaId: String): List<MangaChapter> {
-        return document.select("#chapters > div > a").mapNotNull { element ->
+        // Chapters are in: <div id="chapters"> <div data-filter-list> <a href="/chapters/...">Chapter N</a>
+        return document.select("#chapters a[href^=/chapters/]").mapNotNull { element ->
             val url = element.attr("href")
             val name = element.text().trim()
 
@@ -91,7 +108,8 @@ object MangapillSourceMapper {
     }
 
     fun parsePages(document: Document): List<ChapterPage> {
-        return document.select("picture img").mapIndexed { index, element ->
+        // Pages are in: <chapter-page><picture><img data-src="..." /></picture></chapter-page>
+        return document.select("chapter-page picture img").mapIndexed { index, element ->
             val imageUrl = element.attr("data-src").takeIf { it.isNotBlank() }
                 ?: element.attr("src")
             ChapterPage(
@@ -107,6 +125,9 @@ object MangapillSourceMapper {
         return when (text.lowercase().trim()) {
             "publishing" -> MangaStatus.ONGOING
             "finished" -> MangaStatus.COMPLETED
+            "on hiatus" -> MangaStatus.ONGOING
+            "discontinued" -> MangaStatus.COMPLETED
+            "not yet published" -> MangaStatus.UNKNOWN
             else -> MangaStatus.UNKNOWN
         }
     }

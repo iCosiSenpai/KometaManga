@@ -228,7 +228,7 @@ document.head.appendChild(s);`
                   </span>
                 </div>
                 <p className="mt-1.5 text-sm text-ink-400">
-                  Open the <strong className="text-ink-200">Browse</strong> tab above     Komga loads inside KometaManga
+                  Open the <strong className="text-ink-200">Browse</strong> tab above — Komga loads inside KometaManga
                   with metadata tools injected automatically via the built-in reverse proxy. No extra setup needed.
                 </p>
               </div>
@@ -353,6 +353,29 @@ function ConnectionSettingsForm({
 
   return (
     <div className="space-y-6">
+      {/* Connection status card */}
+      <div className={clsx(
+        'flex items-center gap-4 rounded-2xl border p-4',
+        connected
+          ? 'border-emerald-500/20 bg-emerald-500/10'
+          : 'border-red-500/20 bg-red-500/10',
+      )}>
+        <div className={clsx(
+          'h-3 w-3 shrink-0 rounded-full',
+          connected ? 'bg-emerald-400' : 'bg-red-400',
+        )} />
+        <div className="flex-1">
+          <p className={clsx('text-sm font-medium', connected ? 'text-emerald-200' : 'text-red-200')}>
+            {connected ? 'Connected to Komga' : 'Not connected'}
+          </p>
+          <p className="text-xs text-ink-400">
+            {connected
+              ? `Linked to ${baseUri}`
+              : 'Check your server URL and credentials below'}
+          </p>
+        </div>
+      </div>
+
       {/* Server section */}
       <SettingsSection
         title="Server"

@@ -9,8 +9,8 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
-  Clock3,
   Download,
+  ExternalLink,
   Heart,
   HeartOff,
   Languages,
@@ -41,61 +41,95 @@ const SOURCE_META: Record<
   MangaSourceId,
   {
     label: string
-    accentDot: string
+    short: string
+    accentColor: string
     accentSoft: string
     accentText: string
     accentGlow: string
     accentRing: string
+    baseUrl: string
   }
 > = {
   MANGADEX: {
     label: 'MangaDex',
-    accentDot: 'bg-orange-400',
+    short: 'MD',
+    accentColor: 'text-orange-400',
     accentSoft: 'bg-orange-500/10 text-orange-200',
     accentText: 'text-orange-300',
     accentGlow: 'from-orange-500/18 via-orange-500/5 to-transparent',
     accentRing: 'ring-orange-500/20 border-orange-500/20',
+    baseUrl: 'https://mangadex.org/title/',
   },
   COMICK: {
     label: 'Comick',
-    accentDot: 'bg-rose-400',
+    short: 'CK',
+    accentColor: 'text-rose-400',
     accentSoft: 'bg-rose-500/10 text-rose-200',
     accentText: 'text-rose-300',
     accentGlow: 'from-rose-500/18 via-rose-500/5 to-transparent',
     accentRing: 'ring-rose-500/20 border-rose-500/20',
+    baseUrl: 'https://comick.io/comic/',
   },
   MANGAWORLD: {
     label: 'MangaWorld',
-    accentDot: 'bg-emerald-400',
+    short: 'MW',
+    accentColor: 'text-emerald-400',
     accentSoft: 'bg-emerald-500/10 text-emerald-200',
     accentText: 'text-emerald-300',
     accentGlow: 'from-emerald-500/18 via-emerald-500/5 to-transparent',
     accentRing: 'ring-emerald-500/20 border-emerald-500/20',
+    baseUrl: 'https://www.mangaworld.ac/manga/',
   },
   NINEMANGA: {
     label: 'WeebCentral',
-    accentDot: 'bg-cyan-400',
+    short: 'WC',
+    accentColor: 'text-cyan-400',
     accentSoft: 'bg-cyan-500/10 text-cyan-200',
     accentText: 'text-cyan-300',
     accentGlow: 'from-cyan-500/18 via-cyan-500/5 to-transparent',
     accentRing: 'ring-cyan-500/20 border-cyan-500/20',
+    baseUrl: 'https://weebcentral.com/series/',
   },
   MANGAPILL: {
     label: 'Mangapill',
-    accentDot: 'bg-pink-400',
+    short: 'MP',
+    accentColor: 'text-pink-400',
     accentSoft: 'bg-pink-500/10 text-pink-200',
     accentText: 'text-pink-300',
     accentGlow: 'from-pink-500/18 via-pink-500/5 to-transparent',
     accentRing: 'ring-pink-500/20 border-pink-500/20',
+    baseUrl: 'https://mangapill.com/manga/',
   },
   MANGAFIRE: {
     label: 'MangaFire',
-    accentDot: 'bg-amber-400',
+    short: 'MF',
+    accentColor: 'text-amber-400',
     accentSoft: 'bg-amber-500/10 text-amber-200',
     accentText: 'text-amber-300',
     accentGlow: 'from-amber-500/18 via-amber-500/5 to-transparent',
     accentRing: 'ring-amber-500/20 border-amber-500/20',
+    baseUrl: 'https://mangafire.to/manga/',
   },
+}
+
+const LANG_META: Record<string, { label: string; flag: string }> = {
+  en: { label: 'English', flag: '🇬🇧' },
+  it: { label: 'Italian', flag: '🇮🇹' },
+  ja: { label: 'Japanese', flag: '🇯🇵' },
+  ko: { label: 'Korean', flag: '🇰🇷' },
+  zh: { label: 'Chinese', flag: '🇨🇳' },
+  'zh-hk': { label: 'Chinese HK', flag: '🇭🇰' },
+  fr: { label: 'French', flag: '🇫🇷' },
+  es: { label: 'Spanish', flag: '🇪🇸' },
+  'es-la': { label: 'Spanish LATAM', flag: '🌎' },
+  de: { label: 'German', flag: '🇩🇪' },
+  pt: { label: 'Portuguese', flag: '🇵🇹' },
+  'pt-br': { label: 'Portuguese BR', flag: '🇧🇷' },
+  ru: { label: 'Russian', flag: '🇷🇺' },
+  ar: { label: 'Arabic', flag: '🇸🇦' },
+  th: { label: 'Thai', flag: '🇹🇭' },
+  vi: { label: 'Vietnamese', flag: '🇻🇳' },
+  id: { label: 'Indonesian', flag: '🇮🇩' },
 }
 
 const STATUS_META: Record<
@@ -138,6 +172,7 @@ export function MangaDetailPanel({
   const [sortAsc, setSortAsc] = useState(false)
   const [descExpanded, setDescExpanded] = useState(false)
   const [showFollowDialog, setShowFollowDialog] = useState(false)
+  const [chapterLimit, setChapterLimit] = useState(50)
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
@@ -215,6 +250,11 @@ export function MangaDetailPanel({
     })
     return sorted
   }, [chapters, sortAsc])
+
+  const displayedChapters = useMemo(
+    () => sortedChapters.slice(0, chapterLimit),
+    [sortedChapters, chapterLimit],
+  )
 
   useEffect(() => {
     const validIds = new Set(chapters.map((chapter) => chapter.id))
@@ -306,12 +346,22 @@ export function MangaDetailPanel({
         title={title}
         activeLanguageLabel={activeLanguageLabel}
         loading={followMutation.isPending}
+        chapterCount={chapterCount}
         onClose={() => setShowFollowDialog(false)}
-        onConfirm={() => followMutation.mutate()}
+        onConfirm={(downloadExisting) => {
+          followMutation.mutate(undefined, {
+            onSuccess: () => {
+              if (downloadExisting && sortedChapters.length > 0) {
+                onDownload(sourceId, mangaId, sortedChapters.map((ch) => ch.id))
+              }
+            },
+          })
+        }}
       />
 
       <DetailHero
         sourceMeta={sourceMeta}
+        mangaId={mangaId}
         coverImage={coverImage}
         title={title}
         activeLanguageLabel={activeLanguageLabel}
@@ -372,12 +422,14 @@ export function MangaDetailPanel({
 
         <ChapterSection
           sourceMeta={sourceMeta}
-          chapterCount={chapterCount}
           selectedCount={selectedCount}
           loading={chaptersQuery.isLoading && chapterCount === 0}
           error={chaptersQuery.isError}
           onRetry={() => chaptersQuery.refetch()}
-          chapters={sortedChapters}
+          chapters={displayedChapters}
+          totalChapters={sortedChapters.length}
+          chapterLimit={chapterLimit}
+          onChapterLimitChange={setChapterLimit}
           selectedChapters={selectedChapters}
           onToggleChapter={toggleChapter}
         />
@@ -401,6 +453,7 @@ function FollowDialog({
   title,
   activeLanguageLabel,
   loading,
+  chapterCount,
   onClose,
   onConfirm,
 }: {
@@ -409,9 +462,12 @@ function FollowDialog({
   title: string
   activeLanguageLabel: string
   loading: boolean
+  chapterCount: number
   onClose: () => void
-  onConfirm: () => void
+  onConfirm: (downloadExisting: boolean) => void
 }) {
+  const [downloadExisting, setDownloadExisting] = useState(false)
+
   if (!open) return null
 
   return (
@@ -463,12 +519,27 @@ function FollowDialog({
             </div>
           </div>
 
+          {chapterCount > 0 && (
+            <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <input
+                type="checkbox"
+                checked={downloadExisting}
+                onChange={(e) => setDownloadExisting(e.target.checked)}
+                className="h-4 w-4 rounded border-white/20 bg-transparent accent-rose-500"
+              />
+              <div>
+                <span className="text-sm font-medium text-ink-200">Also download existing chapters</span>
+                <p className="text-xs text-ink-500">Queue all {chapterCount} available chapters for download now</p>
+              </div>
+            </label>
+          )}
+
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button variant="ghost" onClick={onClose}>
               Cancel
             </Button>
             <Button
-              onClick={onConfirm}
+              onClick={() => onConfirm(downloadExisting)}
               loading={loading}
               className="bg-rose-500/90 text-white hover:bg-rose-400"
             >
@@ -484,6 +555,7 @@ function FollowDialog({
 
 function DetailHero({
   sourceMeta,
+  mangaId,
   coverImage,
   title,
   activeLanguageLabel,
@@ -506,6 +578,7 @@ function DetailHero({
   downloadLoading,
 }: {
   sourceMeta: SourceMetaEntry
+  mangaId: string
   coverImage?: string
   title: string
   activeLanguageLabel: string
@@ -567,7 +640,7 @@ function DetailHero({
                     sourceMeta.accentRing,
                   )}
                 >
-                  <span className={clsx('h-2 w-2 rounded-full', sourceMeta.accentDot)} />
+                  <span className={clsx('font-mono text-[10px] font-bold', sourceMeta.accentColor)}>{sourceMeta.short}</span>
                   {sourceMeta.label}
                 </div>
                 <div className="rounded-full border border-white/10 bg-black/35 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.28em] text-ink-300">
@@ -650,11 +723,25 @@ function DetailHero({
                   onClick={onDownloadSelected}
                   disabled={selectedCount === 0}
                   loading={downloadLoading}
-                  className="min-w-[180px] justify-center bg-white text-ink-950 hover:bg-ink-100"
+                  className={clsx(
+                    'min-w-[180px] justify-center',
+                    selectedCount === 0
+                      ? 'border-white/10 bg-white/5 text-ink-500 cursor-not-allowed'
+                      : 'bg-white text-ink-950 hover:bg-ink-100',
+                  )}
                 >
                   <Download className="h-4 w-4" />
-                  Download selected
+                  {selectedCount > 0 ? `Download ${selectedCount} selected` : 'Select chapters below'}
                 </Button>
+                <a
+                  href={`${sourceMeta.baseUrl}${mangaId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-ink-300 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Open on {sourceMeta.label}
+                </a>
               </div>
             </div>
 
@@ -849,20 +936,24 @@ function SelectionRail({
                 >
                   All languages
                 </button>
-                {languages.map((language) => (
-                  <button
-                    key={language}
-                    onClick={() => onLanguageChange(language)}
-                    className={clsx(
-                      'rounded-full border px-3 py-1.5 text-xs font-medium uppercase transition-colors',
-                      languageFilter === language
-                        ? 'border-white/15 bg-white text-ink-950'
-                        : 'border-white/10 bg-white/5 text-ink-300 hover:bg-white/10',
-                    )}
-                  >
-                    {language}
-                  </button>
-                ))}
+                {languages.map((language) => {
+                  const lm = LANG_META[language]
+                  return (
+                    <button
+                      key={language}
+                      onClick={() => onLanguageChange(language)}
+                      className={clsx(
+                        'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                        languageFilter === language
+                          ? 'border-white/15 bg-white text-ink-950'
+                          : 'border-white/10 bg-white/5 text-ink-300 hover:bg-white/10',
+                      )}
+                    >
+                      {lm?.flag && <span>{lm.flag}</span>}
+                      {lm?.label ?? language.toUpperCase()}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
@@ -932,24 +1023,30 @@ function SelectionRail({
   )
 }
 
+const CHAPTER_LIMITS = [20, 50, 100, 200] as const
+
 function ChapterSection({
   sourceMeta,
-  chapterCount,
   selectedCount,
   loading,
   error,
   onRetry,
   chapters,
+  totalChapters,
+  chapterLimit,
+  onChapterLimitChange,
   selectedChapters,
   onToggleChapter,
 }: {
   sourceMeta: SourceMetaEntry
-  chapterCount: number
   selectedCount: number
   loading: boolean
   error: boolean
   onRetry: () => void
   chapters: MangaChapterDto[]
+  totalChapters: number
+  chapterLimit: number
+  onChapterLimitChange: (limit: number) => void
   selectedChapters: Set<string>
   onToggleChapter: (chapterId: string) => void
 }) {
@@ -971,13 +1068,29 @@ function ChapterSection({
               queue.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-ink-300">
-              {chapterCount} visible
+              {chapters.length}/{totalChapters} shown
             </span>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-ink-300">
               {selectedCount} selected
             </span>
+            <div className="flex rounded-lg border border-white/10 overflow-hidden">
+              {CHAPTER_LIMITS.map((limit) => (
+                <button
+                  key={limit}
+                  onClick={() => onChapterLimitChange(limit)}
+                  className={clsx(
+                    'px-2 py-1 text-[10px] font-mono transition-colors',
+                    chapterLimit === limit
+                      ? 'bg-white/15 text-white'
+                      : 'text-ink-500 hover:bg-white/5 hover:text-ink-300',
+                  )}
+                >
+                  {limit}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -1098,86 +1211,45 @@ function ChapterBayRow({
   onToggle: () => void
 }) {
   const updatedLabel = formatChapterUpdate(chapter.updatedAt)
+  const langMeta = chapter.language ? LANG_META[chapter.language] : null
 
   return (
     <button
       onClick={onToggle}
       className={clsx(
-        'group w-full rounded-[24px] border p-4 text-left transition-all duration-200 sm:p-5',
+        'group w-full rounded-xl border px-3 py-2.5 text-left transition-all duration-150',
         selected
-          ? 'border-white/15 bg-white/[0.09] shadow-[0_18px_40px_rgba(0,0,0,0.22)]'
+          ? 'border-white/15 bg-white/[0.09]'
           : 'border-white/10 bg-black/20 hover:bg-white/[0.06]',
       )}
     >
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        <div className="flex items-start gap-3">
-          <div
-            className={clsx(
-              'flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition-colors',
-              selected
-                ? 'border-white bg-white text-ink-950'
-                : 'border-white/15 bg-transparent text-transparent group-hover:border-white/25',
-            )}
-          >
-            <Check className="h-3.5 w-3.5" />
-          </div>
-
-          <div className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-3">
-            <p className="font-mono text-[10px] uppercase tracking-[0.26em] text-ink-500">Chapter</p>
-            <p className="mt-1 font-display text-2xl font-semibold tracking-tight text-white">
-              {chapter.chapterNumber}
-            </p>
-          </div>
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            {chapter.volumeNumber && (
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-ink-300">
-                Vol. {chapter.volumeNumber}
-              </span>
-            )}
-            {chapter.language && (
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium uppercase text-ink-300">
-                {chapter.language}
-              </span>
-            )}
-            {chapter.pageCount != null && (
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-ink-300">
-                {chapter.pageCount} pages
-              </span>
-            )}
-          </div>
-
-          <h3 className="mt-4 font-display text-xl font-semibold tracking-tight text-white">
-            {chapter.title || `Chapter ${chapter.chapterNumber}`}
-          </h3>
-
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-400">
-            {chapter.scanlator && (
-              <span className="inline-flex items-center gap-2">
-                <User className="h-4 w-4" />
-                {chapter.scanlator}
-              </span>
-            )}
-            {updatedLabel && (
-              <span className="inline-flex items-center gap-2">
-                <Clock3 className="h-4 w-4" />
-                {updatedLabel}
-              </span>
-            )}
-          </div>
-        </div>
-
+      <div className="flex items-center gap-3">
         <div
           className={clsx(
-            'rounded-full border px-3 py-1 text-[11px] font-mono uppercase tracking-[0.24em]',
+            'flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors',
             selected
-              ? 'border-white/15 bg-white text-ink-950'
-              : 'border-white/10 bg-white/5 text-ink-400',
+              ? 'border-white bg-white text-ink-950'
+              : 'border-white/15 bg-transparent text-transparent group-hover:border-white/25',
           )}
         >
-          {selected ? 'Selected' : 'Ready'}
+          <Check className="h-3 w-3" />
+        </div>
+
+        <span className="w-14 shrink-0 font-mono text-sm font-semibold text-white">
+          {chapter.chapterNumber}
+        </span>
+
+        <span className="min-w-0 flex-1 truncate text-sm text-ink-300">
+          {chapter.title || `Chapter ${chapter.chapterNumber}`}
+        </span>
+
+        <div className="flex shrink-0 items-center gap-2 text-[11px] text-ink-500">
+          {chapter.volumeNumber && <span>Vol.{chapter.volumeNumber}</span>}
+          {langMeta && <span title={langMeta.label}>{langMeta.flag}</span>}
+          {!langMeta && chapter.language && <span className="uppercase">{chapter.language}</span>}
+          {chapter.pageCount != null && <span>{chapter.pageCount}p</span>}
+          {chapter.scanlator && <span className="hidden sm:inline truncate max-w-[120px]">{chapter.scanlator}</span>}
+          {updatedLabel && <span className="hidden md:inline">{updatedLabel}</span>}
         </div>
       </div>
     </button>

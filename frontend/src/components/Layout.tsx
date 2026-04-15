@@ -8,22 +8,20 @@ import {
   Activity,
   Tv2,
   ScrollText,
-  Heart,
   ExternalLink,
   Menu,
   X,
   Sun,
   Moon,
   Settings,
-  Coffee,
   ArrowUpCircle,
   RefreshCw,
   PanelLeftClose,
   PanelLeftOpen,
   BookOpen,
   Download,
-  MessageSquare,
   LogOut,
+  Info,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -54,6 +52,7 @@ const NAV_SECTIONS = [
     label: 'Integration',
     items: [
       { to: '/komga', icon: Tv2, label: 'Komga' },
+      { to: '/about', icon: Info, label: 'About' },
     ],
   },
 ] as const
@@ -167,24 +166,24 @@ export function Layout() {
         />
 
         {/* Logo + mobile close */}
-        <div className="relative z-10 flex h-20 items-center justify-between border-b border-ink-800/30 px-4">
+        <div className="relative z-10 flex h-24 items-center justify-between border-b border-ink-800/30 px-4">
           <NavLink to="/" className="flex items-center gap-3 overflow-hidden" onClick={closeSidebar}>
             <img
               src="/logo.png"
               alt="KometaManga"
-              className="h-12 w-12 shrink-0 rounded-xl shadow-lg shadow-accent-600/10"
+              className="h-14 w-14 shrink-0 rounded-xl shadow-lg shadow-accent-600/10"
             />
             {!effectiveCollapsed && (
               <>
                 <img
                   src="/name.png"
                   alt="KometaManga"
-                  className="hidden h-12 w-auto max-w-[200px] object-contain md:block"
+                  className="hidden h-14 w-auto max-w-[200px] object-contain md:block"
                 />
                 <img
                   src="/nameshort.png"
                   alt="KometaManga"
-                  className="h-12 w-auto max-w-[140px] object-contain md:hidden"
+                  className="h-14 w-auto max-w-[140px] object-contain md:hidden"
                 />
               </>
             )}
@@ -259,66 +258,19 @@ export function Layout() {
             </button>
           )}
 
-          {/* ── Mobile-only: compact support row ── */}
+          {/* ── Mobile-only: compact version ── */}
           {!effectiveCollapsed && (
             <div className="flex items-center gap-2.5 md:hidden">
-              <a href="https://github.com/iCosiSenpai/KometaManga/issues/new" target="_blank" rel="noopener noreferrer"
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/10 transition-colors hover:bg-emerald-500/20" aria-label="Feedback">
-                <MessageSquare className="h-3.5 w-3.5" />
-              </a>
-              <a href="https://buymeacoffee.com/icosisenpai" target="_blank" rel="noopener noreferrer"
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/10 transition-colors hover:bg-amber-500/20" aria-label="Buy me a coffee">
-                <Coffee className="h-3.5 w-3.5" />
-              </a>
-              <a href="https://paypal.me/AlessioCosi" target="_blank" rel="noopener noreferrer"
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 ring-1 ring-blue-500/10 transition-colors hover:bg-blue-500/20" aria-label="PayPal">
-                <Heart className="h-3.5 w-3.5" />
-              </a>
-              <span className="ml-auto font-mono text-[10px] text-ink-600">
+              <span className="font-mono text-[10px] text-ink-600">
                 <VersionBadgeInline />
               </span>
             </div>
           )}
 
-          {/* ── Desktop-only: full support section ── */}
+          {/* ── Desktop-only: version + credits ── */}
           {!effectiveCollapsed && (
             <div className="hidden md:block space-y-2.5">
-              {/* Version & update check */}
               <VersionBadge />
-
-              {/* Support & Donate */}
-              <div className="flex gap-1.5">
-                <a
-                  href="https://github.com/iCosiSenpai/KometaManga/issues/new"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-500/8 px-2 py-1.5 text-[11px] font-medium text-emerald-400 transition-all hover:bg-emerald-500/15"
-                  title="Send Feedback"
-                >
-                  <MessageSquare className="h-3 w-3" />
-                  Feedback
-                </a>
-                <a
-                  href="https://buymeacoffee.com/icosisenpai"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-center justify-center rounded-lg bg-amber-500/8 px-2 py-1.5 text-amber-400 transition-all hover:bg-amber-500/15"
-                  title="Buy me a coffee"
-                >
-                  <Coffee className="h-3 w-3" />
-                </a>
-                <a
-                  href="https://paypal.me/AlessioCosi"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-center justify-center rounded-lg bg-blue-500/8 px-2 py-1.5 text-blue-400 transition-all hover:bg-blue-500/15"
-                  title="PayPal"
-                >
-                  <Heart className="h-3 w-3" />
-                </a>
-              </div>
-
-              {/* Credits */}
               <div className="space-y-0.5 px-1">
                 <p className="text-[10px] text-ink-600">
                   Based on{' '}
@@ -328,12 +280,6 @@ export function Layout() {
                   {' · '}
                   <a href="https://github.com/iCosiSenpai" target="_blank" rel="noopener noreferrer" className="text-ink-500 hover:text-accent-400 transition-colors">
                     iCosiSenpai
-                  </a>
-                </p>
-                <p className="text-[10px] text-ink-600">
-                  Part of{' '}
-                  <a href="https://icosisenpai.github.io/KometaManga/" target="_blank" rel="noopener noreferrer" className="text-purple-400/60 hover:text-purple-300 transition-colors font-medium">
-                    KometaHub
                   </a>
                 </p>
               </div>

@@ -32,68 +32,77 @@ const SOURCE_META: Record<
   MangaSourceId,
   {
     label: string
-    accentDot: string
+    short: string
+    accentColor: string
     accentSoft: string
     blurb: string
   }
 > = {
   MANGADEX: {
     label: 'MangaDex',
-    accentDot: 'bg-orange-400',
+    short: 'MD',
+    accentColor: 'text-orange-400',
     accentSoft: 'bg-orange-500/10 text-orange-200',
     blurb: 'Open catalog, clean metadata, reliable for deep discovery.',
   },
   COMICK: {
     label: 'Comick',
-    accentDot: 'bg-rose-400',
+    short: 'CK',
+    accentColor: 'text-rose-400',
     accentSoft: 'bg-rose-500/10 text-rose-200',
     blurb: 'Fast mirrors, broad catalog, strong scanlator variety.',
   },
   MANGAWORLD: {
     label: 'MangaWorld',
-    accentDot: 'bg-emerald-400',
+    short: 'MW',
+    accentColor: 'text-emerald-400',
     accentSoft: 'bg-emerald-500/10 text-emerald-200',
     blurb: 'Italian-first comfort zone with dependable browsing rhythm.',
   },
   NINEMANGA: {
     label: 'WeebCentral',
-    accentDot: 'bg-cyan-400',
+    short: 'WC',
+    accentColor: 'text-cyan-400',
     accentSoft: 'bg-cyan-500/10 text-cyan-200',
     blurb: 'Mirror-heavy fallback lane for broad chapter availability.',
   },
   MANGAPILL: {
     label: 'Mangapill',
-    accentDot: 'bg-pink-400',
+    short: 'MP',
+    accentColor: 'text-pink-400',
     accentSoft: 'bg-pink-500/10 text-pink-200',
     blurb: 'Direct and fast. Great when you want clean no-nonsense reads.',
   },
   MANGAFIRE: {
     label: 'MangaFire',
-    accentDot: 'bg-amber-400',
+    short: 'MF',
+    accentColor: 'text-amber-400',
     accentSoft: 'bg-amber-500/10 text-amber-200',
     blurb: 'Polished covers, broad genres, good visual browsing cadence.',
   },
 }
 
-const LANG_META: Record<string, { label: string; dot: string }> = {
-  en: { label: 'English', dot: 'bg-sky-400' },
-  it: { label: 'Italian', dot: 'bg-emerald-400' },
-  ja: { label: 'Japanese', dot: 'bg-rose-400' },
-  ko: { label: 'Korean', dot: 'bg-violet-400' },
-  zh: { label: 'Chinese', dot: 'bg-amber-400' },
-  'zh-hk': { label: 'Chinese HK', dot: 'bg-amber-300' },
-  fr: { label: 'French', dot: 'bg-cyan-400' },
-  es: { label: 'Spanish', dot: 'bg-orange-400' },
-  'es-la': { label: 'Spanish LATAM', dot: 'bg-orange-300' },
-  de: { label: 'German', dot: 'bg-yellow-400' },
-  pt: { label: 'Portuguese', dot: 'bg-teal-400' },
-  'pt-br': { label: 'Portuguese BR', dot: 'bg-teal-300' },
-  ru: { label: 'Russian', dot: 'bg-blue-400' },
-  ar: { label: 'Arabic', dot: 'bg-indigo-400' },
-  th: { label: 'Thai', dot: 'bg-lime-400' },
-  vi: { label: 'Vietnamese', dot: 'bg-green-300' },
-  id: { label: 'Indonesian', dot: 'bg-red-300' },
+const LANG_META: Record<string, { label: string; flag: string }> = {
+  en: { label: 'English', flag: '🇬🇧' },
+  it: { label: 'Italian', flag: '🇮🇹' },
+  ja: { label: 'Japanese', flag: '🇯🇵' },
+  ko: { label: 'Korean', flag: '🇰🇷' },
+  zh: { label: 'Chinese', flag: '🇨🇳' },
+  'zh-hk': { label: 'Chinese HK', flag: '🇭🇰' },
+  fr: { label: 'French', flag: '🇫🇷' },
+  es: { label: 'Spanish', flag: '🇪🇸' },
+  'es-la': { label: 'Spanish LATAM', flag: '🌎' },
+  de: { label: 'German', flag: '🇩🇪' },
+  pt: { label: 'Portuguese', flag: '🇵🇹' },
+  'pt-br': { label: 'Portuguese BR', flag: '🇧🇷' },
+  ru: { label: 'Russian', flag: '🇷🇺' },
+  ar: { label: 'Arabic', flag: '🇸🇦' },
+  th: { label: 'Thai', flag: '🇹🇭' },
+  vi: { label: 'Vietnamese', flag: '🇻🇳' },
+  id: { label: 'Indonesian', flag: '🇮🇩' },
 }
+
+const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.userAgent)
 
 const HEALTH_META: Record<
   HealthStatus,
@@ -608,7 +617,7 @@ export function SourcesPage() {
               </button>
             )}
             <kbd className="hidden items-center gap-0.5 rounded-md border border-ink-800/50 bg-ink-900/60 px-1.5 py-0.5 font-mono text-[10px] text-ink-600 sm:inline-flex">
-              <Command className="h-2.5 w-2.5" />K
+              {isMac ? <><Command className="h-2.5 w-2.5" />K</> : 'Ctrl+K'}
             </kbd>
           </div>
         </form>
@@ -648,10 +657,11 @@ export function SourcesPage() {
 
       {/* ── Filter Strip ── */}
       <section className="mx-auto max-w-5xl">
+        <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={() => setFiltersOpen(!filtersOpen)}
-          className="group flex w-full items-center justify-between rounded-xl border border-ink-800/40 bg-ink-900/40 px-4 py-2.5 text-left transition-colors hover:bg-ink-900/60"
+          className="group flex flex-1 items-center justify-between rounded-xl border border-ink-800/40 bg-ink-900/40 px-4 py-2.5 text-left transition-colors hover:bg-ink-900/60"
         >
           <div className="flex items-center gap-3">
             <Filter className="h-4 w-4 text-ink-500" />
@@ -683,6 +693,14 @@ export function SourcesPage() {
             )}
           />
         </button>
+        <Link
+          to="/settings/sources"
+          className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-ink-800/40 bg-ink-900/40 text-ink-400 transition-colors hover:bg-ink-900/60 hover:text-ink-200"
+          title="Source settings"
+        >
+          <Settings className="h-4 w-4" />
+        </Link>
+        </div>
 
         {filtersOpen && (
           <div className="mt-2 animate-slide-up space-y-4 rounded-xl border border-ink-800/40 bg-ink-900/40 p-4">
@@ -724,7 +742,7 @@ export function SourcesPage() {
                           : 'bg-ink-950/50 text-ink-500 hover:bg-ink-900/60 hover:text-ink-300',
                       )}
                     >
-                      <span className={clsx('h-2 w-2 rounded-full', meta.accentDot)} />
+                      <span className={clsx('font-opsMono text-[10px] font-bold', meta.accentColor)}>{meta.short}</span>
                       {meta.label}
                       {health && <span className={clsx('h-1.5 w-1.5 rounded-full', HEALTH_META[health.status].dot)} />}
                       {isSearching && (
@@ -764,7 +782,7 @@ export function SourcesPage() {
                         langFilter === lang ? 'bg-accent-600/15 text-accent-300' : 'text-ink-400 hover:text-ink-200',
                       )}
                     >
-                      {meta?.dot && <span className={clsx('h-1.5 w-1.5 rounded-full', meta.dot)} />}
+                      {meta?.flag && <span className="text-sm leading-none">{meta.flag}</span>}
                       {meta?.label ?? lang.toUpperCase()}
                     </button>
                   )
@@ -772,28 +790,20 @@ export function SourcesPage() {
               </div>
             </div>
 
-            {/* Health summary + settings link */}
-            <div className="flex items-center justify-between border-t border-ink-800/30 pt-3">
-              <div className="flex items-center gap-4 text-xs text-ink-500">
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  {healthSummary.green} stable
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-amber-400" />
-                  {healthSummary.yellow} watch
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-red-400" />
-                  {healthSummary.red} down
-                </span>
-              </div>
-              <Link
-                to="/settings/sources"
-                className="flex items-center gap-1 text-xs text-ink-500 transition-colors hover:text-ink-300"
-              >
-                <Settings className="h-3 w-3" /> Source settings
-              </Link>
+            {/* Health summary */}
+            <div className="flex items-center gap-4 border-t border-ink-800/30 pt-3 text-xs text-ink-500">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                {healthSummary.green} stable
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-amber-400" />
+                {healthSummary.yellow} watch
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-red-400" />
+                {healthSummary.red} down
+              </span>
             </div>
           </div>
         )}
@@ -899,7 +909,7 @@ function SourceLandingCard({
 
   return (
     <div className="group flex items-start gap-3 rounded-xl border border-ink-800/40 bg-ink-900/40 p-4 transition-colors hover:bg-ink-900/60">
-      <span className={clsx('mt-0.5 h-3 w-3 shrink-0 rounded-full', meta.accentDot)} />
+      <span className={clsx('mt-0.5 shrink-0 font-opsMono text-xs font-bold', meta.accentColor)}>{meta.short}</span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-ink-200">{meta.label}</span>
@@ -977,31 +987,33 @@ function MangaShelfCard({
             <p className="mt-0.5 line-clamp-1 text-[11px] text-ink-500">{entry.primaryAltTitle}</p>
           )}
           <div className="mt-2 flex items-center gap-1.5">
-            <span className={clsx('h-2 w-2 rounded-full', meta.accentDot)} />
+            <span className={clsx('font-opsMono text-[10px] font-bold', meta.accentColor)}>{meta.short}</span>
             <span className="text-[11px] text-ink-500">{meta.label}</span>
             {lead.year && <span className="ml-auto text-[11px] text-ink-600">{lead.year}</span>}
           </div>
         </div>
       </button>
 
-      {/* Mirror chips */}
+      {/* Mirror chips — exclude lead to avoid duplication */}
       {entry.variants.length > 1 && (
         <div className="mt-1.5 flex flex-wrap gap-1">
-          {entry.variants.map((variant) => {
-            const variantMeta = SOURCE_META[variant.sourceId]
-            return (
-              <button
-                key={`${variant.sourceId}-${variant.id}`}
-                type="button"
-                onClick={() => onOpenVariant(variant)}
-                className="flex items-center gap-1 rounded-md bg-ink-900/40 px-1.5 py-0.5 text-[10px] text-ink-400 transition-colors hover:bg-ink-800/60 hover:text-ink-200"
-                title={`Open on ${variantMeta.label}`}
-              >
-                <span className={clsx('h-1.5 w-1.5 rounded-full', variantMeta.accentDot)} />
-                {variantMeta.label}
-              </button>
-            )
-          })}
+          {entry.variants
+            .filter((v) => !(v.sourceId === lead.sourceId && v.id === lead.id))
+            .map((variant) => {
+              const variantMeta = SOURCE_META[variant.sourceId]
+              return (
+                <button
+                  key={`${variant.sourceId}-${variant.id}`}
+                  type="button"
+                  onClick={() => onOpenVariant(variant)}
+                  className="flex items-center gap-1 rounded-md bg-ink-900/40 px-1.5 py-0.5 text-[10px] text-ink-400 transition-colors hover:bg-ink-800/60 hover:text-ink-200"
+                  title={`Open on ${variantMeta.label}`}
+                >
+                  <span className={clsx('font-opsMono text-[9px] font-bold', variantMeta.accentColor)}>{variantMeta.short}</span>
+                  {variantMeta.label}
+                </button>
+              )
+            })}
         </div>
       )}
     </div>
