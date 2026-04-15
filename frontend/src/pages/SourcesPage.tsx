@@ -233,6 +233,17 @@ export function SourcesPage() {
     language?: string | null
   } | null>(null)
 
+  // Wire the browser back button to close the detail panel instead of
+  // unmounting the whole page. Push a history entry on open; on popstate
+  // while a manga is selected, close it and stay on Browse Sources.
+  useEffect(() => {
+    if (!selectedManga) return
+    window.history.pushState({ kometaDetail: true }, '')
+    const onPop = () => setSelectedManga(null)
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [selectedManga])
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
@@ -502,7 +513,11 @@ export function SourcesPage() {
         initialTitle={selectedManga.title}
         initialCoverUrl={selectedManga.coverUrl}
         initialLanguage={selectedManga.language}
-        onBack={() => setSelectedManga(null)}
+        onBack={() => {
+          // Prefer the browser history so back-button state stays consistent
+          if (window.history.state?.kometaDetail) window.history.back()
+          else setSelectedManga(null)
+        }}
         onDownload={(sourceId, mangaId, chapterIds) => {
           downloadMutation.mutate({ sourceId, mangaId, chapterIds })
         }}

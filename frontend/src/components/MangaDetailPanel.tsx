@@ -646,8 +646,8 @@ function DetailHero({
                 className={clsx(
                   'justify-center',
                   selectedCount === 0
-                    ? 'border-white/10 bg-white/5 text-ink-500 cursor-not-allowed'
-                    : 'bg-white text-ink-950 hover:bg-ink-100',
+                    ? '!bg-white/5 !text-ink-500 border border-white/10 cursor-not-allowed'
+                    : '!bg-accent-600 !text-white hover:!bg-accent-500',
                 )}
               >
                 <Download className="h-4 w-4" />
@@ -994,7 +994,7 @@ function StickyBatchBar({
             <Button
               onClick={onDownload}
               loading={downloadLoading}
-              className="justify-center bg-white text-ink-950 hover:bg-ink-100"
+              className="justify-center !bg-accent-600 !text-white hover:!bg-accent-500"
             >
               <Download className="h-4 w-4" />
               Queue download

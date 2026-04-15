@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import { Button } from '@/components/Button'
@@ -8,10 +8,14 @@ interface LoginPageProps {
   onSuccess: () => void
 }
 
+const REMEMBER_KEY = 'kometa.login.remember'
+const REMEMBER_USER_KEY = 'kometa.login.username'
+
 export function LoginPage({ onSuccess }: LoginPageProps) {
-  const [username, setUsername] = useState('')
+  const [username, setUsername] = useState(() => localStorage.getItem(REMEMBER_USER_KEY) ?? '')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [remember, setRemember] = useState(() => localStorage.getItem(REMEMBER_KEY) === '1')
 
   const loginMutation = useMutation({
     mutationFn: () => api.login({ username, password }),
@@ -19,6 +23,18 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
       if (data.authenticated) onSuccess()
     },
   })
+
+  // Persist the "remember me" preference on successful login
+  useEffect(() => {
+    if (!loginMutation.data?.authenticated) return
+    if (remember) {
+      localStorage.setItem(REMEMBER_KEY, '1')
+      localStorage.setItem(REMEMBER_USER_KEY, username)
+    } else {
+      localStorage.removeItem(REMEMBER_KEY)
+      localStorage.removeItem(REMEMBER_USER_KEY)
+    }
+  }, [loginMutation.data, remember, username])
 
   const canSubmit = username.trim() !== '' && password !== ''
 
@@ -96,6 +112,16 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                 </button>
               </div>
             </div>
+
+            <label className="flex cursor-pointer items-center gap-2.5 text-sm text-ink-300 select-none">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                className="h-4 w-4 rounded border-ink-700 bg-ink-800 accent-accent-500"
+              />
+              Ricordami
+            </label>
 
             {loginMutation.isError && (
               <div className="rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3">

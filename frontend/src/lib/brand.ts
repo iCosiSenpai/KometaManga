@@ -41,10 +41,8 @@ export const LANG_LABELS: Record<string, string> = {
   id: 'Indonesian',
 }
 
-export function flagUrl(langCode: string, size: 20 | 40 | 80 = 20): string | null {
-  const cc = LANG_TO_CC[langCode.toLowerCase()]
-  if (!cc) return null
-  return `https://flagcdn.com/w${size}/${cc}.png`
+export function langToCountryCode(langCode: string): string | null {
+  return LANG_TO_CC[langCode.toLowerCase()] ?? null
 }
 
 export function langLabel(langCode: string): string {

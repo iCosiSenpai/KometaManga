@@ -6,6 +6,7 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { ToastProvider } from './components/Toast'
 import App from './App'
 import './index.css'
+import 'flag-icons/css/flag-icons.min.css'
 
 /* Auto-reload when a new service-worker takes control (e.g. after deploy) */
 if ('serviceWorker' in navigator) {

@@ -1,23 +1,32 @@
 import { clsx } from 'clsx'
-import { flagUrl, langLabel } from '@/lib/brand'
+import { langToCountryCode, langLabel } from '@/lib/brand'
 
+/**
+ * Renders a country flag via locally-bundled flag-icons CSS (no network).
+ * Falls back to a 2-letter monospace code when the language isn't mapped.
+ */
 export function Flag({ code, className }: { code: string; className?: string }) {
-  const url = flagUrl(code)
+  const cc = langToCountryCode(code)
   const label = langLabel(code)
-  if (!url) {
+  if (!cc) {
     return (
-      <span className={clsx('font-mono text-[10px] uppercase', className)} title={label}>
+      <span
+        className={clsx(
+          'inline-block w-5 text-center font-mono text-[9px] uppercase text-ink-400',
+          className,
+        )}
+        title={label}
+      >
         {code.slice(0, 2)}
       </span>
     )
   }
   return (
-    <img
-      src={url}
-      alt={label}
+    <span
+      className={clsx('fi', `fi-${cc}`, 'inline-block h-3 w-4 rounded-[1px] shadow-sm', className)}
       title={label}
-      className={clsx('inline-block h-3 w-auto rounded-sm shadow-sm', className)}
-      loading="lazy"
+      role="img"
+      aria-label={label}
     />
   )
 }
