@@ -175,7 +175,7 @@ function normalizeTitleKey(value: string) {
 function collectTitleKeys(result: MangaSearchResultDto) {
   return Array.from(
     new Set(
-      [result.title, ...result.alternativeTitles]
+      [result.title, ...(result.alternativeTitles ?? [])]
         .map((value) => normalizeTitleKey(value))
         .filter(Boolean),
     ),
@@ -232,7 +232,7 @@ function buildDirectoryEntries(results: MangaSearchResultDto[]) {
 
       const lead = dedupedVariants[0]!
       const primaryAltTitle = dedupedVariants
-        .flatMap((item) => item.alternativeTitles)
+        .flatMap((item) => item.alternativeTitles ?? [])
         .find((title) => normalizeTitleKey(title) !== normalizeTitleKey(lead.title))
 
       return {
