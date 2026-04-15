@@ -1,4 +1,4 @@
-import { Coffee, ExternalLink, Github, Heart, Instagram, MessageSquare } from 'lucide-react'
+import { ExternalLink, Github, Heart, Instagram, MessageSquare } from 'lucide-react'
 
 const KOMETA_PROJECTS = [
   {
@@ -106,41 +106,39 @@ export function AboutPage() {
         <h2 className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-500">
           Support the project
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <a
-            href="https://buymeacoffee.com/icosisenpai"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex items-center gap-4 rounded-[24px] border border-white/10 bg-[#070b16]/90 p-5 transition-colors hover:bg-white/5"
-          >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400">
-              <Coffee className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="font-display text-lg font-semibold text-white group-hover:text-amber-300 transition-colors">
-                Buy Me a Coffee
-              </p>
-              <p className="text-sm text-ink-400">One-time or recurring support</p>
-            </div>
-            <ExternalLink className="ml-auto h-4 w-4 shrink-0 text-ink-600 group-hover:text-ink-400" />
-          </a>
-          <a
-            href="https://paypal.me/AlessioCosi"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex items-center gap-4 rounded-[24px] border border-white/10 bg-[#070b16]/90 p-5 transition-colors hover:bg-white/5"
-          >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-400">
-              <Heart className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="font-display text-lg font-semibold text-white group-hover:text-blue-300 transition-colors">
-                PayPal
-              </p>
-              <p className="text-sm text-ink-400">Direct donation via PayPal</p>
-            </div>
-            <ExternalLink className="ml-auto h-4 w-4 shrink-0 text-ink-600 group-hover:text-ink-400" />
-          </a>
+        <div className="flex flex-wrap items-center gap-4 rounded-[24px] border border-white/10 bg-[#070b16]/90 p-6">
+          <p className="min-w-0 flex-1 text-sm leading-7 text-ink-300">
+            KometaHub is free and open source. If it saves you time, consider chipping in — every coffee and donation keeps the project alive.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href="https://buymeacoffee.com/icosisenpai"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Buy Me a Coffee"
+              className="inline-block transition-transform hover:scale-[1.03]"
+            >
+              <img
+                src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+                alt="Buy Me a Coffee"
+                height={48}
+                className="h-12 w-auto rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
+              />
+            </a>
+            <a
+              href="https://www.paypal.com/donate/?business=alessiocosi95@gmail.com&no_recurring=0&currency_code=EUR"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Donate with PayPal"
+              className="inline-block transition-transform hover:scale-[1.03]"
+            >
+              <img
+                src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"
+                alt="Donate with PayPal"
+                className="h-12 w-auto rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
+              />
+            </a>
+          </div>
         </div>
       </section>
 

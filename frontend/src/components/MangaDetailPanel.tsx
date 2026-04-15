@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { clsx } from 'clsx'
-import type { ReactNode } from 'react'
 import {
-  Activity,
   AlertTriangle,
   ArrowLeft,
   Check,
@@ -16,7 +14,6 @@ import {
   Languages,
   Search,
   Sparkles,
-  User,
 } from 'lucide-react'
 import { api, imageProxyUrl } from '@/api/client'
 import type { MangaChapterDto, MangaSourceId } from '@/api/sources'
@@ -25,6 +22,9 @@ import { Button } from '@/components/Button'
 import { ErrorState } from '@/components/ErrorState'
 import { Skeleton } from '@/components/Skeleton'
 import { useToast } from '@/components/Toast'
+import { Flag } from '@/components/Flag'
+import { SourceIcon } from '@/components/SourceIcon'
+import { SOURCE_BRAND, langLabel, type SourceBrand } from '@/lib/brand'
 
 interface MangaDetailPanelProps {
   sourceId: MangaSourceId
@@ -35,101 +35,6 @@ interface MangaDetailPanelProps {
   onBack: () => void
   onDownload: (sourceId: MangaSourceId, mangaId: string, chapterIds: string[]) => void
   downloadLoading?: boolean
-}
-
-const SOURCE_META: Record<
-  MangaSourceId,
-  {
-    label: string
-    short: string
-    accentColor: string
-    accentSoft: string
-    accentText: string
-    accentGlow: string
-    accentRing: string
-    baseUrl: string
-  }
-> = {
-  MANGADEX: {
-    label: 'MangaDex',
-    short: 'MD',
-    accentColor: 'text-orange-400',
-    accentSoft: 'bg-orange-500/10 text-orange-200',
-    accentText: 'text-orange-300',
-    accentGlow: 'from-orange-500/18 via-orange-500/5 to-transparent',
-    accentRing: 'ring-orange-500/20 border-orange-500/20',
-    baseUrl: 'https://mangadex.org/title/',
-  },
-  COMICK: {
-    label: 'Comick',
-    short: 'CK',
-    accentColor: 'text-rose-400',
-    accentSoft: 'bg-rose-500/10 text-rose-200',
-    accentText: 'text-rose-300',
-    accentGlow: 'from-rose-500/18 via-rose-500/5 to-transparent',
-    accentRing: 'ring-rose-500/20 border-rose-500/20',
-    baseUrl: 'https://comick.io/comic/',
-  },
-  MANGAWORLD: {
-    label: 'MangaWorld',
-    short: 'MW',
-    accentColor: 'text-emerald-400',
-    accentSoft: 'bg-emerald-500/10 text-emerald-200',
-    accentText: 'text-emerald-300',
-    accentGlow: 'from-emerald-500/18 via-emerald-500/5 to-transparent',
-    accentRing: 'ring-emerald-500/20 border-emerald-500/20',
-    baseUrl: 'https://www.mangaworld.ac/manga/',
-  },
-  NINEMANGA: {
-    label: 'WeebCentral',
-    short: 'WC',
-    accentColor: 'text-cyan-400',
-    accentSoft: 'bg-cyan-500/10 text-cyan-200',
-    accentText: 'text-cyan-300',
-    accentGlow: 'from-cyan-500/18 via-cyan-500/5 to-transparent',
-    accentRing: 'ring-cyan-500/20 border-cyan-500/20',
-    baseUrl: 'https://weebcentral.com/series/',
-  },
-  MANGAPILL: {
-    label: 'Mangapill',
-    short: 'MP',
-    accentColor: 'text-pink-400',
-    accentSoft: 'bg-pink-500/10 text-pink-200',
-    accentText: 'text-pink-300',
-    accentGlow: 'from-pink-500/18 via-pink-500/5 to-transparent',
-    accentRing: 'ring-pink-500/20 border-pink-500/20',
-    baseUrl: 'https://mangapill.com/manga/',
-  },
-  MANGAFIRE: {
-    label: 'MangaFire',
-    short: 'MF',
-    accentColor: 'text-amber-400',
-    accentSoft: 'bg-amber-500/10 text-amber-200',
-    accentText: 'text-amber-300',
-    accentGlow: 'from-amber-500/18 via-amber-500/5 to-transparent',
-    accentRing: 'ring-amber-500/20 border-amber-500/20',
-    baseUrl: 'https://mangafire.to/manga/',
-  },
-}
-
-const LANG_META: Record<string, { label: string; flag: string }> = {
-  en: { label: 'English', flag: '🇬🇧' },
-  it: { label: 'Italian', flag: '🇮🇹' },
-  ja: { label: 'Japanese', flag: '🇯🇵' },
-  ko: { label: 'Korean', flag: '🇰🇷' },
-  zh: { label: 'Chinese', flag: '🇨🇳' },
-  'zh-hk': { label: 'Chinese HK', flag: '🇭🇰' },
-  fr: { label: 'French', flag: '🇫🇷' },
-  es: { label: 'Spanish', flag: '🇪🇸' },
-  'es-la': { label: 'Spanish LATAM', flag: '🌎' },
-  de: { label: 'German', flag: '🇩🇪' },
-  pt: { label: 'Portuguese', flag: '🇵🇹' },
-  'pt-br': { label: 'Portuguese BR', flag: '🇧🇷' },
-  ru: { label: 'Russian', flag: '🇷🇺' },
-  ar: { label: 'Arabic', flag: '🇸🇦' },
-  th: { label: 'Thai', flag: '🇹🇭' },
-  vi: { label: 'Vietnamese', flag: '🇻🇳' },
-  id: { label: 'Indonesian', flag: '🇮🇩' },
 }
 
 const STATUS_META: Record<
@@ -143,7 +48,7 @@ const STATUS_META: Record<
   UNKNOWN: 'bg-ink-800/80 text-ink-300 ring-1 ring-ink-700/60',
 }
 
-type SourceMetaEntry = (typeof SOURCE_META)[MangaSourceId]
+type SourceMetaEntry = SourceBrand
 
 function formatChapterUpdate(updatedAt: string | null) {
   if (!updatedAt) return null
@@ -176,7 +81,7 @@ export function MangaDetailPanel({
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
-  const sourceMeta = SOURCE_META[sourceId]
+  const sourceMeta = SOURCE_BRAND[sourceId]
 
   const detailsQuery = useQuery({
     queryKey: ['manga-details', sourceId, mangaId],
@@ -296,7 +201,7 @@ export function MangaDetailPanel({
 
   const selectedCount = selectedChapters.size
   const chapterCount = sortedChapters.length
-  const activeLanguageLabel = languageFilter ? languageFilter.toUpperCase() : 'ALL'
+  const activeLanguageLabel = languageFilter ? langLabel(languageFilter) : 'ALL'
   const statusLabel = details?.status ?? 'UNKNOWN'
   const description = details?.description?.trim() ?? ''
   const alternativeTitles = (details?.alternativeTitles ?? [])
@@ -361,6 +266,8 @@ export function MangaDetailPanel({
 
       <DetailHero
         sourceMeta={sourceMeta}
+        sourceId={sourceId}
+        languageFilter={languageFilter}
         mangaId={mangaId}
         coverImage={coverImage}
         title={title}
@@ -555,6 +462,8 @@ function FollowDialog({
 
 function DetailHero({
   sourceMeta,
+  sourceId,
+  languageFilter,
   mangaId,
   coverImage,
   title,
@@ -578,6 +487,8 @@ function DetailHero({
   downloadLoading,
 }: {
   sourceMeta: SourceMetaEntry
+  sourceId: MangaSourceId
+  languageFilter: string | null
   mangaId: string
   coverImage?: string
   title: string
@@ -604,261 +515,158 @@ function DetailHero({
     <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#070b16] shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_32px_120px_rgba(0,0,0,0.45)]">
       <div className={clsx('absolute inset-0 bg-gradient-to-br opacity-100', sourceMeta.accentGlow)} />
       <div className="absolute inset-y-0 left-0 w-full bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_42%)]" />
-      <div className="relative p-5 sm:p-8 xl:p-10">
-        <div className="grid gap-8 xl:grid-cols-[280px_minmax(0,1fr)]">
-          <div className="space-y-4">
-            <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-ink-950/70 shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
-              <div className="aspect-[2/3] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_50%)]">
-                {coverImage ? (
-                  <img
-                    src={coverImage}
-                    alt={title}
-                    className="h-full w-full object-cover"
-                    onError={(event) => {
-                      event.currentTarget.style.display = 'none'
-                    }}
-                  />
-                ) : (
-                  <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
-                      <Sparkles className="h-7 w-7 text-white/70" />
-                    </div>
-                    <div>
-                      <p className="font-display text-lg font-semibold text-white">No cover signal</p>
-                      <p className="mt-1 text-sm text-ink-400">
-                        Metadata is still available for chapter triage.
-                      </p>
-                    </div>
+      <div className="relative p-5 sm:p-7">
+        <div className="grid gap-6 md:grid-cols-[200px_minmax(0,1fr)]">
+          <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-ink-950/70 shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
+            <div className="aspect-[2/3] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_50%)]">
+              {coverImage ? (
+                <img
+                  src={coverImage}
+                  alt={title}
+                  className="h-full w-full object-cover"
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none'
+                  }}
+                />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+                    <Sparkles className="h-6 w-6 text-white/70" />
                   </div>
-                )}
-              </div>
-              <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-2 p-4">
-                <div
-                  className={clsx(
-                    'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-mono uppercase tracking-[0.28em]',
-                    sourceMeta.accentSoft,
-                    sourceMeta.accentRing,
-                  )}
-                >
-                  <span className={clsx('font-mono text-[10px] font-bold', sourceMeta.accentColor)}>{sourceMeta.short}</span>
-                  {sourceMeta.label}
+                  <p className="font-display text-base font-semibold text-white">No cover</p>
                 </div>
-                <div className="rounded-full border border-white/10 bg-black/35 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.28em] text-ink-300">
-                  {activeLanguageLabel}
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-              <div className="rounded-[24px] border border-white/10 bg-black/20 p-4 backdrop-blur-sm">
-                <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-500">
-                  Discovery lane
-                </p>
-                <p className="mt-3 text-sm leading-7 text-ink-300">
-                  Editorial overview on top, chapter operations underneath. This page is tuned for
-                  quick triage, not generic browsing.
-                </p>
-              </div>
-              <div className="rounded-[24px] border border-white/10 bg-black/20 p-4 backdrop-blur-sm">
-                <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-500">
-                  Auto-download
-                </p>
-                <p className="mt-3 text-sm leading-7 text-ink-300">
-                  {isFollowing
-                    ? `Following is active${followLanguage ? ` for ${followLanguage.toUpperCase()}` : ''}.`
-                    : 'Not following yet. Enable it when you want future chapters to arrive automatically.'}
-                </p>
-              </div>
+              )}
             </div>
           </div>
 
-          <div className="space-y-7">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0">
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.28em] text-ink-400">
-                  <Activity className="h-3.5 w-3.5" />
-                  Manga dossier
-                </div>
-                <h1 className="mt-4 max-w-4xl font-display text-4xl font-semibold tracking-[-0.03em] text-white sm:text-5xl">
-                  {title}
-                </h1>
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <span className={clsx('rounded-full px-3 py-1 text-xs font-semibold uppercase', STATUS_META[statusLabel])}>
-                    {statusLabel.toLowerCase()}
-                  </span>
-                  {year && (
-                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-ink-300">
-                      {year}
-                    </span>
-                  )}
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-ink-300">
-                    {chapterCount} chapter{chapterCount !== 1 ? 's' : ''}
-                  </span>
-                </div>
-                {alternativeTitles.length > 0 && (
-                  <p className="mt-4 max-w-3xl text-sm leading-7 text-ink-400">
-                    Also known as {alternativeTitles.join(' • ')}
-                  </p>
+          <div className="min-w-0 space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={clsx(
+                  'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-mono uppercase tracking-[0.22em]',
+                  sourceMeta.accentSoft,
+                  sourceMeta.accentRing,
                 )}
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
-                <Button
-                  variant={isFollowing ? 'secondary' : 'primary'}
-                  size="lg"
-                  onClick={onToggleFollow}
-                  loading={followLoading}
-                  className={clsx(
-                    'min-w-[180px] justify-center',
-                    isFollowing
-                      ? 'border-white/10 bg-white/5 text-white hover:bg-white/10'
-                      : 'bg-rose-500 text-white hover:bg-rose-400',
-                  )}
-                >
-                  {isFollowing ? <HeartOff className="h-4 w-4" /> : <Heart className="h-4 w-4" />}
-                  {isFollowing ? 'Unfollow' : 'Follow manga'}
-                </Button>
-                <Button
-                  size="lg"
-                  onClick={onDownloadSelected}
-                  disabled={selectedCount === 0}
-                  loading={downloadLoading}
-                  className={clsx(
-                    'min-w-[180px] justify-center',
-                    selectedCount === 0
-                      ? 'border-white/10 bg-white/5 text-ink-500 cursor-not-allowed'
-                      : 'bg-white text-ink-950 hover:bg-ink-100',
-                  )}
-                >
-                  <Download className="h-4 w-4" />
-                  {selectedCount > 0 ? `Download ${selectedCount} selected` : 'Select chapters below'}
-                </Button>
-                <a
-                  href={`${sourceMeta.baseUrl}${mangaId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-ink-300 transition-colors hover:bg-white/10 hover:text-white"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Open on {sourceMeta.label}
-                </a>
-              </div>
+              >
+                <SourceIcon sourceId={sourceId} size={12} />
+                {sourceMeta.label}
+              </span>
+              <span className={clsx('rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider', STATUS_META[statusLabel])}>
+                {statusLabel.toLowerCase()}
+              </span>
+              {year && (
+                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-ink-300">
+                  {year}
+                </span>
+              )}
+              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-ink-300">
+                {chapterCount} ch
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-ink-300">
+                <Flag code={languageFilter ?? 'en'} />
+                {activeLanguageLabel}
+              </span>
+              {isFollowing && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-rose-200">
+                  <Heart className="h-3 w-3" />
+                  Following{followLanguage ? ` · ${followLanguage.toUpperCase()}` : ''}
+                </span>
+              )}
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <HeroMetric label="Source" value={sourceMeta.label} note="Active provider for this dossier" />
-              <HeroMetric
-                label="Selection"
-                value={String(selectedCount)}
-                note={selectedCount === 0 ? 'Pick chapters below' : 'Ready for queueing'}
-              />
-              <HeroMetric label="Language" value={activeLanguageLabel} note="Current chapter lane" />
-              <HeroMetric
-                label="Auto-follow"
-                value={isFollowing ? 'ON' : 'OFF'}
-                note={isFollowing ? 'New drops will be watched' : 'Manual queue only'}
-              />
-            </div>
+            <h1 className="font-display text-3xl font-semibold leading-tight tracking-[-0.02em] text-white sm:text-4xl">
+              {title}
+            </h1>
 
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)]">
-              <div className="rounded-[28px] border border-white/10 bg-black/20 p-5 backdrop-blur-sm sm:p-6">
-                <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.28em] text-ink-500">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Synopsis
-                </div>
-                <p
-                  className={clsx(
-                    'mt-4 text-sm leading-8 text-ink-300',
-                    !descExpanded && description && 'line-clamp-5',
-                  )}
-                >
-                  {description || 'No summary came back from the source, but the chapter deck is fully available below.'}
+            {(authors.length > 0 || artists.length > 0) && (
+              <p className="text-sm text-ink-400">
+                {authors.length > 0 && <span>by <span className="text-ink-200">{authors.join(', ')}</span></span>}
+                {authors.length > 0 && artists.length > 0 && ' · '}
+                {artists.length > 0 && authors.join(', ') !== artists.join(', ') && (
+                  <span>art <span className="text-ink-200">{artists.join(', ')}</span></span>
+                )}
+              </p>
+            )}
+
+            {alternativeTitles.length > 0 && (
+              <p className="text-xs leading-6 text-ink-500">
+                Also known as {alternativeTitles.join(' • ')}
+              </p>
+            )}
+
+            {description && (
+              <div>
+                <p className={clsx('text-sm leading-7 text-ink-300', !descExpanded && 'line-clamp-3')}>
+                  {description}
                 </p>
-                {description.length > 280 && (
+                {description.length > 200 && (
                   <button
                     onClick={onToggleDescription}
-                    className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-ink-200 transition-colors hover:bg-white/10"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-ink-400 transition-colors hover:text-white"
                   >
                     {descExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                    {descExpanded ? 'Collapse synopsis' : 'Expand synopsis'}
+                    {descExpanded ? 'Show less' : 'Show more'}
                   </button>
                 )}
               </div>
-
-              <div className="rounded-[28px] border border-white/10 bg-black/20 p-5 backdrop-blur-sm sm:p-6">
-                <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.28em] text-ink-500">
-                  <User className="h-3.5 w-3.5" />
-                  Metadata readout
-                </div>
-                <div className="mt-4 space-y-3">
-                  <MetaRow
-                    label="Authors"
-                    value={authors.length ? authors.join(', ') : 'Unknown'}
-                    icon={<User className="h-4 w-4" />}
-                  />
-                  <MetaRow
-                    label="Artists"
-                    value={artists.length ? artists.join(', ') : 'Unknown'}
-                    icon={<Sparkles className="h-4 w-4" />}
-                  />
-                  <MetaRow
-                    label="Language lane"
-                    value={activeLanguageLabel}
-                    icon={<Languages className="h-4 w-4" />}
-                  />
-                  <MetaRow
-                    label="Queue posture"
-                    value={
-                      selectedCount === 0
-                        ? 'Waiting for selection'
-                        : `${selectedCount} chapter${selectedCount !== 1 ? 's' : ''} armed`
-                    }
-                    icon={<Download className="h-4 w-4" />}
-                  />
-                </div>
-              </div>
-            </div>
+            )}
 
             {metadataPills.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {metadataPills.map((pill) => (
                   <span
                     key={pill}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-ink-300"
+                    className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] font-medium text-ink-300"
                   >
                     {pill}
                   </span>
                 ))}
               </div>
             )}
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button
+                variant={isFollowing ? 'secondary' : 'primary'}
+                onClick={onToggleFollow}
+                loading={followLoading}
+                className={clsx(
+                  'justify-center',
+                  isFollowing
+                    ? 'border-white/10 bg-white/5 text-white hover:bg-white/10'
+                    : 'bg-rose-500 text-white hover:bg-rose-400',
+                )}
+              >
+                {isFollowing ? <HeartOff className="h-4 w-4" /> : <Heart className="h-4 w-4" />}
+                {isFollowing ? 'Unfollow' : 'Follow'}
+              </Button>
+              <Button
+                onClick={onDownloadSelected}
+                disabled={selectedCount === 0}
+                loading={downloadLoading}
+                className={clsx(
+                  'justify-center',
+                  selectedCount === 0
+                    ? 'border-white/10 bg-white/5 text-ink-500 cursor-not-allowed'
+                    : 'bg-white text-ink-950 hover:bg-ink-100',
+                )}
+              >
+                <Download className="h-4 w-4" />
+                {selectedCount > 0 ? `Download ${selectedCount}` : 'Select chapters'}
+              </Button>
+              <a
+                href={`${sourceMeta.mangaBaseUrl}${mangaId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-ink-300 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Open on {sourceMeta.label}
+              </a>
+            </div>
           </div>
         </div>
       </div>
     </section>
-  )
-}
-
-function HeroMetric({ label, value, note }: { label: string; value: string; note: string }) {
-  return (
-    <div className="rounded-[24px] border border-white/10 bg-black/20 p-4 backdrop-blur-sm">
-      <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-500">{label}</p>
-      <p className="mt-3 font-display text-2xl font-semibold tracking-tight text-white">{value}</p>
-      <p className="mt-2 text-sm text-ink-400">{note}</p>
-    </div>
-  )
-}
-
-function MetaRow({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {
-  return (
-    <div className="flex items-start gap-3 rounded-[22px] border border-white/10 bg-ink-950/40 p-4">
-      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-ink-300">
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-500">{label}</p>
-        <p className="mt-2 text-sm leading-7 text-ink-200">{value}</p>
-      </div>
-    </div>
   )
 }
 
@@ -911,12 +719,12 @@ function SelectionRail({
           </h2>
         </div>
 
-        <div className="space-y-6 p-5">
-          <div className="space-y-3">
-            <QuickActionRow label="Selected now" value={`${selectedCount} chapter${selectedCount !== 1 ? 's' : ''}`} />
-            <QuickActionRow label="Visible chapters" value={`${chapterCount}`} />
-            <QuickActionRow label="Sort order" value={sortAsc ? 'Oldest to newest' : 'Newest to oldest'} />
-            <QuickActionRow label="Follow state" value={isFollowing ? 'Watching future releases' : 'Manual mode'} />
+        <div className="space-y-5 p-5">
+          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs">
+            <span className="font-mono uppercase tracking-[0.22em] text-ink-500">Selected</span>
+            <span className="text-sm font-semibold text-white">
+              {selectedCount} / {chapterCount}
+            </span>
           </div>
 
           {(languages.length > 1 || languageFilter) && (
@@ -936,24 +744,21 @@ function SelectionRail({
                 >
                   All languages
                 </button>
-                {languages.map((language) => {
-                  const lm = LANG_META[language]
-                  return (
-                    <button
-                      key={language}
-                      onClick={() => onLanguageChange(language)}
-                      className={clsx(
-                        'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
-                        languageFilter === language
-                          ? 'border-white/15 bg-white text-ink-950'
-                          : 'border-white/10 bg-white/5 text-ink-300 hover:bg-white/10',
-                      )}
-                    >
-                      {lm?.flag && <span>{lm.flag}</span>}
-                      {lm?.label ?? language.toUpperCase()}
-                    </button>
-                  )
-                })}
+                {languages.map((language) => (
+                  <button
+                    key={language}
+                    onClick={() => onLanguageChange(language)}
+                    className={clsx(
+                      'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                      languageFilter === language
+                        ? 'border-white/15 bg-white text-ink-950'
+                        : 'border-white/10 bg-white/5 text-ink-300 hover:bg-white/10',
+                    )}
+                  >
+                    <Flag code={language} />
+                    {langLabel(language)}
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -1211,7 +1016,6 @@ function ChapterBayRow({
   onToggle: () => void
 }) {
   const updatedLabel = formatChapterUpdate(chapter.updatedAt)
-  const langMeta = chapter.language ? LANG_META[chapter.language] : null
 
   return (
     <button
@@ -1245,8 +1049,7 @@ function ChapterBayRow({
 
         <div className="flex shrink-0 items-center gap-2 text-[11px] text-ink-500">
           {chapter.volumeNumber && <span>Vol.{chapter.volumeNumber}</span>}
-          {langMeta && <span title={langMeta.label}>{langMeta.flag}</span>}
-          {!langMeta && chapter.language && <span className="uppercase">{chapter.language}</span>}
+          {chapter.language && <Flag code={chapter.language} />}
           {chapter.pageCount != null && <span>{chapter.pageCount}p</span>}
           {chapter.scanlator && <span className="hidden sm:inline truncate max-w-[120px]">{chapter.scanlator}</span>}
           {updatedLabel && <span className="hidden md:inline">{updatedLabel}</span>}

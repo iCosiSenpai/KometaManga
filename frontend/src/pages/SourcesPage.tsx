@@ -25,81 +25,27 @@ import { ErrorState } from '@/components/ErrorState'
 import { Skeleton } from '@/components/Skeleton'
 import { useToast } from '@/components/Toast'
 import { MangaDetailPanel } from '@/components/MangaDetailPanel'
+import { Flag } from '@/components/Flag'
+import { SourceIcon } from '@/components/SourceIcon'
+import { SOURCE_BRAND, langLabel } from '@/lib/brand'
 
-const SEARCH_SUGGESTIONS = ['One Piece', 'Berserk', 'Blue Lock', 'Dandadan']
+// Pool of currently popular / frequently searched manga — rotated on each mount
+const TRENDING_POOL = [
+  'One Piece', 'Jujutsu Kaisen', 'Chainsaw Man', 'Solo Leveling', 'Dandadan',
+  'Kagurabachi', 'Berserk', 'Blue Lock', 'Kaiju No. 8', 'Sakamoto Days',
+  'Frieren', 'Oshi no Ko', 'My Hero Academia', 'Vagabond', 'Vinland Saga',
+  'Spy x Family', 'Attack on Titan', 'Tokyo Revengers', 'Hunter x Hunter',
+  'The Beginning After The End', 'Wind Breaker', 'Record of Ragnarok',
+]
 
-const SOURCE_META: Record<
-  MangaSourceId,
-  {
-    label: string
-    short: string
-    accentColor: string
-    accentSoft: string
-    blurb: string
+function pickTrending(count: number): string[] {
+  const pool = [...TRENDING_POOL]
+  const out: string[] = []
+  while (out.length < count && pool.length > 0) {
+    const idx = Math.floor(Math.random() * pool.length)
+    out.push(pool.splice(idx, 1)[0]!)
   }
-> = {
-  MANGADEX: {
-    label: 'MangaDex',
-    short: 'MD',
-    accentColor: 'text-orange-400',
-    accentSoft: 'bg-orange-500/10 text-orange-200',
-    blurb: 'Open catalog, clean metadata, reliable for deep discovery.',
-  },
-  COMICK: {
-    label: 'Comick',
-    short: 'CK',
-    accentColor: 'text-rose-400',
-    accentSoft: 'bg-rose-500/10 text-rose-200',
-    blurb: 'Fast mirrors, broad catalog, strong scanlator variety.',
-  },
-  MANGAWORLD: {
-    label: 'MangaWorld',
-    short: 'MW',
-    accentColor: 'text-emerald-400',
-    accentSoft: 'bg-emerald-500/10 text-emerald-200',
-    blurb: 'Italian-first comfort zone with dependable browsing rhythm.',
-  },
-  NINEMANGA: {
-    label: 'WeebCentral',
-    short: 'WC',
-    accentColor: 'text-cyan-400',
-    accentSoft: 'bg-cyan-500/10 text-cyan-200',
-    blurb: 'Mirror-heavy fallback lane for broad chapter availability.',
-  },
-  MANGAPILL: {
-    label: 'Mangapill',
-    short: 'MP',
-    accentColor: 'text-pink-400',
-    accentSoft: 'bg-pink-500/10 text-pink-200',
-    blurb: 'Direct and fast. Great when you want clean no-nonsense reads.',
-  },
-  MANGAFIRE: {
-    label: 'MangaFire',
-    short: 'MF',
-    accentColor: 'text-amber-400',
-    accentSoft: 'bg-amber-500/10 text-amber-200',
-    blurb: 'Polished covers, broad genres, good visual browsing cadence.',
-  },
-}
-
-const LANG_META: Record<string, { label: string; flag: string }> = {
-  en: { label: 'English', flag: '🇬🇧' },
-  it: { label: 'Italian', flag: '🇮🇹' },
-  ja: { label: 'Japanese', flag: '🇯🇵' },
-  ko: { label: 'Korean', flag: '🇰🇷' },
-  zh: { label: 'Chinese', flag: '🇨🇳' },
-  'zh-hk': { label: 'Chinese HK', flag: '🇭🇰' },
-  fr: { label: 'French', flag: '🇫🇷' },
-  es: { label: 'Spanish', flag: '🇪🇸' },
-  'es-la': { label: 'Spanish LATAM', flag: '🌎' },
-  de: { label: 'German', flag: '🇩🇪' },
-  pt: { label: 'Portuguese', flag: '🇵🇹' },
-  'pt-br': { label: 'Portuguese BR', flag: '🇧🇷' },
-  ru: { label: 'Russian', flag: '🇷🇺' },
-  ar: { label: 'Arabic', flag: '🇸🇦' },
-  th: { label: 'Thai', flag: '🇹🇭' },
-  vi: { label: 'Vietnamese', flag: '🇻🇳' },
-  id: { label: 'Indonesian', flag: '🇮🇩' },
+  return out
 }
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.userAgent)
@@ -270,6 +216,15 @@ export function SourcesPage() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [trendingPicks, setTrendingPicks] = useState<string[]>(() => pickTrending(5))
+
+  // Rotate trending picks every 20 seconds while idle
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setTrendingPicks(pickTrending(5))
+    }, 20000)
+    return () => window.clearInterval(id)
+  }, [])
   const [selectedManga, setSelectedManga] = useState<{
     sourceId: MangaSourceId
     mangaId: string
@@ -459,8 +414,8 @@ export function SourcesPage() {
       const leftActive = enabledSources.has(left.sourceId) ? 1 : 0
       const rightActive = enabledSources.has(right.sourceId) ? 1 : 0
       if (leftActive !== rightActive) return rightActive - leftActive
-      return SOURCE_META[left.sourceId].label.localeCompare(
-        SOURCE_META[right.sourceId].label,
+      return SOURCE_BRAND[left.sourceId].label.localeCompare(
+        SOURCE_BRAND[right.sourceId].label,
       )
     })
   }, [enabledSources, filteredSources])
@@ -473,7 +428,7 @@ export function SourcesPage() {
   const isSearching = searchTerm.length >= 2
   const anyLoading = loadingCount > 0
   const activeLanguageLabel = langFilter
-    ? (LANG_META[langFilter]?.label ?? langFilter.toUpperCase())
+    ? langLabel(langFilter)
     : 'All languages'
   const hasActiveSources = activeSourceIds.length > 0
   const totalDirectoryMatches = directoryEntries.length
@@ -623,9 +578,9 @@ export function SourcesPage() {
         </form>
 
         {!isSearching && (
-          <div className="mt-3 flex items-center justify-center gap-2">
-            <span className="text-xs text-ink-600">Try:</span>
-            {SEARCH_SUGGESTIONS.map((s) => (
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+            <span className="font-opsMono text-[10px] uppercase tracking-[0.2em] text-ink-600">Most researched</span>
+            {trendingPicks.map((s) => (
               <button
                 key={s}
                 type="button"
@@ -635,6 +590,15 @@ export function SourcesPage() {
                 {s}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setTrendingPicks(pickTrending(5))}
+              className="flex h-6 w-6 items-center justify-center rounded-full text-ink-600 transition-colors hover:bg-ink-800/60 hover:text-ink-200"
+              title="Refresh suggestions"
+              aria-label="Refresh suggestions"
+            >
+              <RefreshCw className="h-3 w-3" />
+            </button>
           </div>
         )}
 
@@ -727,7 +691,7 @@ export function SourcesPage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {sourceDeck.map((source) => {
-                  const meta = SOURCE_META[source.sourceId]
+                  const meta = SOURCE_BRAND[source.sourceId]
                   const active = enabledSources.has(source.sourceId)
                   const health = healthMap.get(source.sourceId)
                   return (
@@ -742,7 +706,7 @@ export function SourcesPage() {
                           : 'bg-ink-950/50 text-ink-500 hover:bg-ink-900/60 hover:text-ink-300',
                       )}
                     >
-                      <span className={clsx('font-opsMono text-[10px] font-bold', meta.accentColor)}>{meta.short}</span>
+                      <SourceIcon sourceId={source.sourceId} size={14} />
                       {meta.label}
                       {health && <span className={clsx('h-1.5 w-1.5 rounded-full', HEALTH_META[health.status].dot)} />}
                       {isSearching && (
@@ -770,23 +734,20 @@ export function SourcesPage() {
                 >
                   All
                 </button>
-                {availableLanguages.map((lang) => {
-                  const meta = LANG_META[lang]
-                  return (
-                    <button
-                      key={lang}
-                      type="button"
-                      onClick={() => setLangFilter((current) => (current === lang ? null : lang))}
-                      className={clsx(
-                        'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-colors',
-                        langFilter === lang ? 'bg-accent-600/15 text-accent-300' : 'text-ink-400 hover:text-ink-200',
-                      )}
-                    >
-                      {meta?.flag && <span className="text-sm leading-none">{meta.flag}</span>}
-                      {meta?.label ?? lang.toUpperCase()}
-                    </button>
-                  )
-                })}
+                {availableLanguages.map((lang) => (
+                  <button
+                    key={lang}
+                    type="button"
+                    onClick={() => setLangFilter((current) => (current === lang ? null : lang))}
+                    className={clsx(
+                      'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-colors',
+                      langFilter === lang ? 'bg-accent-600/15 text-accent-300' : 'text-ink-400 hover:text-ink-200',
+                    )}
+                  >
+                    <Flag code={lang} />
+                    {langLabel(lang)}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -860,7 +821,7 @@ export function SourcesPage() {
 
         {/* No results */}
         {isSearching && !anyLoading && totalCount === 0 && errorCount === 0 && hasActiveSources && (
-          <DirectoryNoResults searchTerm={searchTerm} onSuggestionClick={handleSuggestedQuery} />
+          <DirectoryNoResults searchTerm={searchTerm} onSuggestionClick={handleSuggestedQuery} suggestions={trendingPicks} />
         )}
 
         {/* Results grid */}
@@ -904,12 +865,12 @@ function SourceLandingCard({
   source: { sourceId: MangaSourceId; languages: string[] }
   health?: { status: HealthStatus; latencyMs: number | null; error: string | null }
 }) {
-  const meta = SOURCE_META[source.sourceId]
+  const meta = SOURCE_BRAND[source.sourceId]
   const healthMeta = health ? HEALTH_META[health.status] : null
 
   return (
     <div className="group flex items-start gap-3 rounded-xl border border-ink-800/40 bg-ink-900/40 p-4 transition-colors hover:bg-ink-900/60">
-      <span className={clsx('mt-0.5 shrink-0 font-opsMono text-xs font-bold', meta.accentColor)}>{meta.short}</span>
+      <SourceIcon sourceId={source.sourceId} size={20} className="mt-0.5 shrink-0" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-ink-200">{meta.label}</span>
@@ -935,7 +896,7 @@ function MangaShelfCard({
   onOpenVariant: (result: MangaSearchResultDto) => void
 }) {
   const { lead } = entry
-  const meta = SOURCE_META[lead.sourceId]
+  const meta = SOURCE_BRAND[lead.sourceId]
 
   return (
     <div className="group animate-fade-in">
@@ -955,25 +916,11 @@ function MangaShelfCard({
             </div>
           )}
 
-          {/* Source count overlay */}
+          {/* Source count overlay (top-right) */}
           {entry.sourceCount > 1 && (
             <div className="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-ink-950/80 px-2 py-1 text-[10px] font-medium text-ink-200 backdrop-blur-sm">
               <Layers className="h-3 w-3" />
               {entry.sourceCount}
-            </div>
-          )}
-
-          {/* Status overlay */}
-          {lead.status && lead.status !== 'UNKNOWN' && (
-            <div className="absolute bottom-2 left-2">
-              <span
-                className={clsx(
-                  'rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider backdrop-blur-sm',
-                  STATUS_META[lead.status],
-                )}
-              >
-                {lead.status}
-              </span>
             </div>
           )}
         </div>
@@ -986,9 +933,19 @@ function MangaShelfCard({
           {entry.primaryAltTitle && (
             <p className="mt-0.5 line-clamp-1 text-[11px] text-ink-500">{entry.primaryAltTitle}</p>
           )}
-          <div className="mt-2 flex items-center gap-1.5">
-            <span className={clsx('font-opsMono text-[10px] font-bold', meta.accentColor)}>{meta.short}</span>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <SourceIcon sourceId={lead.sourceId} size={12} />
             <span className="text-[11px] text-ink-500">{meta.label}</span>
+            {lead.status && lead.status !== 'UNKNOWN' && (
+              <span
+                className={clsx(
+                  'rounded px-1.5 py-0 text-[9px] font-semibold uppercase tracking-wider',
+                  STATUS_META[lead.status],
+                )}
+              >
+                {lead.status}
+              </span>
+            )}
             {lead.year && <span className="ml-auto text-[11px] text-ink-600">{lead.year}</span>}
           </div>
         </div>
@@ -1000,7 +957,7 @@ function MangaShelfCard({
           {entry.variants
             .filter((v) => !(v.sourceId === lead.sourceId && v.id === lead.id))
             .map((variant) => {
-              const variantMeta = SOURCE_META[variant.sourceId]
+              const variantMeta = SOURCE_BRAND[variant.sourceId]
               return (
                 <button
                   key={`${variant.sourceId}-${variant.id}`}
@@ -1009,7 +966,7 @@ function MangaShelfCard({
                   className="flex items-center gap-1 rounded-md bg-ink-900/40 px-1.5 py-0.5 text-[10px] text-ink-400 transition-colors hover:bg-ink-800/60 hover:text-ink-200"
                   title={`Open on ${variantMeta.label}`}
                 >
-                  <span className={clsx('font-opsMono text-[9px] font-bold', variantMeta.accentColor)}>{variantMeta.short}</span>
+                  <SourceIcon sourceId={variant.sourceId} size={10} />
                   {variantMeta.label}
                 </button>
               )
@@ -1040,9 +997,11 @@ function DirectoryLoadingState() {
 function DirectoryNoResults({
   searchTerm,
   onSuggestionClick,
+  suggestions,
 }: {
   searchTerm: string
   onSuggestionClick: (value: string) => void
+  suggestions: string[]
 }) {
   return (
     <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-ink-800/50 bg-ink-900/20 text-center animate-fade-in">
@@ -1056,7 +1015,7 @@ function DirectoryNoResults({
         </p>
       </div>
       <div className="flex flex-wrap justify-center gap-2">
-        {SEARCH_SUGGESTIONS.map((s) => (
+        {suggestions.map((s) => (
           <Button key={s} variant="ghost" size="sm" onClick={() => onSuggestionClick(s)}>
             {s}
           </Button>
