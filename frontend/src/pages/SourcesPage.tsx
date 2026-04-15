@@ -3,14 +3,15 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { Link } from 'react-router-dom'
 import { clsx } from 'clsx'
 import {
-  Activity,
-  ArrowRight,
   BookOpen,
-  ChevronRight,
-  Languages,
+  ChevronDown,
+  Command,
+  Filter,
+  Layers,
   Loader2,
-  RefreshCcw,
+  RefreshCw,
   Search,
+  Settings,
   X,
 } from 'lucide-react'
 import { api, imageProxyUrl } from '@/api/client'
@@ -20,7 +21,6 @@ import type {
   MangaSourceId,
 } from '@/api/sources'
 import { Button } from '@/components/Button'
-import { Card } from '@/components/Card'
 import { ErrorState } from '@/components/ErrorState'
 import { Skeleton } from '@/components/Skeleton'
 import { useToast } from '@/components/Toast'
@@ -260,6 +260,7 @@ export function SourcesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [selectedManga, setSelectedManga] = useState<{
     sourceId: MangaSourceId
     mangaId: string
@@ -460,19 +461,6 @@ export function SourcesPage() {
     [mergedResults],
   )
 
-  const sourceResultRows = useMemo(
-    () =>
-      sourceDeck
-        .filter((source) => enabledSources.has(source.sourceId))
-        .map((source) => ({
-          source,
-          count: resultCountBySource.get(source.sourceId) ?? 0,
-          health: healthMap.get(source.sourceId),
-        }))
-        .sort((left, right) => right.count - left.count),
-    [enabledSources, healthMap, resultCountBySource, sourceDeck],
-  )
-
   const isSearching = searchTerm.length >= 2
   const anyLoading = loadingCount > 0
   const activeLanguageLabel = langFilter
@@ -576,811 +564,460 @@ export function SourcesPage() {
   }
 
   return (
-    <div className="animate-page-in font-jpSans space-y-5 pb-10">
+    <div className="animate-fade-in font-jpSans space-y-4 pb-12">
       <div aria-live="polite" className="sr-only">
         {isSearching
           ? `${totalDirectoryMatches} grouped matches across ${activeSourceIds.length} active sources`
           : `${filteredSources.length} sources ready to search`}
       </div>
 
-      <section className="relative overflow-hidden rounded-2xl border border-ink-800/40 bg-ink-900/60 px-5 py-5 shadow-card sm:px-6">
-        <div className="pointer-events-none absolute inset-0 opacity-100">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(248,113,113,0.06),transparent_34%),radial-gradient(circle_at_80%_16%,rgba(125,211,252,0.06),transparent_24%)]" />
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        </div>
+      {/* ── Command Bar ── */}
+      <section className="mx-auto max-w-2xl pt-6 pb-2">
+        <h1 className="text-center font-display text-lg font-medium tracking-tight text-ink-300">
+          Browse Sources
+        </h1>
 
-        <div className="relative grid gap-5 xl:grid-cols-[1.05fr_0.95fr] xl:items-end">
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge label={`${filteredSources.length} sources`} tone="neutral" />
-              <StatusBadge
-                label={healthSummary.red > 0 ? `${healthSummary.red} down` : 'all healthy'}
-                tone={healthSummary.red > 0 ? 'danger' : 'success'}
-              />
-              <StatusBadge label={activeLanguageLabel} tone="neutral" />
+        <form onSubmit={handleSearch} className="mt-4">
+          <div
+            className={clsx(
+              'flex items-center gap-3 rounded-2xl border bg-ink-950/80 px-4 py-3.5 shadow-card transition-all duration-200',
+              'border-ink-800/50 focus-within:border-ink-600/60 focus-within:shadow-card-hover focus-within:ring-1 focus-within:ring-ink-700/30',
+            )}
+          >
+            {anyLoading ? (
+              <Loader2 className="h-5 w-5 shrink-0 animate-spin text-accent-400" />
+            ) : (
+              <Search className="h-5 w-5 shrink-0 text-ink-500" />
+            )}
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search manga across all sources..."
+              className="min-w-0 flex-1 bg-transparent text-base text-ink-100 placeholder:text-ink-600 focus:outline-none"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="rounded-full p-1 text-ink-500 transition-colors hover:bg-white/5 hover:text-ink-200"
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+            <kbd className="hidden items-center gap-0.5 rounded-md border border-ink-800/50 bg-ink-900/60 px-1.5 py-0.5 font-mono text-[10px] text-ink-600 sm:inline-flex">
+              <Command className="h-2.5 w-2.5" />K
+            </kbd>
+          </div>
+        </form>
+
+        {!isSearching && (
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <span className="text-xs text-ink-600">Try:</span>
+            {SEARCH_SUGGESTIONS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => handleSuggestedQuery(s)}
+                className="rounded-full border border-ink-800/50 bg-ink-900/40 px-3 py-1 text-xs text-ink-400 transition-colors hover:bg-ink-800/60 hover:text-ink-200"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {isSearching && (
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-ink-500">
+            <span>{activeSourceIds.length} source{activeSourceIds.length !== 1 ? 's' : ''} active</span>
+            <span className="h-1 w-1 rounded-full bg-ink-700" />
+            <span>{totalDirectoryMatches} result{totalDirectoryMatches !== 1 ? 's' : ''}</span>
+            <span className="h-1 w-1 rounded-full bg-ink-700" />
+            <span>{activeLanguageLabel}</span>
+            {anyLoading && (
+              <>
+                <span className="h-1 w-1 rounded-full bg-ink-700" />
+                <span className="text-accent-400">{loadingCount} loading...</span>
+              </>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* ── Filter Strip ── */}
+      <section className="mx-auto max-w-5xl">
+        <button
+          type="button"
+          onClick={() => setFiltersOpen(!filtersOpen)}
+          className="group flex w-full items-center justify-between rounded-xl border border-ink-800/40 bg-ink-900/40 px-4 py-2.5 text-left transition-colors hover:bg-ink-900/60"
+        >
+          <div className="flex items-center gap-3">
+            <Filter className="h-4 w-4 text-ink-500" />
+            <span className="text-sm font-medium text-ink-300">Filters</span>
+            <div className="flex items-center gap-1.5">
+              {healthSummary.green > 0 && (
+                <span className="h-2 w-2 rounded-full bg-emerald-400" title={`${healthSummary.green} stable`} />
+              )}
+              {healthSummary.yellow > 0 && (
+                <span className="h-2 w-2 rounded-full bg-amber-400" title={`${healthSummary.yellow} degraded`} />
+              )}
+              {healthSummary.red > 0 && (
+                <span className="h-2 w-2 rounded-full bg-red-400" title={`${healthSummary.red} down`} />
+              )}
+              <span className="ml-1 text-xs text-ink-500">
+                {activeSourceIds.length}/{filteredSources.length} sources
+              </span>
+              {langFilter && (
+                <span className="rounded-full bg-accent-600/15 px-2 py-0.5 text-[10px] text-accent-300">
+                  {activeLanguageLabel}
+                </span>
+              )}
+            </div>
+          </div>
+          <ChevronDown
+            className={clsx(
+              'h-4 w-4 text-ink-500 transition-transform duration-200',
+              filtersOpen && 'rotate-180',
+            )}
+          />
+        </button>
+
+        {filtersOpen && (
+          <div className="mt-2 animate-slide-up space-y-4 rounded-xl border border-ink-800/40 bg-ink-900/40 p-4">
+            {/* Sources */}
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <span className="font-opsMono text-[10px] uppercase tracking-[0.2em] text-ink-500">Sources</span>
+                <div className="flex gap-3">
+                  <button type="button" onClick={enableAllSources} className="text-[11px] text-ink-400 transition-colors hover:text-ink-200">
+                    All
+                  </button>
+                  <button type="button" onClick={enableHealthySources} className="text-[11px] text-ink-400 transition-colors hover:text-ink-200">
+                    Healthy only
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => refreshHealthMutation.mutate()}
+                    className="flex items-center gap-1 text-[11px] text-ink-400 transition-colors hover:text-ink-200"
+                  >
+                    <RefreshCw className={clsx('h-3 w-3', refreshHealthMutation.isPending && 'animate-spin')} />
+                    Refresh
+                  </button>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {sourceDeck.map((source) => {
+                  const meta = SOURCE_META[source.sourceId]
+                  const active = enabledSources.has(source.sourceId)
+                  const health = healthMap.get(source.sourceId)
+                  return (
+                    <button
+                      key={source.sourceId}
+                      type="button"
+                      onClick={() => toggleSource(source.sourceId)}
+                      className={clsx(
+                        'flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition-all duration-150',
+                        active
+                          ? 'bg-ink-800/80 text-ink-100 ring-1 ring-ink-700/50'
+                          : 'bg-ink-950/50 text-ink-500 hover:bg-ink-900/60 hover:text-ink-300',
+                      )}
+                    >
+                      <span className={clsx('h-2 w-2 rounded-full', meta.accentDot)} />
+                      {meta.label}
+                      {health && <span className={clsx('h-1.5 w-1.5 rounded-full', HEALTH_META[health.status].dot)} />}
+                      {isSearching && (
+                        <span className="font-opsMono text-[10px] text-ink-500">
+                          {resultCountBySource.get(source.sourceId) ?? 0}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
 
-            <div className="max-w-2xl space-y-2">
-              <h1 className="font-jpSerif text-2xl font-semibold tracking-[-0.03em] text-ink-50 sm:text-3xl">
-                Browse Sources
-              </h1>
-              <p className="max-w-xl text-sm leading-relaxed text-ink-400">
-                Search across sources, compare mirrors, and queue chapters for download.
+            {/* Languages */}
+            <div>
+              <span className="mb-2 block font-opsMono text-[10px] uppercase tracking-[0.2em] text-ink-500">Language</span>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setLangFilter(null)}
+                  className={clsx(
+                    'rounded-lg px-2.5 py-1.5 text-xs transition-colors',
+                    !langFilter ? 'bg-accent-600/15 text-accent-300' : 'text-ink-400 hover:text-ink-200',
+                  )}
+                >
+                  All
+                </button>
+                {availableLanguages.map((lang) => {
+                  const meta = LANG_META[lang]
+                  return (
+                    <button
+                      key={lang}
+                      type="button"
+                      onClick={() => setLangFilter((current) => (current === lang ? null : lang))}
+                      className={clsx(
+                        'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-colors',
+                        langFilter === lang ? 'bg-accent-600/15 text-accent-300' : 'text-ink-400 hover:text-ink-200',
+                      )}
+                    >
+                      {meta?.dot && <span className={clsx('h-1.5 w-1.5 rounded-full', meta.dot)} />}
+                      {meta?.label ?? lang.toUpperCase()}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Health summary + settings link */}
+            <div className="flex items-center justify-between border-t border-ink-800/30 pt-3">
+              <div className="flex items-center gap-4 text-xs text-ink-500">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  {healthSummary.green} stable
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-amber-400" />
+                  {healthSummary.yellow} watch
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-red-400" />
+                  {healthSummary.red} down
+                </span>
+              </div>
+              <Link
+                to="/settings/sources"
+                className="flex items-center gap-1 text-xs text-ink-500 transition-colors hover:text-ink-300"
+              >
+                <Settings className="h-3 w-3" /> Source settings
+              </Link>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ── Results Area ── */}
+      <section className="mx-auto max-w-6xl">
+        {/* Landing */}
+        {!isSearching && (
+          <div className="animate-fade-in">
+            <div className="flex flex-col items-center py-10 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-ink-800/40 text-ink-400">
+                <BookOpen className="h-7 w-7" />
+              </div>
+              <h2 className="mt-4 font-display text-xl font-semibold text-ink-200">
+                Search across {filteredSources.length} sources at once
+              </h2>
+              <p className="mt-2 max-w-md text-sm text-ink-500">
+                Type a manga title above. Results from all active sources are merged, deduplicated, and ranked automatically.
               </p>
             </div>
 
-            <div className="grid gap-2.5 sm:grid-cols-3">
-              <OverviewTile
-                label="Active sources"
-                value={`${activeSourceIds.length}/${filteredSources.length}`}
-                note={hasActiveSources ? 'Ready for parallel lookup' : 'Choose at least one source'}
-              />
-              <OverviewTile
-                label="Raw hits"
-                value={isSearching ? `${totalCount}` : '--'}
-                note={isSearching ? 'Total entries from search' : 'Waiting for a query'}
-              />
-              <OverviewTile
-                label="Grouped titles"
-                value={isSearching ? `${totalDirectoryMatches}` : '--'}
-                note={isSearching ? 'Merged across mirrors' : 'Compare-ready once you search'}
-              />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {sourceDeck.map((source) => (
+                <SourceLandingCard key={source.sourceId} source={source} health={healthMap.get(source.sourceId)} />
+              ))}
             </div>
           </div>
-          <form
-            onSubmit={handleSearch}
-            className="relative overflow-hidden rounded-2xl border border-ink-800/50 bg-ink-950/70 p-4 shadow-lg sm:p-5"
-          >
-            <div className="relative space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-medium text-ink-300">
-                  Search manga
-                </h2>
-                <span className="rounded-md border border-ink-800/50 bg-ink-950/60 px-2 py-0.5 font-mono text-[10px] text-ink-600">
-                  Ctrl+K
-                </span>
-              </div>
+        )}
 
-              <div className="rounded-xl border border-ink-800/50 bg-ink-900/50 p-2.5">
-                <div className="flex items-center gap-3 rounded-lg border border-ink-800/60 bg-ink-950/80 px-3 py-2.5">
-                  <Search className="h-4 w-4 shrink-0 text-ink-400" />
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Try a manga title, alt title, or series name..."
-                    className="min-w-0 flex-1 bg-transparent text-sm text-ink-100 placeholder:text-ink-600 focus:outline-none"
-                  />
-                  {query && (
-                    <button
-                      type="button"
-                      onClick={handleClearSearch}
-                      className="rounded-full p-1 text-ink-500 transition-colors hover:bg-white/5 hover:text-ink-200"
-                      aria-label="Clear search"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
+        {/* No sources selected */}
+        {isSearching && !hasActiveSources && (
+          <div role="alert">
+            <ErrorState
+              message="No source selected"
+              hint="Open filters and enable at least one source before searching."
+            />
+          </div>
+        )}
 
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button
-                    type="submit"
-                    size="sm"
-                    disabled={query.trim().length < 2 || !hasActiveSources}
-                    className="min-w-[108px] justify-center rounded-full !px-4"
-                  >
-                    {anyLoading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Searching
-                      </>
-                    ) : (
-                      <>
-                        Search titles
-                        <ArrowRight className="h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="rounded-full"
-                    onClick={handleClearSearch}
-                  >
-                    Reset
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-full"
-                    onClick={() => inputRef.current?.focus()}
-                  >
-                    Focus search
-                  </Button>
-                </div>
-              </div>
+        {/* Loading */}
+        {isSearching && anyLoading && totalCount === 0 && hasActiveSources && <DirectoryLoadingState />}
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <SearchReadout
-                  label="Scope"
-                  value={String(activeSourceIds.length)}
-                  note={hasActiveSources ? 'Sources active for the next lookup' : 'No source currently active'}
-                />
-                <SearchReadout
-                  label="Language"
-                  value={activeLanguageLabel}
-                  note={langFilter ? 'Results filtered before search fan-out' : 'All languages currently in play'}
-                />
-              </div>
+        {/* Errors */}
+        {isSearching && !anyLoading && errorCount > 0 && totalCount === 0 && hasActiveSources && (
+          <div role="alert">
+            <ErrorState
+              message={`Search failed on ${errorCount} source${errorCount !== 1 ? 's' : ''}`}
+              hint="Try refreshing source health, widening the language filter, or reducing active sources."
+              onRetry={() => queryClient.invalidateQueries({ queryKey: ['manga-search'] })}
+            />
+          </div>
+        )}
 
-              <div className="space-y-2">
-                <div className="text-xs text-ink-500">Suggested starts</div>
-                <div className="flex flex-wrap gap-2">
-                  {SEARCH_SUGGESTIONS.map((suggestion) => (
-                    <button
-                      key={suggestion}
-                      type="button"
-                      onClick={() => handleSuggestedQuery(suggestion)}
-                      className="cursor-pointer rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-ink-300 transition-all duration-200 hover:border-white/20 hover:bg-white/[0.08] hover:text-ink-100"
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
-      </section>
+        {/* No results */}
+        {isSearching && !anyLoading && totalCount === 0 && errorCount === 0 && hasActiveSources && (
+          <DirectoryNoResults searchTerm={searchTerm} onSuggestionClick={handleSuggestedQuery} />
+        )}
 
-      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="space-y-4 xl:sticky xl:top-6 xl:self-start">
-          <Card className="rounded-[26px] border-ink-800/50 bg-ink-900/60 p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="font-opsMono text-[11px] uppercase tracking-[0.22em] text-ink-500">
-                  Search scope
-                </p>
-                <h2 className="mt-1 font-jpSerif text-2xl font-semibold text-ink-50">
-                  Filters
-                </h2>
-              </div>
-              <Languages className="h-5 w-5 text-ink-500" />
-            </div>
-
-            <div className="mt-4 grid gap-3">
-              <ScopeRow label="Sources active" value={`${activeSourceIds.length}/${filteredSources.length}`} />
-              <ScopeRow label="Language" value={activeLanguageLabel} />
-              <ScopeRow label="Healthy" value={`${healthSummary.green} stable`} />
-            </div>
-
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              <HealthMiniPill label="Stable" count={healthSummary.green} tone="success" />
-              <HealthMiniPill label="Watch" count={healthSummary.yellow} tone="warn" />
-              <HealthMiniPill label="Down" count={healthSummary.red} tone="danger" />
-            </div>
-          </Card>
-
-          <Card className="rounded-[26px] border-ink-800/50 bg-ink-900/60 p-5">
-            <div className="flex items-end justify-between gap-3">
-              <div>
-                <p className="font-opsMono text-[11px] uppercase tracking-[0.22em] text-ink-500">
-                  Language lane
-                </p>
-                <h2 className="mt-1 font-jpSerif text-xl font-semibold text-ink-50">
-                  Narrow the catalog
-                </h2>
-              </div>
-              <span className="text-xs text-ink-500">{availableLanguages.length}</span>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <DirectoryFilterChip
-                label="All languages"
-                active={!langFilter}
-                onClick={() => setLangFilter(null)}
-              />
-              {availableLanguages.map((language) => {
-                const meta = LANG_META[language]
-                return (
-                  <DirectoryFilterChip
-                    key={language}
-                    label={meta?.label ?? language.toUpperCase()}
-                    dotClass={meta?.dot}
-                    active={langFilter === language}
-                    onClick={() =>
-                      setLangFilter((current) => (current === language ? null : language))
-                    }
-                  />
-                )
-              })}
-            </div>
-          </Card>
-
-          <Card className="rounded-[26px] border-ink-800/50 bg-ink-900/60 p-5">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-end justify-between gap-3">
-                <div>
-                  <p className="font-opsMono text-[11px] uppercase tracking-[0.22em] text-ink-500">
-                    Sources
-                  </p>
-                  <h2 className="mt-1 font-jpSerif text-xl font-semibold text-ink-50">
-                    Choose mirrors
-                  </h2>
-                </div>
-                <span className="text-xs text-ink-500">{sourceDeck.length} shown</span>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  className="rounded-full"
-                  onClick={enableAllSources}
-                >
-                  Enable all
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  className="rounded-full"
-                  onClick={enableHealthySources}
-                >
-                  Healthy only
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="rounded-full"
-                  onClick={() => refreshHealthMutation.mutate()}
-                  loading={refreshHealthMutation.isPending}
-                >
-                  {!refreshHealthMutation.isPending && <RefreshCcw className="h-4 w-4" />}
-                  Refresh
-                </Button>
+        {/* Results grid */}
+        {isSearching && totalCount > 0 && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-end justify-between gap-3 px-1">
+              <h2 className="font-display text-lg font-semibold text-ink-100">
+                {totalDirectoryMatches} result{totalDirectoryMatches !== 1 ? 's' : ''}
+                <span className="ml-2 font-normal text-ink-500">for &ldquo;{searchTerm}&rdquo;</span>
+              </h2>
+              <div className="flex items-center gap-3 text-xs text-ink-500">
+                <span>{totalCount} raw hits</span>
+                <span>{activeSourceIds.length} sources</span>
+                {errorCount > 0 && <span className="text-red-400">{errorCount} failed</span>}
               </div>
             </div>
 
-            <div className="mt-4 space-y-2">
-              {sourceDeck.map((source) => (
-                <SourceToggleRow
-                  key={source.sourceId}
-                  source={source}
-                  active={enabledSources.has(source.sourceId)}
-                  health={healthMap.get(source.sourceId)}
-                  resultCount={resultCountBySource.get(source.sourceId) ?? 0}
-                  onToggle={() => toggleSource(source.sourceId)}
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              {directoryEntries.map((entry) => (
+                <MangaShelfCard
+                  key={entry.key}
+                  entry={entry}
+                  onOpenLead={() => handleMangaClick(entry.lead)}
+                  onOpenVariant={handleMangaClick}
                 />
               ))}
             </div>
-
-            <Link
-              to="/settings/sources"
-              className="mt-4 inline-flex items-center gap-2 text-sm text-ink-400 transition-colors hover:text-ink-100"
-            >
-              <Activity className="h-4 w-4" />
-              Open full source settings
-            </Link>
-          </Card>
-        </aside>
-
-        <section className="space-y-4">
-          {!isSearching && (
-            <DirectoryLanding
-              sourceCount={filteredSources.length}
-              sourceDeck={sourceDeck}
-              healthMap={healthMap}
-              onSuggestionClick={handleSuggestedQuery}
-            />
-          )}
-
-          {isSearching && !hasActiveSources && (
-            <div role="alert">
-              <ErrorState
-                message="No source selected"
-                hint="Enable at least one source in the left rail before launching a search."
-              />
-            </div>
-          )}
-
-          {isSearching && anyLoading && totalCount === 0 && hasActiveSources && (
-            <DirectoryLoadingState />
-          )}
-
-          {isSearching && !anyLoading && errorCount > 0 && totalCount === 0 && hasActiveSources && (
-            <div role="alert">
-              <ErrorState
-                message={`Search failed on ${errorCount} source${errorCount !== 1 ? 's' : ''}`}
-                hint="The query returned no usable entries. Refresh health, widen the language lane, or reduce the active source set."
-                onRetry={() => {
-                  queryClient.invalidateQueries({ queryKey: ['manga-search'] })
-                }}
-              />
-            </div>
-          )}
-
-          {isSearching && !anyLoading && totalCount === 0 && errorCount === 0 && hasActiveSources && (
-            <DirectoryNoResults
-              searchTerm={searchTerm}
-              onSuggestionClick={handleSuggestedQuery}
-            />
-          )}
-
-          {isSearching && totalCount > 0 && (
-            <div className="space-y-4">
-              <Card className="rounded-[26px] border-ink-800/50 bg-ink-900/60 p-5">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                  <div>
-                    <p className="font-opsMono text-[11px] uppercase tracking-[0.22em] text-ink-500">
-                      Search results
-                    </p>
-                    <h2 className="mt-1 font-jpSerif text-3xl font-semibold text-ink-50">
-                      {totalDirectoryMatches} grouped match{totalDirectoryMatches !== 1 ? 'es' : ''} for "{searchTerm}"
-                    </h2>
-                    <p className="mt-2 max-w-3xl text-sm leading-7 text-ink-400">
-                      Results are grouped by title so you can compare availability across mirrors before opening a detail page.
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <SummaryBadge label="Raw hits" value={String(totalCount)} />
-                    <SummaryBadge label="Sources" value={String(activeSourceIds.length)} />
-                    <SummaryBadge label="Language" value={activeLanguageLabel} />
-                  </div>
-                </div>
-
-                <div className="mt-5 grid gap-3 xl:grid-cols-[1.2fr_0.8fr]">
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <OverviewTile
-                      label="Compared titles"
-                      value={String(totalDirectoryMatches)}
-                      note="Distinct grouped works"
-                    />
-                    <OverviewTile
-                      label="Raw source hits"
-                      value={String(totalCount)}
-                      note="All entries before grouping"
-                    />
-                    <OverviewTile
-                      label="Still loading"
-                      value={String(loadingCount)}
-                      note={anyLoading ? 'Some sources are still responding' : 'All active searches have answered'}
-                    />
-                  </div>
-
-                  <div className="rounded-[22px] border border-ink-800/60 bg-ink-950/60 px-4 py-4">
-                    <p className="font-opsMono text-[11px] uppercase tracking-[0.22em] text-ink-500">
-                      Source contribution
-                    </p>
-                    <div className="mt-3 space-y-2">
-                      {sourceResultRows.map(({ source, count, health }) => (
-                        <ContributionRow
-                          key={source.sourceId}
-                          sourceId={source.sourceId}
-                          count={count}
-                          latency={health?.latencyMs}
-                          error={health?.error}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
-              <div className="grid gap-4 2xl:grid-cols-2">
-                {directoryEntries.map((entry) => (
-                  <DirectoryResultCard
-                    key={entry.key}
-                    entry={entry}
-                    onOpenLead={() => handleMangaClick(entry.lead)}
-                    onOpenVariant={handleMangaClick}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
-      </div>
+          </div>
+        )}
+      </section>
     </div>
   )
 }
 
-function OverviewTile({
-  label,
-  value,
-  note,
-}: {
-  label: string
-  value: string
-  note: string
-}) {
-  return (
-    <div className="rounded-[22px] border border-ink-800/60 bg-ink-950/65 px-4 py-4">
-      <p className="font-opsMono text-[11px] uppercase tracking-[0.2em] text-ink-500">{label}</p>
-      <p className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-ink-50">{value}</p>
-      <p className="mt-1 text-xs leading-6 text-ink-500">{note}</p>
-    </div>
-  )
-}
+/* ── Sub-components ── */
 
-function SearchReadout({
-  label,
-  value,
-  note,
-}: {
-  label: string
-  value: string
-  note: string
-}) {
-  return (
-    <div className="rounded-[20px] border border-ink-800/60 bg-ink-900/55 px-4 py-3">
-      <p className="font-opsMono text-[11px] uppercase tracking-[0.18em] text-ink-600">{label}</p>
-      <p className="mt-2 truncate text-lg font-semibold text-ink-50">{value}</p>
-      <p className="mt-1 text-xs text-ink-500">{note}</p>
-    </div>
-  )
-}
-
-function StatusBadge({
-  label,
-  tone,
-}: {
-  label: string
-  tone: 'neutral' | 'success' | 'danger'
-}) {
-  return (
-    <span
-      className={clsx(
-        'rounded-full px-3 py-1 text-xs',
-        tone === 'neutral' && 'border border-ink-800/60 bg-ink-950/70 text-ink-400',
-        tone === 'success' && 'bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20',
-        tone === 'danger' && 'bg-red-500/10 text-red-300 ring-1 ring-red-500/20',
-      )}
-    >
-      {label}
-    </span>
-  )
-}
-
-function ScopeRow({
-  label,
-  value,
-}: {
-  label: string
-  value: string
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-ink-800/60 bg-ink-950/55 px-4 py-3">
-      <span className="text-sm text-ink-400">{label}</span>
-      <span className="font-opsMono text-sm text-ink-100">{value}</span>
-    </div>
-  )
-}
-
-function HealthMiniPill({
-  label,
-  count,
-  tone,
-}: {
-  label: string
-  count: number
-  tone: 'success' | 'warn' | 'danger'
-}) {
-  return (
-    <div
-      className={clsx(
-        'rounded-2xl px-3 py-3 text-center',
-        tone === 'success' && 'bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20',
-        tone === 'warn' && 'bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/20',
-        tone === 'danger' && 'bg-red-500/10 text-red-300 ring-1 ring-red-500/20',
-      )}
-    >
-      <p className="font-opsMono text-[10px] uppercase tracking-[0.18em]">{label}</p>
-      <p className="mt-1 text-lg font-semibold">{count}</p>
-    </div>
-  )
-}
-
-function DirectoryFilterChip({
-  label,
-  active,
-  onClick,
-  dotClass,
-}: {
-  label: string
-  active: boolean
-  onClick: () => void
-  dotClass?: string
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={clsx(
-        'cursor-pointer rounded-full px-3 py-2 text-xs font-medium transition-all duration-200',
-        active
-          ? 'bg-accent-600/15 text-accent-300 ring-1 ring-accent-500/25'
-          : 'bg-ink-950/55 text-ink-400 ring-1 ring-ink-800/60 hover:bg-ink-950/80 hover:text-ink-200',
-      )}
-    >
-      <span className="flex items-center gap-2">
-        {dotClass && <span className={clsx('h-2 w-2 rounded-full', dotClass)} />}
-        {label}
-      </span>
-    </button>
-  )
-}
-
-function HealthDot({ status }: { status?: HealthStatus }) {
-  if (!status) return <span className="h-2.5 w-2.5 rounded-full bg-ink-700" />
-  return <span className={clsx('h-2.5 w-2.5 rounded-full', HEALTH_META[status].dot)} />
-}
-
-function SourceToggleRow({
+function SourceLandingCard({
   source,
-  active,
   health,
-  resultCount,
-  onToggle,
 }: {
   source: { sourceId: MangaSourceId; languages: string[] }
-  active: boolean
   health?: { status: HealthStatus; latencyMs: number | null; error: string | null }
-  resultCount: number
-  onToggle: () => void
 }) {
   const meta = SOURCE_META[source.sourceId]
   const healthMeta = health ? HEALTH_META[health.status] : null
 
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-pressed={active}
-      className={clsx(
-        'w-full rounded-[22px] border px-4 py-3 text-left transition-all duration-200',
-        active
-          ? 'border-accent-700/30 bg-accent-950/10'
-          : 'border-ink-800/60 bg-ink-950/55 hover:bg-ink-950/75',
-      )}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className={clsx('h-2.5 w-2.5 rounded-full', meta.accentDot)} />
-            <span className="font-medium text-ink-100">{meta.label}</span>
-          </div>
-          <p className="mt-1 line-clamp-2 text-xs leading-5 text-ink-500">{meta.blurb}</p>
-        </div>
-        <span
-          className={clsx(
-            'rounded-full px-2.5 py-1 text-[10px] uppercase tracking-[0.16em]',
-            active ? meta.accentSoft : 'bg-ink-800/90 text-ink-400',
-          )}
-        >
-          {active ? 'On' : 'Off'}
-        </span>
-      </div>
-
-      <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-        <ScopeRow label="Lang" value={String(source.languages.length)} />
-        <ScopeRow label="Hits" value={resultCount > 0 ? String(resultCount) : '--'} />
-        <ScopeRow label="Latency" value={formatLatency(health?.latencyMs)} />
-      </div>
-
-      <div className="mt-3 flex items-center justify-between gap-3 border-t border-ink-800/50 pt-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <HealthDot status={health?.status} />
-          <span className="truncate text-xs text-ink-500">
-            {healthMeta?.note ?? 'Waiting for health probe'}
-          </span>
-        </div>
-        <ChevronRight className="h-4 w-4 text-ink-600" />
-      </div>
-    </button>
-  )
-}
-
-function SummaryBadge({
-  label,
-  value,
-}: {
-  label: string
-  value: string
-}) {
-  return (
-    <span className="rounded-full border border-ink-800/60 bg-ink-950/70 px-3 py-1.5 text-xs text-ink-300">
-      <span className="text-ink-500">{label}:</span> {value}
-    </span>
-  )
-}
-
-function ContributionRow({
-  sourceId,
-  count,
-  latency,
-  error,
-}: {
-  sourceId: MangaSourceId
-  count: number
-  latency: number | null | undefined
-  error: string | null | undefined
-}) {
-  const meta = SOURCE_META[sourceId]
-  return (
-    <div className="flex items-center gap-3 rounded-2xl border border-ink-800/50 bg-ink-900/50 px-4 py-3">
-      <span className={clsx('h-2.5 w-2.5 rounded-full', meta.accentDot)} />
+    <div className="group flex items-start gap-3 rounded-xl border border-ink-800/40 bg-ink-900/40 p-4 transition-colors hover:bg-ink-900/60">
+      <span className={clsx('mt-0.5 h-3 w-3 shrink-0 rounded-full', meta.accentDot)} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-ink-100">{meta.label}</span>
-          <span className="text-xs text-ink-500">{formatLatency(latency)}</span>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-ink-200">{meta.label}</span>
+          {healthMeta && <span className={clsx('h-2 w-2 rounded-full', healthMeta.dot)} />}
         </div>
-        <p className="truncate text-xs text-ink-500">{error || 'Healthy response cycle'}</p>
+        <p className="mt-1 line-clamp-1 text-xs text-ink-500">{meta.blurb}</p>
+        <div className="mt-2 flex items-center gap-3 text-[11px] text-ink-600">
+          <span>{source.languages.length} lang</span>
+          <span>{formatLatency(health?.latencyMs)}</span>
+        </div>
       </div>
-      <span className="rounded-full bg-ink-950/70 px-2.5 py-1 font-opsMono text-xs text-ink-200">
-        {count}
-      </span>
     </div>
   )
 }
 
-function DirectoryLanding({
-  sourceCount,
-  sourceDeck,
-  healthMap,
-  onSuggestionClick,
+function MangaShelfCard({
+  entry,
+  onOpenLead,
+  onOpenVariant,
 }: {
-  sourceCount: number
-  sourceDeck: Array<{ sourceId: MangaSourceId; languages: string[] }>
-  healthMap: Map<MangaSourceId, { status: HealthStatus; latencyMs: number | null; error: string | null }>
-  onSuggestionClick: (value: string) => void
+  entry: DirectoryEntry
+  onOpenLead: () => void
+  onOpenVariant: (result: MangaSearchResultDto) => void
 }) {
-  return (
-    <div className="space-y-4">
-      <Card className="rounded-[28px] border-ink-800/50 bg-ink-900/60 p-6">
-        <div className="max-w-3xl space-y-4">
-          <p className="font-opsMono text-[11px] uppercase tracking-[0.22em] text-ink-500">
-            Directory mode
-          </p>
-          <h3 className="font-jpSerif text-3xl font-semibold tracking-[-0.03em] text-ink-50">
-            Search across {sourceCount} visible sources from one place.
-          </h3>
-          <p className="max-w-2xl text-sm leading-7 text-ink-400">
-            Pick a title, let KometaManga compare the mirrors, then open the one that looks healthiest and most complete.
-          </p>
+  const { lead } = entry
+  const meta = SOURCE_META[lead.sourceId]
 
-          <div className="flex flex-wrap gap-2">
-            {SEARCH_SUGGESTIONS.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() => onSuggestionClick(suggestion)}
-                className="cursor-pointer rounded-full border border-ink-800/60 bg-ink-950/60 px-3 py-2 text-sm text-ink-300 transition-all duration-200 hover:bg-ink-950/80 hover:text-ink-100"
+  return (
+    <div className="group animate-fade-in">
+      <button type="button" onClick={onOpenLead} className="relative w-full overflow-hidden rounded-xl bg-ink-900/60 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover">
+        {/* Cover */}
+        <div className="aspect-[2/3] w-full overflow-hidden bg-ink-950/80">
+          {lead.coverUrl ? (
+            <img
+              src={imageProxyUrl(lead.coverUrl) ?? lead.coverUrl}
+              alt={lead.title}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-ink-700">
+              <BookOpen className="h-8 w-8" />
+            </div>
+          )}
+
+          {/* Source count overlay */}
+          {entry.sourceCount > 1 && (
+            <div className="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-ink-950/80 px-2 py-1 text-[10px] font-medium text-ink-200 backdrop-blur-sm">
+              <Layers className="h-3 w-3" />
+              {entry.sourceCount}
+            </div>
+          )}
+
+          {/* Status overlay */}
+          {lead.status && lead.status !== 'UNKNOWN' && (
+            <div className="absolute bottom-2 left-2">
+              <span
+                className={clsx(
+                  'rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider backdrop-blur-sm',
+                  STATUS_META[lead.status],
+                )}
               >
-                {suggestion}
+                {lead.status}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Title area */}
+        <div className="p-3 text-left">
+          <h3 className="line-clamp-2 text-sm font-medium leading-snug text-ink-100 group-hover:text-white">
+            {lead.title}
+          </h3>
+          {entry.primaryAltTitle && (
+            <p className="mt-0.5 line-clamp-1 text-[11px] text-ink-500">{entry.primaryAltTitle}</p>
+          )}
+          <div className="mt-2 flex items-center gap-1.5">
+            <span className={clsx('h-2 w-2 rounded-full', meta.accentDot)} />
+            <span className="text-[11px] text-ink-500">{meta.label}</span>
+            {lead.year && <span className="ml-auto text-[11px] text-ink-600">{lead.year}</span>}
+          </div>
+        </div>
+      </button>
+
+      {/* Mirror chips */}
+      {entry.variants.length > 1 && (
+        <div className="mt-1.5 flex flex-wrap gap-1">
+          {entry.variants.map((variant) => {
+            const variantMeta = SOURCE_META[variant.sourceId]
+            return (
+              <button
+                key={`${variant.sourceId}-${variant.id}`}
+                type="button"
+                onClick={() => onOpenVariant(variant)}
+                className="flex items-center gap-1 rounded-md bg-ink-900/40 px-1.5 py-0.5 text-[10px] text-ink-400 transition-colors hover:bg-ink-800/60 hover:text-ink-200"
+                title={`Open on ${variantMeta.label}`}
+              >
+                <span className={clsx('h-1.5 w-1.5 rounded-full', variantMeta.accentDot)} />
+                {variantMeta.label}
               </button>
-            ))}
-          </div>
+            )
+          })}
         </div>
-      </Card>
-
-      <div className="grid gap-4 xl:grid-cols-[0.82fr_1.18fr]">
-        <Card className="rounded-[28px] border-ink-800/50 bg-ink-900/60 p-6">
-          <p className="font-opsMono text-[11px] uppercase tracking-[0.22em] text-ink-500">
-            How to use it
-          </p>
-          <div className="mt-4 space-y-3">
-            <LandingNote
-              title="Search by series"
-              description="Start from the work you want, not the provider you guess might have it."
-            />
-            <LandingNote
-              title="Filter with purpose"
-              description="Use the left rail only when you need to constrain language or exclude weak mirrors."
-            />
-            <LandingNote
-              title="Compare before opening"
-              description="Grouped results let you see how many sources carry the same title at a glance."
-            />
-          </div>
-        </Card>
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {sourceDeck.map((source) => (
-            <SourceShelfCard
-              key={source.sourceId}
-              source={source}
-              health={healthMap.get(source.sourceId)}
-            />
-          ))}
-        </div>
-      </div>
+      )}
     </div>
-  )
-}
-
-function LandingNote({
-  title,
-  description,
-}: {
-  title: string
-  description: string
-}) {
-  return (
-    <div className="rounded-2xl border border-ink-800/60 bg-ink-950/55 px-4 py-3">
-      <p className="text-base font-semibold text-ink-100">{title}</p>
-      <p className="mt-1 text-sm leading-6 text-ink-400">{description}</p>
-    </div>
-  )
-}
-
-function SourceShelfCard({
-  source,
-  health,
-}: {
-  source: { sourceId: MangaSourceId; languages: string[] }
-  health?: { status: HealthStatus; latencyMs: number | null; error: string | null }
-}) {
-  const meta = SOURCE_META[source.sourceId]
-  return (
-    <Card className="rounded-[24px] border-ink-800/50 bg-ink-900/60 p-5">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className={clsx('h-2.5 w-2.5 rounded-full', meta.accentDot)} />
-            <span className="font-opsMono text-[11px] uppercase tracking-[0.18em] text-ink-500">
-              {source.sourceId}
-            </span>
-          </div>
-          <h4 className="mt-2 text-lg font-semibold text-ink-100">{meta.label}</h4>
-        </div>
-        <HealthDot status={health?.status} />
-      </div>
-
-      <p className="mt-3 text-sm leading-6 text-ink-400">{meta.blurb}</p>
-
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <ScopeRow label="Languages" value={String(source.languages.length)} />
-        <ScopeRow label="Latency" value={formatLatency(health?.latencyMs)} />
-      </div>
-    </Card>
   )
 }
 
 function DirectoryLoadingState() {
   return (
-    <div className="space-y-4">
-      <div className="rounded-[28px] border border-ink-800/40 bg-ink-900/40 p-5">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Skeleton className="h-24 rounded-[22px]" />
-          <Skeleton className="h-24 rounded-[22px]" />
-          <Skeleton className="h-24 rounded-[22px]" />
-        </div>
-      </div>
-
-      <div className="grid gap-4 2xl:grid-cols-2">
-        {Array.from({ length: 4 }, (_, index) => (
-          <div key={index} className="rounded-[24px] border border-ink-800/40 bg-ink-900/40 p-5">
-            <div className="grid gap-4 md:grid-cols-[108px_1fr]">
-              <Skeleton className="h-40 rounded-[18px]" />
-              <div className="space-y-3">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-8 w-4/5" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-10 w-32 rounded-full" />
-                <div className="flex flex-wrap gap-2">
-                  <Skeleton className="h-9 w-24 rounded-full" />
-                  <Skeleton className="h-9 w-24 rounded-full" />
-                </div>
-              </div>
-            </div>
+    <div className="mx-auto max-w-6xl">
+      <Skeleton className="mb-4 h-6 w-48" />
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        {Array.from({ length: 12 }, (_, i) => (
+          <div key={i} className="space-y-2">
+            <Skeleton className="aspect-[2/3] w-full rounded-xl" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
           </div>
         ))}
       </div>
@@ -1396,175 +1033,41 @@ function DirectoryNoResults({
   onSuggestionClick: (value: string) => void
 }) {
   return (
-    <Card className="rounded-[28px] border-ink-800/50 bg-ink-900/60 p-6">
-      <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-        <div className="space-y-2">
-          <p className="font-opsMono text-[11px] uppercase tracking-[0.22em] text-ink-500">
-            No matches
-          </p>
-          <h3 className="font-jpSerif text-2xl font-semibold text-ink-50">
-            Nothing surfaced for "{searchTerm}".
-          </h3>
-          <p className="max-w-2xl text-sm leading-7 text-ink-400">
-            Try a broader title, remove the language filter, or enable more sources in the left rail.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {SEARCH_SUGGESTIONS.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => onSuggestionClick(suggestion)}
-              className="cursor-pointer rounded-full border border-ink-800/60 bg-ink-950/60 px-3 py-2 text-sm text-ink-300 transition-all duration-200 hover:bg-ink-950/80 hover:text-ink-100"
-            >
-              Try {suggestion}
-            </button>
-          ))}
-        </div>
+    <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-ink-800/50 bg-ink-900/20 text-center animate-fade-in">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-ink-800/40 text-ink-500">
+        <Search className="h-6 w-6" />
       </div>
-    </Card>
-  )
-}
-
-function DirectoryResultCard({
-  entry,
-  onOpenLead,
-  onOpenVariant,
-}: {
-  entry: DirectoryEntry
-  onOpenLead: () => void
-  onOpenVariant: (result: MangaSearchResultDto) => void
-}) {
-  const { lead } = entry
-  const meta = SOURCE_META[lead.sourceId]
-
-  return (
-    <Card className="rounded-[26px] border-ink-800/50 bg-ink-900/60 p-5">
-      <button
-        type="button"
-        onClick={onOpenLead}
-        className="group w-full text-left"
-      >
-        <div className="grid gap-4 md:grid-cols-[108px_1fr]">
-          <div className="overflow-hidden rounded-[18px] bg-ink-950/80">
-            {lead.coverUrl ? (
-              <img
-                src={imageProxyUrl(lead.coverUrl) ?? lead.coverUrl}
-                alt={`${lead.title} cover`}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                loading="lazy"
-              />
-            ) : (
-              <div className="flex h-full min-h-[10rem] items-center justify-center text-ink-700">
-                <BookOpen className="h-6 w-6" />
-              </div>
-            )}
-          </div>
-
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={clsx('rounded-full px-2.5 py-1 text-[10px] uppercase tracking-[0.16em]', meta.accentSoft)}>
-                Lead: {meta.label}
-              </span>
-              <span className="rounded-full border border-ink-800/60 bg-ink-950/70 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-ink-400">
-                {entry.sourceCount} source{entry.sourceCount !== 1 ? 's' : ''}
-              </span>
-              {lead.status && (
-                <span className={clsx('rounded-full px-2.5 py-1 text-[10px] uppercase tracking-[0.16em]', STATUS_META[lead.status])}>
-                  {lead.status}
-                </span>
-              )}
-            </div>
-
-            <h3 className="mt-3 line-clamp-2 font-jpSerif text-2xl font-semibold leading-tight text-ink-50">
-              {lead.title}
-            </h3>
-            {entry.primaryAltTitle && (
-              <p className="mt-1 line-clamp-1 text-sm text-ink-500">{entry.primaryAltTitle}</p>
-            )}
-
-            <p className="mt-3 text-sm leading-7 text-ink-400">
-              Best match chosen from the grouped results. Open this to inspect chapters fast, or pick a specific mirror below.
-            </p>
-
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-ink-500">
-              <span>{lead.year ? `Year ${lead.year}` : 'Year unknown'}</span>
-              <span>{entry.variants.length} available entries</span>
-            </div>
-
-            <div className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-ink-100">
-              Open lead result
-              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-            </div>
-          </div>
-        </div>
-      </button>
-
-      <div className="mt-5 border-t border-ink-800/50 pt-4">
-        <p className="font-opsMono text-[11px] uppercase tracking-[0.2em] text-ink-500">
-          Available mirrors
+      <div className="max-w-xs">
+        <p className="font-display font-semibold text-ink-300">No results for &ldquo;{searchTerm}&rdquo;</p>
+        <p className="mt-1.5 text-sm leading-relaxed text-ink-500">
+          Try a different title, remove language filters, or enable more sources.
         </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {entry.variants.map((variant) => {
-            const variantMeta = SOURCE_META[variant.sourceId]
-            return (
-              <button
-                key={`${variant.sourceId}-${variant.id}`}
-                type="button"
-                onClick={() => onOpenVariant(variant)}
-                className="inline-flex items-center gap-2 rounded-full border border-ink-800/60 bg-ink-950/60 px-3 py-2 text-sm text-ink-300 transition-all duration-200 hover:bg-ink-950/85 hover:text-ink-100"
-              >
-                <span className={clsx('h-2 w-2 rounded-full', variantMeta.accentDot)} />
-                {variantMeta.label}
-                {variant.status && (
-                  <span className={clsx('rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.14em]', STATUS_META[variant.status])}>
-                    {variant.status}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
       </div>
-    </Card>
+      <div className="flex flex-wrap justify-center gap-2">
+        {SEARCH_SUGGESTIONS.map((s) => (
+          <Button key={s} variant="ghost" size="sm" onClick={() => onSuggestionClick(s)}>
+            {s}
+          </Button>
+        ))}
+      </div>
+    </div>
   )
 }
 
 function SourcesPageSkeleton() {
   return (
-    <div className="animate-page-in space-y-6 pb-10">
-      <div className="rounded-[30px] border border-ink-800/50 bg-ink-900/50 p-6">
-        <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-14 w-4/5" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-4/5" />
-            <div className="grid gap-3 sm:grid-cols-3">
-              <Skeleton className="h-24 rounded-[22px]" />
-              <Skeleton className="h-24 rounded-[22px]" />
-              <Skeleton className="h-24 rounded-[22px]" />
-            </div>
-          </div>
-          <Skeleton className="h-[24rem] rounded-[28px]" />
-        </div>
+    <div className="animate-fade-in space-y-6 pb-12">
+      <div className="mx-auto max-w-2xl space-y-4 pt-6">
+        <Skeleton className="mx-auto h-5 w-32" />
+        <Skeleton className="h-14 w-full rounded-2xl" />
       </div>
-
-      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="space-y-4">
-          <Skeleton className="h-48 rounded-[26px]" />
-          <Skeleton className="h-44 rounded-[26px]" />
-          <Skeleton className="h-[32rem] rounded-[26px]" />
-        </div>
-        <div className="space-y-4">
-          <Skeleton className="h-56 rounded-[28px]" />
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 6 }, (_, index) => (
-              <Skeleton key={index} className="h-56 rounded-[24px]" />
-            ))}
-          </div>
-        </div>
+      <div className="mx-auto max-w-5xl">
+        <Skeleton className="h-12 w-full rounded-xl" />
+      </div>
+      <div className="mx-auto max-w-5xl grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }, (_, i) => (
+          <Skeleton key={i} className="h-20 rounded-xl" />
+        ))}
       </div>
     </div>
   )
