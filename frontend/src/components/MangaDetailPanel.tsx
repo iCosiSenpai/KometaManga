@@ -9,6 +9,7 @@ import {
   ChevronUp,
   Download,
   ExternalLink,
+  FolderOpen,
   Heart,
   HeartOff,
   Languages,
@@ -310,6 +311,9 @@ export function MangaDetailPanel({
         activeLanguageLabel={activeLanguageLabel}
         loading={followMutation.isPending}
         chapterCount={chapterCount}
+        downloadTargets={downloadTargets}
+        selectedTargetId={selectedTargetId}
+        onSelectTarget={setSelectedTargetId}
         onClose={() => setShowFollowDialog(false)}
         onConfirm={(downloadExisting) => {
           followMutation.mutate(undefined, {
@@ -432,6 +436,9 @@ function FollowDialog({
   activeLanguageLabel,
   loading,
   chapterCount,
+  downloadTargets,
+  selectedTargetId,
+  onSelectTarget,
   onClose,
   onConfirm,
 }: {
@@ -441,6 +448,9 @@ function FollowDialog({
   activeLanguageLabel: string
   loading: boolean
   chapterCount: number
+  downloadTargets: DownloadTarget[]
+  selectedTargetId: string
+  onSelectTarget: (id: string) => void
   onClose: () => void
   onConfirm: (downloadExisting: boolean) => void
 }) {
@@ -498,18 +508,38 @@ function FollowDialog({
           </div>
 
           {chapterCount > 0 && (
-            <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              <input
-                type="checkbox"
-                checked={downloadExisting}
-                onChange={(e) => setDownloadExisting(e.target.checked)}
-                className="h-4 w-4 rounded border-white/20 bg-transparent accent-rose-500"
-              />
-              <div>
-                <span className="text-sm font-medium text-ink-200">Also download existing chapters</span>
-                <p className="text-xs text-ink-500">Queue all {chapterCount} available chapters for download now</p>
-              </div>
-            </label>
+            <div className="mt-4 space-y-3">
+              <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={downloadExisting}
+                  onChange={(e) => setDownloadExisting(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20 bg-transparent accent-rose-500"
+                />
+                <div>
+                  <span className="text-sm font-medium text-ink-200">Also download existing chapters</span>
+                  <p className="text-xs text-ink-500">Queue all {chapterCount} available chapters for download now</p>
+                </div>
+              </label>
+              {downloadExisting && downloadTargets.length > 1 && (
+                <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                  <FolderOpen className="h-4 w-4 shrink-0 text-ink-400" />
+                  <span className="text-xs text-ink-400">Download to</span>
+                  <select
+                    value={selectedTargetId}
+                    onChange={(e) => onSelectTarget(e.target.value)}
+                    aria-label="Download target"
+                    className="flex-1 rounded-xl border border-white/10 bg-ink-950/60 px-3 py-1.5 text-sm text-ink-200 outline-none transition-colors focus:border-accent-500"
+                  >
+                    {downloadTargets.map((t) => (
+                      <option key={t.id} value={t.id} className="bg-ink-900 text-ink-100">
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
           )}
 
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -731,18 +761,21 @@ function DetailHero({
                 {selectedCount > 0 ? `Download ${selectedCount}` : 'Select chapters'}
               </Button>
               {downloadTargets.length > 1 && (
-                <select
-                  value={selectedTargetId}
-                  onChange={(e) => onSelectTarget(e.target.value)}
-                  title="Download target library"
-                  className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-ink-200 outline-none transition-colors hover:bg-white/10 focus:border-accent-500"
-                >
-                  {downloadTargets.map((t) => (
-                    <option key={t.id} value={t.id} className="bg-ink-900 text-ink-100">
-                      → {t.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={selectedTargetId}
+                    onChange={(e) => onSelectTarget(e.target.value)}
+                    aria-label="Download target library"
+                    className="appearance-none rounded-2xl border border-white/10 bg-white/5 py-2.5 pl-3 pr-8 text-sm text-ink-200 outline-none transition-colors hover:bg-white/10 focus:border-accent-500"
+                  >
+                    {downloadTargets.map((t) => (
+                      <option key={t.id} value={t.id} className="bg-ink-900 text-ink-100">
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400" />
+                </div>
               )}
               <a
                 href={`${sourceMeta.mangaBaseUrl}${mangaId}`}
