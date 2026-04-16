@@ -33,7 +33,7 @@ export function AboutPage() {
           <Heart className="h-3.5 w-3.5 text-purple-400" />
           About
         </div>
-        <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.03em] text-white sm:text-5xl">
+        <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.03em] text-ink-100 sm:text-5xl">
           KometaHub
         </h1>
         <p className="mt-3 max-w-2xl text-lg leading-8 text-ink-300">
@@ -50,10 +50,10 @@ export function AboutPage() {
           {KOMETA_PROJECTS.map((project) => (
             <div
               key={project.name}
-              className="rounded-[24px] border border-white/10 bg-[#070b16]/90 p-5 shadow-[0_16px_60px_rgba(0,0,0,0.32)]"
+              className="rounded-[24px] border border-white/10 bg-ink-950/90 p-5 shadow-[0_16px_60px_rgba(0,0,0,0.32)]"
             >
               <div className="flex items-center justify-between">
-                <h3 className="font-display text-xl font-semibold text-white">{project.name}</h3>
+                <h3 className="font-display text-xl font-semibold text-ink-100">{project.name}</h3>
                 <span
                   className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${project.statusColor}`}
                 >
@@ -67,13 +67,13 @@ export function AboutPage() {
       </section>
 
       {/* About Me */}
-      <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[#070b16]/90 p-6 shadow-[0_16px_60px_rgba(0,0,0,0.32)] sm:p-8">
+      <section className="overflow-hidden rounded-[28px] border border-white/10 bg-ink-950/90 p-6 shadow-[0_16px_60px_rgba(0,0,0,0.32)] sm:p-8">
         <h2 className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-500">
           About me
         </h2>
         <div className="mt-4 flex flex-col gap-6 sm:flex-row sm:items-center">
           <div className="flex-1">
-            <p className="font-display text-2xl font-semibold text-white">iCosiSenpai</p>
+            <p className="font-display text-2xl font-semibold text-ink-100">iCosiSenpai</p>
             <p className="mt-2 text-sm leading-7 text-ink-300">
               Solo developer behind KometaHub. Building tools I wish existed when managing my own manga and anime collection.
             </p>
@@ -106,7 +106,7 @@ export function AboutPage() {
         <h2 className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-500">
           Support the project
         </h2>
-        <div className="flex flex-wrap items-center gap-4 rounded-[24px] border border-white/10 bg-[#070b16]/90 p-6">
+        <div className="flex flex-wrap items-center gap-4 rounded-[24px] border border-white/10 bg-ink-950/90 p-6">
           <p className="min-w-0 flex-1 text-sm leading-7 text-ink-300">
             KometaHub is free and open source. If it saves you time, consider chipping in — every coffee and donation keeps the project alive.
           </p>
@@ -143,14 +143,14 @@ export function AboutPage() {
       </section>
 
       {/* Feedback */}
-      <section className="rounded-[24px] border border-white/10 bg-[#070b16]/90 p-5 sm:p-6">
+      <section className="rounded-[24px] border border-white/10 bg-ink-950/90 p-5 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
               <MessageSquare className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-display text-lg font-semibold text-white">Feedback & Bug Reports</p>
+              <p className="font-display text-lg font-semibold text-ink-100">Feedback & Bug Reports</p>
               <p className="text-sm text-ink-400">Found a bug or have a suggestion? Open an issue on GitHub.</p>
             </div>
           </div>

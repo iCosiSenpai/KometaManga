@@ -142,6 +142,23 @@ html.light.is-scrolling ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.
 html.light.is-scrolling ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
 html.light.is-scrolling * { scrollbar-color: rgba(0, 0, 0, 0.15) transparent; }
 
+/* Light: translucent white/black inversions */
+html.light .border-white\/10 { border-color: rgba(0,0,0,0.08); }
+html.light .border-white\/15 { border-color: rgba(0,0,0,0.10); }
+html.light .border-white\/20 { border-color: rgba(0,0,0,0.12); }
+html.light .bg-white\/5 { background-color: rgba(0,0,0,0.03); }
+html.light .bg-white\/\[0\.06\] { background-color: rgba(0,0,0,0.04); }
+html.light .bg-white\/\[0\.09\] { background-color: rgba(0,0,0,0.06); }
+html.light .bg-white\/10 { background-color: rgba(0,0,0,0.06); }
+html.light .bg-white\/15 { background-color: rgba(0,0,0,0.08); }
+html.light .bg-black\/20 { background-color: rgba(0,0,0,0.04); }
+html.light .bg-black\/30 { background-color: rgba(0,0,0,0.06); }
+
+/* Light: ring overrides */
+html.light .ring-white\/10 { --tw-ring-color: rgba(0,0,0,0.08); }
+
 /* Light: shadow adjustments */
 html.light .shadow-2xl { box-shadow: 0 20px 60px -12px rgba(0,0,0,0.15); }
 html.light .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08); }
+html.light .shadow-card { box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+html.light .shadow-card-hover { box-shadow: 0 4px 12px rgba(0,0,0,0.10); }

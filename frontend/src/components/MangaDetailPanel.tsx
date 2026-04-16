@@ -408,6 +408,8 @@ export function MangaDetailPanel({
           onChapterLimitChange={setChapterLimit}
           selectedChapters={selectedChapters}
           onToggleChapter={toggleChapter}
+          languageFilter={languageFilter}
+          onClearLanguageFilter={() => setLanguageFilter(null)}
         />
       </div>
 
@@ -452,7 +454,7 @@ function FollowDialog({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-lg overflow-hidden rounded-[28px] border border-white/10 bg-[#070b16] shadow-[0_32px_120px_rgba(0,0,0,0.55)]"
+        className="relative w-full max-w-lg overflow-hidden rounded-[28px] border border-white/10 bg-ink-950 shadow-[0_32px_120px_rgba(0,0,0,0.55)]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className={clsx('absolute inset-0 bg-gradient-to-br opacity-100', sourceMeta.accentGlow)} />
@@ -464,12 +466,12 @@ function FollowDialog({
                 Auto-download follow
               </div>
               <div>
-                <h3 className="font-display text-2xl font-semibold tracking-tight text-white">
+                <h3 className="font-display text-2xl font-semibold tracking-tight text-ink-100">
                   Follow this manga?
                 </h3>
                 <p className="mt-2 max-w-md text-sm leading-7 text-ink-300">
                   We&apos;ll create an auto-downloader rule for{' '}
-                  <span className="font-semibold text-white">{title}</span> so future chapters can
+                  <span className="font-semibold text-ink-100">{title}</span> so future chapters can
                   land automatically.
                 </p>
               </div>
@@ -587,7 +589,7 @@ function DetailHero({
   onSelectTarget: (id: string) => void
 }) {
   return (
-    <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#070b16] shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_32px_120px_rgba(0,0,0,0.45)]">
+    <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-ink-950 shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_32px_120px_rgba(0,0,0,0.45)]">
       <div className={clsx('absolute inset-0 bg-gradient-to-br opacity-100', sourceMeta.accentGlow)} />
       <div className="absolute inset-y-0 left-0 w-full bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_42%)]" />
       <div className="relative p-5 sm:p-7">
@@ -608,7 +610,7 @@ function DetailHero({
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
                     <Sparkles className="h-6 w-6 text-white/70" />
                   </div>
-                  <p className="font-display text-base font-semibold text-white">No cover</p>
+                  <p className="font-display text-base font-semibold text-ink-300">No cover</p>
                 </div>
               )}
             </div>
@@ -649,7 +651,7 @@ function DetailHero({
               )}
             </div>
 
-            <h1 className="font-display text-3xl font-semibold leading-tight tracking-[-0.02em] text-white sm:text-4xl">
+            <h1 className="font-display text-3xl font-semibold leading-tight tracking-[-0.02em] text-ink-100 sm:text-4xl">
               {title}
             </h1>
 
@@ -797,13 +799,13 @@ function SelectionRail({
 }) {
   return (
     <div className="space-y-6">
-      <Card className="rounded-[28px] border-white/10 bg-[#070b16]/90 p-0 shadow-[0_16px_60px_rgba(0,0,0,0.32)]">
+      <Card className="rounded-[28px] border-white/10 bg-ink-950/90 p-0 shadow-[0_16px_60px_rgba(0,0,0,0.32)]">
         <div className="border-b border-white/10 px-5 py-4">
           <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.28em] text-ink-500">
             <Languages className="h-3.5 w-3.5" />
             Selection bay
           </div>
-          <h2 className="mt-3 font-display text-2xl font-semibold tracking-tight text-white">
+          <h2 className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink-100">
             Shape your download run
           </h2>
         </div>
@@ -811,7 +813,7 @@ function SelectionRail({
         <div className="space-y-5 p-5">
           <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs">
             <span className="font-mono uppercase tracking-[0.22em] text-ink-500">Selected</span>
-            <span className="text-sm font-semibold text-white">
+            <span className="text-sm font-semibold text-ink-100">
               {selectedCount} / {chapterCount}
             </span>
           </div>
@@ -881,13 +883,13 @@ function SelectionRail({
         </div>
       </Card>
 
-      <Card className="rounded-[28px] border-white/10 bg-[#070b16]/90 p-0 shadow-[0_16px_60px_rgba(0,0,0,0.32)]">
+      <Card className="rounded-[28px] border-white/10 bg-ink-950/90 p-0 shadow-[0_16px_60px_rgba(0,0,0,0.32)]">
         <div className="border-b border-white/10 px-5 py-4">
           <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.28em] text-ink-500">
             <Heart className="h-3.5 w-3.5" />
             Follow signal
           </div>
-          <h2 className="mt-3 font-display text-xl font-semibold tracking-tight text-white">
+          <h2 className="mt-3 font-display text-xl font-semibold tracking-tight text-ink-100">
             {isFollowing ? 'Auto-download armed' : 'Auto-download idle'}
           </h2>
         </div>
@@ -931,6 +933,8 @@ function ChapterSection({
   onChapterLimitChange,
   selectedChapters,
   onToggleChapter,
+  languageFilter,
+  onClearLanguageFilter,
 }: {
   sourceMeta: SourceMetaEntry
   selectedCount: number
@@ -943,9 +947,11 @@ function ChapterSection({
   onChapterLimitChange: (limit: number) => void
   selectedChapters: Set<string>
   onToggleChapter: (chapterId: string) => void
+  languageFilter: string | null
+  onClearLanguageFilter: () => void
 }) {
   return (
-    <Card className="relative overflow-hidden rounded-[28px] border-white/10 bg-[#070b16]/90 p-0 shadow-[0_16px_60px_rgba(0,0,0,0.32)]">
+    <Card className="relative overflow-hidden rounded-[28px] border-white/10 bg-ink-950/90 p-0 shadow-[0_16px_60px_rgba(0,0,0,0.32)]">
       <div className={clsx('absolute inset-0 bg-gradient-to-br opacity-100', sourceMeta.accentGlow)} />
       <div className="relative">
         <div className="flex flex-col gap-4 border-b border-white/10 px-5 py-5 sm:flex-row sm:items-end sm:justify-between">
@@ -954,7 +960,7 @@ function ChapterSection({
               <Search className="h-3.5 w-3.5" />
               Chapter bay
             </div>
-            <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-white">
+            <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink-100">
               Browse the release deck
             </h2>
             <p className="mt-2 text-sm leading-7 text-ink-300">
@@ -1010,16 +1016,35 @@ function ChapterSection({
           )}
 
           {!loading && !error && chapters.length === 0 && (
-            <div className="flex min-h-[360px] flex-col items-center justify-center rounded-[24px] border border-dashed border-white/10 bg-black/20 px-6 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
-                <Search className="h-6 w-6 text-ink-400" />
+            <div className="flex min-h-[360px] flex-col items-center justify-center rounded-[24px] border border-dashed border-ink-800/50 bg-ink-950/50 px-6 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-ink-800/50 bg-ink-900/50">
+                <Languages className="h-6 w-6 text-ink-400" />
               </div>
-              <h3 className="mt-5 font-display text-2xl font-semibold text-white">
-                No chapters in this lane
-              </h3>
-              <p className="mt-2 max-w-md text-sm leading-7 text-ink-400">
-                Try another language filter or clear the current lane to see the full deck again.
-              </p>
+              {languageFilter ? (
+                <>
+                  <h3 className="mt-5 font-display text-2xl font-semibold text-ink-100">
+                    No chapters in {langLabel(languageFilter)}
+                  </h3>
+                  <p className="mt-2 max-w-md text-sm leading-7 text-ink-400">
+                    This manga exists on the source but has no chapters available in {langLabel(languageFilter)}.
+                  </p>
+                  <button
+                    onClick={onClearLanguageFilter}
+                    className="mt-4 rounded-full border border-ink-700 bg-ink-900/60 px-4 py-2 text-sm font-medium text-ink-200 transition-colors hover:bg-ink-800 hover:text-ink-100"
+                  >
+                    Show all languages
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h3 className="mt-5 font-display text-2xl font-semibold text-ink-100">
+                    No chapters found
+                  </h3>
+                  <p className="mt-2 max-w-md text-sm leading-7 text-ink-400">
+                    This source returned no chapters for this title.
+                  </p>
+                </>
+              )}
             </div>
           )}
 
@@ -1060,14 +1085,14 @@ function StickyBatchBar({
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-30 md:left-[calc(16rem+1.5rem)]">
-      <div className="mx-auto max-w-6xl rounded-[24px] border border-white/10 bg-[#060912]/90 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+      <div className="mx-auto max-w-6xl rounded-[24px] border border-white/10 bg-ink-950/90 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.45)] backdrop-blur-xl">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-500">
               Batch queue
             </p>
             <p className="mt-2 text-sm text-ink-300">
-              <span className="font-semibold text-white">{selectedCount}</span> chapter
+              <span className="font-semibold text-ink-100">{selectedCount}</span> chapter
               {selectedCount !== 1 ? 's are' : ' is'} armed for download from{' '}
               <span className={sourceMeta.accentText}>{sourceMeta.label}</span>.
             </p>
@@ -1128,7 +1153,7 @@ function ChapterBayRow({
           <Check className="h-3 w-3" />
         </div>
 
-        <span className="w-14 shrink-0 font-mono text-sm font-semibold text-white">
+        <span className="w-14 shrink-0 font-mono text-sm font-semibold text-ink-100">
           {chapter.chapterNumber}
         </span>
 
@@ -1153,7 +1178,7 @@ function MangaDetailSkeleton() {
     <div className="animate-page-in space-y-8 pb-28">
       <Skeleton className="h-10 w-40 rounded-full" />
 
-      <div className="overflow-hidden rounded-[32px] border border-white/10 bg-[#070b16] p-5 sm:p-8">
+      <div className="overflow-hidden rounded-[32px] border border-white/10 bg-ink-950 p-5 sm:p-8">
         <div className="grid gap-8 xl:grid-cols-[280px_minmax(0,1fr)]">
           <Skeleton className="aspect-[2/3] w-full rounded-[28px]" />
           <div className="space-y-6">

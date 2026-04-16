@@ -93,7 +93,7 @@ export function LogsPage() {
         title="Application Logs"
         description="Live application log output from the KometaManga backend."
         action={
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2">
             <Button
               variant="secondary"
               size="sm"
@@ -149,34 +149,38 @@ export function LogsPage() {
       />
 
       {/* Filter & search bar */}
-      <div className="mb-4 flex items-center gap-3">
-        <Filter className="h-4 w-4 text-ink-500" />
-        <div className="flex items-center gap-1 rounded-xl border border-ink-800/50 bg-ink-900/30 p-1">
-          {FILTER_OPTIONS.map(({ value, label }) => (
-            <button
-              key={value}
-              onClick={() => setFilter(value)}
-              className={clsx(
-                'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
-                filter === value
-                  ? 'bg-ink-800 text-ink-100'
-                  : 'text-ink-400 hover:bg-ink-800/50 hover:text-ink-200',
-              )}
-            >
-              {label}
-            </button>
-          ))}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-3 overflow-x-auto">
+          <Filter className="hidden h-4 w-4 text-ink-500 sm:block" />
+          <div className="flex items-center gap-1 rounded-xl border border-ink-800/50 bg-ink-900/30 p-1">
+            {FILTER_OPTIONS.map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => setFilter(value)}
+                className={clsx(
+                  'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
+                  filter === value
+                    ? 'bg-ink-800 text-ink-100'
+                    : 'text-ink-400 hover:bg-ink-800/50 hover:text-ink-200',
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search logs..."
-          className="flex-1 rounded-lg border border-ink-700 bg-ink-900 px-3 py-1.5 text-sm text-ink-100 placeholder:text-ink-600 focus:border-accent-500 focus:outline-none"
-        />
-        <span className="shrink-0 text-xs text-ink-500">
-          {filtered.length} / {logs.length}
-        </span>
+        <div className="flex flex-1 items-center gap-3">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search logs..."
+            className="flex-1 rounded-lg border border-ink-700 bg-ink-900 px-3 py-1.5 text-sm text-ink-100 placeholder:text-ink-600 focus:border-accent-500 focus:outline-none"
+          />
+          <span className="shrink-0 text-xs text-ink-500">
+            {filtered.length} / {logs.length}
+          </span>
+        </div>
       </div>
 
       {/* Log output */}
@@ -190,20 +194,25 @@ export function LogsPage() {
             {filtered.map((entry, i) => (
               <div
                 key={`${entry.timestamp}-${i}`}
-                className="flex gap-3 px-4 py-1.5 hover:bg-ink-800/20 transition-colors leading-relaxed"
+                className="flex flex-col gap-0.5 px-3 py-2 hover:bg-ink-800/20 transition-colors leading-relaxed sm:flex-row sm:gap-3 sm:px-4 sm:py-1.5"
               >
-                <span className="shrink-0 text-ink-600 tabular-nums">
-                  {formatTimestamp(entry.timestamp)}
-                </span>
-                <span
-                  className={clsx(
-                    'shrink-0 w-12 text-right font-semibold',
-                    LEVEL_COLORS[entry.level] ?? 'text-ink-400',
-                  )}
-                >
-                  {entry.level}
-                </span>
-                <span className="shrink-0 max-w-[180px] truncate text-ink-500" title={entry.logger}>
+                <div className="flex items-center gap-2 sm:contents">
+                  <span className="shrink-0 text-ink-600 tabular-nums">
+                    {formatTimestamp(entry.timestamp)}
+                  </span>
+                  <span
+                    className={clsx(
+                      'shrink-0 w-12 text-right font-semibold',
+                      LEVEL_COLORS[entry.level] ?? 'text-ink-400',
+                    )}
+                  >
+                    {entry.level}
+                  </span>
+                  <span className="truncate text-[10px] text-ink-500 sm:hidden" title={entry.logger}>
+                    {shortLogger(entry.logger)}
+                  </span>
+                </div>
+                <span className="hidden shrink-0 max-w-[180px] truncate text-ink-500 sm:inline" title={entry.logger}>
                   {shortLogger(entry.logger)}
                 </span>
                 <span className="min-w-0 flex-1 text-ink-200 break-all whitespace-pre-wrap">
