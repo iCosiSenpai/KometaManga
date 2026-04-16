@@ -293,7 +293,7 @@ export function DashboardPage() {
                 <a
                   href="https://github.com/iCosiSenpai/KometaManga/releases"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="rounded-full border border-emerald-700/30 bg-emerald-950/20 px-2.5 py-0.5 text-[11px] font-medium text-emerald-400 transition-colors hover:bg-emerald-950/40"
                 >
                   {version.latest} available
@@ -479,7 +479,7 @@ export function DashboardPage() {
             <a
               href="https://github.com/iCosiSenpai/KometaManga/releases"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-accent-300 transition-colors hover:text-accent-200"
             >
               Open release notes

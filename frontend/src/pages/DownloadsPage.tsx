@@ -898,7 +898,7 @@ function CreateRuleForm({
     <Card className="border-accent-800/20">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-display text-lg font-semibold text-ink-100">New Auto-Download Rule</h3>
-        <button onClick={onCancel} className="rounded p-1 text-ink-500 hover:text-ink-300">
+        <button aria-label="Cancel" onClick={onCancel} className="rounded p-1 text-ink-500 hover:text-ink-300">
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -907,6 +907,7 @@ function CreateRuleForm({
         <div>
           <label className="mb-1.5 block text-xs font-medium text-ink-400">Source</label>
           <select
+            aria-label="Source"
             value={sourceId}
             onChange={(e) => {
               setSourceId(e.target.value as MangaSourceId)
@@ -977,6 +978,7 @@ function CreateRuleForm({
               {selectedManga.title}
             </span>
             <button
+              aria-label="Clear selection"
               onClick={() => {
                 setSelectedManga(null)
                 setSearchTerm('')

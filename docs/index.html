@@ -152,6 +152,12 @@
         transition:all .15s;
       }
       .chip:hover{color:var(--text);border-color:var(--border-strong)}
+      .chip.active{background:rgba(167,139,250,.12);color:#a78bfa;border:1px solid rgba(167,139,250,.2)}
+      .chip.upcoming{background:rgba(255,255,255,.04);color:rgba(255,255,255,.4);border:1px dashed rgba(255,255,255,.1)}
+      .kometahub-section{border-top:1px solid rgba(255,255,255,0.06);padding-top:3rem}
+      .kometahub-label{color:#a78bfa}
+      .kometahub-desc{color:rgba(255,255,255,0.55);max-width:600px;margin:0 auto 2rem;line-height:1.6}
+      .kometahub-row{gap:1rem}
 
       /* ─── FOOTER ─── */
       footer{
@@ -205,8 +211,8 @@
           <h1 data-en="Download.<br>Organize.<br><span>Import.</span>" data-it="Scarica.<br>Organizza.<br><span>Importa.</span>"></h1>
           <p class="hero-desc" data-en="A focused companion for Komga: browse manga sources, download chapters, package CBZ with metadata, and auto-import — all from one operational surface." data-it="Un companion dedicato a Komga: esplora le fonti manga, scarica i capitoli, prepara CBZ con metadati e importa tutto in automatico da un'unica interfaccia operativa."></p>
           <div class="hero-actions">
-            <a class="btn primary" href="https://github.com/iCosiSenpai/KometaManga" data-en="View on GitHub" data-it="Apri su GitHub"></a>
-            <a class="btn" href="https://github.com/iCosiSenpai/KometaManga/releases" data-en="Download" data-it="Scarica"></a>
+            <a class="btn primary" href="https://github.com/iCosiSenpai/KometaManga" aria-label="View on GitHub" data-en="View on GitHub" data-it="Apri su GitHub"></a>
+            <a class="btn" href="https://github.com/iCosiSenpai/KometaManga/releases" aria-label="Download" data-en="Download" data-it="Scarica"></a>
           </div>
         </div>
         <div class="hero-visual">
@@ -292,16 +298,16 @@ aude         </div>
       </section>
 
       <!-- KOMETAHUB -->
-      <section class="stack-section" style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 3rem;">
-        <div class="section-label" style="color: #a78bfa;">KometaHub</div>
+      <section class="stack-section kometahub-section">
+        <div class="section-label kometahub-label">KometaHub</div>
         <h2 class="section-title" data-en="Part of something bigger" data-it="Parte di qualcosa di più grande"></h2>
-          <p style="color: rgba(255,255,255,0.55); max-width: 600px; margin: 0 auto 2rem; line-height: 1.6;"
+          <p class="kometahub-desc"
            data-en="KometaManga is the first app in the KometaHub suite — a growing collection of self-hosted tools for manga, anime, and media management. More apps coming soon."
            data-it="KometaManga è la prima app della suite KometaHub: una collezione in crescita di strumenti self-hosted per manga, anime e gestione dei media. Altre app arriveranno presto."></p>
-        <div class="stack-row" style="gap: 1rem;">
-          <span class="chip" style="background: rgba(167,139,250,0.12); color: #a78bfa; border: 1px solid rgba(167,139,250,0.2);">✅ KometaManga</span>
-          <span class="chip" style="background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.4); border: 1px dashed rgba(255,255,255,0.1);" data-en="🔜 KometaReader" data-it="🔜 KometaReader">🔜 KometaReader</span>
-          <span class="chip" style="background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.4); border: 1px dashed rgba(255,255,255,0.1);" data-en="🔜 KometaWatcher" data-it="🔜 KometaWatcher">🔜 KometaWatcher</span>
+        <div class="stack-row kometahub-row">
+          <span class="chip active">✅ KometaManga</span>
+          <span class="chip upcoming" data-en="🔜 KometaReader" data-it="🔜 KometaReader">🔜 KometaReader</span>
+          <span class="chip upcoming" data-en="🔜 KometaWatcher" data-it="🔜 KometaWatcher">🔜 KometaWatcher</span>
         </div>
       </section>
 

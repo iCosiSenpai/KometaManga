@@ -1141,6 +1141,7 @@ function ProvidersStep({
 
                 {/* Toggle */}
                 <button
+                  aria-label={`Toggle ${prov.name}`}
                   onClick={() => toggleProvider(prov.key)}
                   className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
                     state.enabled ? 'bg-accent-600' : 'bg-ink-700'
@@ -1165,6 +1166,7 @@ function ProvidersStep({
                       type="number"
                       min={1}
                       max={999}
+                      aria-label={`Priority for ${prov.name}`}
                       value={state.priority}
                       onChange={e => updatePriority(prov.key, parseInt(e.target.value) || 10)}
                       className="w-16 rounded-lg border border-ink-700/50 bg-ink-800/50 px-2 py-1 text-xs text-ink-200 outline-none focus:border-accent-500/50"
