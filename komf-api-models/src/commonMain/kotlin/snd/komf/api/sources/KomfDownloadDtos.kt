@@ -41,6 +41,7 @@ data class KomfDownloadStatusDto(
     val activeDownloads: Int,
     val completedToday: Int,
     val failedCount: Int,
+    val paused: Boolean = false,
 )
 
 @Serializable

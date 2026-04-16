@@ -10,7 +10,10 @@ import { ErrorState } from '@/components/ErrorState'
 import { Skeleton } from '@/components/Skeleton'
 import { useToast } from '@/components/Toast'
 import {
+  Ban,
   Download,
+  Pause,
+  Play,
   RotateCcw,
   CheckCircle2,
   XCircle,
@@ -109,6 +112,31 @@ export function DownloadsPage() {
     },
   })
 
+  const pauseMutation = useMutation({
+    mutationFn: api.pauseDownloads,
+    onSuccess: () => {
+      toast('Downloads paused', 'success')
+      queryClient.invalidateQueries({ queryKey: ['download-status'] })
+    },
+  })
+
+  const resumeMutation = useMutation({
+    mutationFn: api.resumeDownloads,
+    onSuccess: () => {
+      toast('Downloads resumed', 'success')
+      queryClient.invalidateQueries({ queryKey: ['download-status'] })
+    },
+  })
+
+  const cancelAllMutation = useMutation({
+    mutationFn: api.cancelAllDownloads,
+    onSuccess: () => {
+      toast('All queued downloads cancelled', 'success')
+      queryClient.invalidateQueries({ queryKey: ['download-queue'] })
+      queryClient.invalidateQueries({ queryKey: ['download-status'] })
+    },
+  })
+
   const status = statusQuery.data
   const queue = queueQuery.data ?? []
   const autoStatus = autoStatusQuery.data
@@ -179,7 +207,45 @@ export function DownloadsPage() {
 
         {/* Queue actions */}
         {tab === 'queue' && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            {activeItems.length > 0 && (
+              status?.paused ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => resumeMutation.mutate()}
+                  loading={resumeMutation.isPending}
+                >
+                  <Play className="h-3.5 w-3.5" />
+                  Resume
+                </Button>
+              ) : (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => pauseMutation.mutate()}
+                  loading={pauseMutation.isPending}
+                >
+                  <Pause className="h-3.5 w-3.5" />
+                  Pause
+                </Button>
+              )
+            )}
+            {activeItems.length > 0 && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  if (confirm(`Cancel all ${activeItems.filter(i => i.status === 'QUEUED').length} queued downloads?`)) {
+                    cancelAllMutation.mutate()
+                  }
+                }}
+                loading={cancelAllMutation.isPending}
+              >
+                <Ban className="h-3.5 w-3.5" />
+                Cancel All
+              </Button>
+            )}
             {erroredItems.length > 0 && (
               <Button
                 variant="secondary"

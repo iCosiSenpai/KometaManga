@@ -119,7 +119,7 @@ function DownloadTargetsSection({
   extraTargets: DownloadTarget[]
   onSave: (patch: Partial<NonNullable<import('@/api/client').KomfConfig['download']>>) => void
 }) {
-  const [editingDefault, setEditingDefault] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const librariesQuery = useQuery({
     queryKey: ['libraries'],
     queryFn: api.getLibraries,
@@ -127,90 +127,148 @@ function DownloadTargetsSection({
     retry: 1,
   })
   const libraries = librariesQuery.data ?? []
-  const defaultLib = libraries.find((l) => l.id === dl.komgaLibraryId)
+
+  // Build unified list: default first, then extras
+  const allTargets: Array<{ id: string; name: string; path: string; komgaLibId: string | null; isDefault: boolean }> = [
+    { id: 'default', name: 'Default', path: dl.downloadDir, komgaLibId: dl.komgaLibraryId ?? null, isDefault: true },
+    ...extraTargets.map((t) => ({ id: t.id, name: t.name, path: t.containerPath, komgaLibId: t.komgaLibraryId ?? null, isDefault: false })),
+  ]
+
+  function makeDefault(targetId: string) {
+    if (targetId === 'default') return
+    const target = extraTargets.find((t) => t.id === targetId)
+    if (!target) return
+
+    // Current default becomes an extra target
+    const oldDefault: DownloadTarget = {
+      id: typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      name: 'Default',
+      containerPath: dl.downloadDir,
+      komgaLibraryId: dl.komgaLibraryId ?? null,
+      komgaLibraryPath: dl.komgaLibraryPath ?? null,
+    }
+
+    // New default takes over
+    const newExtras = extraTargets
+      .filter((t) => t.id !== targetId)
+      .concat(oldDefault)
+
+    onSave({
+      downloadDir: target.containerPath,
+      komgaLibraryId: target.komgaLibraryId,
+      komgaLibraryPath: target.komgaLibraryPath,
+      extraTargets: newExtras,
+    })
+  }
+
+  function deleteTarget(targetId: string) {
+    if (targetId === 'default') {
+      // Deleting default: if extras exist, promote the first one
+      if (extraTargets.length > 0) {
+        const promoted = extraTargets[0]!
+        onSave({
+          downloadDir: promoted.containerPath,
+          komgaLibraryId: promoted.komgaLibraryId,
+          komgaLibraryPath: promoted.komgaLibraryPath,
+          extraTargets: extraTargets.slice(1),
+        })
+      }
+      return
+    }
+    onSave({ extraTargets: extraTargets.filter((t) => t.id !== targetId) })
+  }
 
   return (
     <div className="space-y-3">
-      {/* Default target card */}
-      <div className="rounded-xl border border-ink-800/50 bg-ink-900/40 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <Star className="h-3.5 w-3.5 text-accent-400" />
-              <span className="text-sm font-semibold text-ink-100">Default</span>
-            </div>
-            {defaultLib && (
-              <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-400">
-                <Library className="h-3 w-3" />
-                Komga: {defaultLib.name}
-              </p>
-            )}
-            <p className="mt-0.5 truncate font-mono text-[11px] text-ink-500">
-              {dl.downloadDir}
-            </p>
-          </div>
-          <button
-            onClick={() => setEditingDefault((v) => !v)}
-            className="text-ink-400 hover:text-ink-200"
-            title="Edit default target"
-          >
-            <Pencil className="h-4 w-4" />
-          </button>
-        </div>
+      {allTargets.map((target) => {
+        const lib = libraries.find((l) => l.id === target.komgaLibId)
+        const isEditing = editingId === target.id
+        const canDelete = target.isDefault ? extraTargets.length > 0 : true
 
-        {editingDefault && (
-          <div className="mt-4 space-y-3 border-t border-ink-800/40 pt-4">
-            {locks.downloadDir && <EnvManagedHint envName="KOMF_DOWNLOAD_DIR" />}
-            <KomgaLibraryPicker
-              selectedLibraryId={dl.komgaLibraryId ?? null}
-              onSelect={(libId, libPath) =>
-                onSave({
-                  komgaLibraryId: libId,
-                  komgaLibraryPath: libPath,
-                  downloadDir: libPath ?? dl.downloadDir,
-                })
-              }
-            />
-            <TextField
-              label="Container path"
-              value={dl.downloadDir}
-              disabled={!!locks.downloadDir}
-              placeholder="/data"
-              description="Path inside the container where chapters are saved. Should match a Komga library mount (e.g. /data/manga)."
-              onChange={(v) => onSave({ downloadDir: v })}
-            />
-            <DirTester path={dl.downloadDir} />
-          </div>
-        )}
-      </div>
-
-      {/* Extra target cards */}
-      {extraTargets.map((t) => {
-        const lib = libraries.find((l) => l.id === t.komgaLibraryId)
         return (
-          <div
-            key={t.id}
-            className="flex items-start justify-between gap-3 rounded-xl border border-ink-800/50 bg-ink-900/40 p-4"
-          >
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-ink-100">{t.name}</p>
-              {lib && (
-                <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-400">
-                  <Library className="h-3 w-3" />
-                  Komga: {lib.name}
+          <div key={target.id} className="rounded-xl border border-ink-800/50 bg-ink-900/40 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => makeDefault(target.id)}
+                    title={target.isDefault ? 'Default target' : 'Set as default'}
+                    className="shrink-0"
+                  >
+                    <Star
+                      className={clsx(
+                        'h-3.5 w-3.5 transition-colors',
+                        target.isDefault
+                          ? 'fill-accent-400 text-accent-400'
+                          : 'text-ink-600 hover:text-accent-400',
+                      )}
+                    />
+                  </button>
+                  <span className="text-sm font-semibold text-ink-100">{target.name}</span>
+                  {target.isDefault && (
+                    <span className="rounded-full bg-accent-600/10 px-2 py-0.5 text-[10px] font-medium text-accent-400">
+                      default
+                    </span>
+                  )}
+                </div>
+                {lib && (
+                  <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-400">
+                    <Library className="h-3 w-3" />
+                    Komga: {lib.name}
+                  </p>
+                )}
+                <p className="mt-0.5 truncate font-mono text-[11px] text-ink-500">
+                  {target.path}
                 </p>
-              )}
-              <p className="mt-0.5 truncate font-mono text-[11px] text-ink-500">
-                {t.containerPath}
-              </p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {target.isDefault && (
+                  <button
+                    onClick={() => setEditingId(isEditing ? null : target.id)}
+                    className="text-ink-400 hover:text-ink-200"
+                    title="Edit"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    onClick={() => deleteTarget(target.id)}
+                    className="text-ink-500 hover:text-red-400"
+                    title="Remove target"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
-            <button
-              onClick={() => onSave({ extraTargets: extraTargets.filter((x) => x.id !== t.id) })}
-              className="text-ink-500 hover:text-red-400"
-              title="Remove target"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+
+            {isEditing && target.isDefault && (
+              <div className="mt-4 space-y-3 border-t border-ink-800/40 pt-4">
+                {locks.downloadDir && <EnvManagedHint envName="KOMF_DOWNLOAD_DIR" />}
+                <KomgaLibraryPicker
+                  selectedLibraryId={dl.komgaLibraryId ?? null}
+                  onSelect={(libId, libPath) =>
+                    onSave({
+                      komgaLibraryId: libId,
+                      komgaLibraryPath: libPath,
+                      downloadDir: libPath ?? dl.downloadDir,
+                    })
+                  }
+                />
+                <TextField
+                  label="Container path"
+                  value={dl.downloadDir}
+                  disabled={!!locks.downloadDir}
+                  placeholder="/data"
+                  description="Path inside the container where chapters are saved. Should match a Komga library mount (e.g. /data/manga)."
+                  onChange={(v) => onSave({ downloadDir: v })}
+                />
+                <DirTester path={dl.downloadDir} />
+              </div>
+            )}
           </div>
         )
       })}

@@ -265,6 +265,12 @@ export const api = {
     request<void>('/downloads/queue/clear-errors', { method: 'POST' }),
   retryFailedDownloads: () =>
     request<void>('/downloads/queue/retry-failed', { method: 'POST' }),
+  pauseDownloads: () =>
+    request<void>('/downloads/queue/pause', { method: 'POST' }),
+  resumeDownloads: () =>
+    request<void>('/downloads/queue/resume', { method: 'POST' }),
+  cancelAllDownloads: () =>
+    request<void>('/downloads/queue/cancel-all', { method: 'POST' }),
   getDownloadHistory: (limit = 50, offset = 0) =>
     request<import('./sources').DownloadedChapterDto[]>(
       `/downloads/history?limit=${limit}&offset=${offset}`,

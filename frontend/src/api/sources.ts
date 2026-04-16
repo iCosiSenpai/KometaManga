@@ -105,6 +105,7 @@ export interface DownloadStatusDto {
   activeDownloads: number
   completedToday: number
   failedCount: number
+  paused: boolean
 }
 
 export interface DownloadedChapterDto {

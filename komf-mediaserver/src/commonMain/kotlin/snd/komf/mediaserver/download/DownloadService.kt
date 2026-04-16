@@ -65,6 +65,9 @@ class DownloadService(
     fun clearCompleted() = queueManager.clearCompleted()
     fun clearErrors() = queueManager.clearErrors()
     fun retryFailed() = queueManager.retryFailed()
+    fun pause() = queueManager.pause()
+    fun resume() = queueManager.resume()
+    fun cancelAll() = queueManager.cancelAll()
     fun getStatus() = queueManager.getStatus()
 
     // History operations

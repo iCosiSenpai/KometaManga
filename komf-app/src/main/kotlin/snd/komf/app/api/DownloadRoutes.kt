@@ -71,6 +71,7 @@ class DownloadRoutes(
                     activeDownloads = status.activeDownloads,
                     completedToday = status.completedToday,
                     failedCount = status.failedCount,
+                    paused = status.paused,
                 ))
             }
 
@@ -117,6 +118,27 @@ class DownloadRoutes(
             post("/queue/retry-failed") {
                 val service = downloadService.first()
                 service.retryFailed()
+                call.respond(HttpStatusCode.NoContent)
+            }
+
+            // Pause queue processing
+            post("/queue/pause") {
+                val service = downloadService.first()
+                service.pause()
+                call.respond(HttpStatusCode.NoContent)
+            }
+
+            // Resume queue processing
+            post("/queue/resume") {
+                val service = downloadService.first()
+                service.resume()
+                call.respond(HttpStatusCode.NoContent)
+            }
+
+            // Cancel all queued items
+            post("/queue/cancel-all") {
+                val service = downloadService.first()
+                service.cancelAll()
                 call.respond(HttpStatusCode.NoContent)
             }
 

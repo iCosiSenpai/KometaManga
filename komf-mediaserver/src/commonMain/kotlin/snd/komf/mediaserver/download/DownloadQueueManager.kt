@@ -34,6 +34,8 @@ class DownloadQueueManager(
 
     private val processChannel = Channel<Unit>(Channel.CONFLATED)
     private var processingJob: Job? = null
+    @Volatile var paused: Boolean = false
+        private set
 
     init {
         // Recover any items that were DOWNLOADING when app crashed
@@ -131,6 +133,28 @@ class DownloadQueueManager(
         }
     }
 
+    fun pause() {
+        paused = true
+        logger.info { "Download queue paused" }
+    }
+
+    fun resume() {
+        paused = false
+        logger.info { "Download queue resumed" }
+        // Trigger processing if there are queued items
+        if (queueRepository.countByStatus(DownloadItemStatus.QUEUED) > 0) {
+            processChannel.trySend(Unit)
+        }
+    }
+
+    fun cancelAll() {
+        val queued = queueRepository.findByStatus(DownloadItemStatus.QUEUED)
+        for (item in queued) {
+            queueRepository.delete(item.id)
+        }
+        logger.info { "Cancelled ${queued.size} queued downloads" }
+    }
+
     fun getStatus(): DownloadStatus {
         val queued = queueRepository.countByStatus(DownloadItemStatus.QUEUED)
         val downloading = queueRepository.countByStatus(DownloadItemStatus.DOWNLOADING) +
@@ -144,11 +168,13 @@ class DownloadQueueManager(
             activeDownloads = downloading.toInt(),
             completedToday = completed.toInt(),
             failedCount = failed.toInt(),
+            paused = paused,
         )
     }
 
     private suspend fun processQueue() {
         while (true) {
+            if (paused) break
             val nextItem = queueRepository.findByStatus(DownloadItemStatus.QUEUED).firstOrNull() ?: break
 
             try {
@@ -301,4 +327,5 @@ data class DownloadStatus(
     val activeDownloads: Int,
     val completedToday: Int,
     val failedCount: Int,
+    val paused: Boolean = false,
 )

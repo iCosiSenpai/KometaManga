@@ -131,13 +131,6 @@ export function MangaDetailPanel({
 
   const resolveTargetPayload = useCallback(() => {
     if (!activeTarget) return undefined
-    // Default target leaves libraryPath unset so the backend falls back to its configured downloadDir.
-    if (activeTarget.id === 'default') {
-      return {
-        libraryPath: activeTarget.komgaLibraryPath,
-        libraryId: activeTarget.komgaLibraryId,
-      }
-    }
     return {
       libraryPath: activeTarget.containerPath,
       libraryId: activeTarget.komgaLibraryId,
