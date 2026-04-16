@@ -35,7 +35,7 @@ function DownloadForm({ config }: { config: KomfConfig }) {
   const { status, error, save, dismissError } = useAutoSave()
   const locks = config.envLocks
   const dl = config.download ?? {
-    downloadDir: '/libraries/manga',
+    downloadDir: '/data',
     komgaLibraryId: null,
     komgaLibraryPath: null,
     autoScanAfterDownload: true,
@@ -56,7 +56,7 @@ function DownloadForm({ config }: { config: KomfConfig }) {
       <div className="mt-6 space-y-6">
         <SettingsSection
           title="Download Targets"
-          description="Where chapters are stored. Pick a Komga library or set a custom path. When multiple targets exist, you can choose which one to use when downloading."
+          description="Where chapters are stored. Use the same mount paths as Komga (e.g. /data) so both containers share the same library tree."
         >
           <DownloadTargetsSection
             dl={dl}
@@ -175,8 +175,8 @@ function DownloadTargetsSection({
               label="Container path"
               value={dl.downloadDir}
               disabled={!!locks.downloadDir}
-              placeholder="/libraries/main"
-              description="Override the path where chapters are written inside the container."
+              placeholder="/data"
+              description="Path inside the container where chapters are saved. Should match a Komga library mount (e.g. /data/manga)."
               onChange={(v) => onSave({ downloadDir: v })}
             />
             <DirTester path={dl.downloadDir} />
@@ -298,7 +298,7 @@ function AddTargetForm({
 
         <input
           type="text"
-          placeholder="Container path (e.g. /libraries/main/Webtoon)"
+          placeholder="Container path (e.g. /data/webtoon)"
           value={containerPath}
           onChange={(e) => setContainerPath(e.target.value)}
           className="w-full rounded-lg border border-ink-800 bg-ink-950/60 px-3 py-2 font-mono text-xs text-ink-100 placeholder-ink-600 outline-none focus:border-accent-500"

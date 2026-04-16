@@ -175,7 +175,7 @@ export function SetupWizard({ defaultBaseUri, onComplete }: SetupWizardProps) {
   const [komgaPassword, setKomgaPassword] = useState('')
   const [authUsername, setAuthUsername] = useState('')
   const [authPassword, setAuthPassword] = useState('')
-  const [downloadDir, setDownloadDir] = useState('/libraries/manga')
+  const [downloadDir, setDownloadDir] = useState('/data')
   const [selectedLibraryId, setSelectedLibraryId] = useState<string | null>(null)
   const [selectedLibraryPath, setSelectedLibraryPath] = useState<string | null>(null)
   const [providerStates, setProviderStates] = useState<Record<string, ProviderState>>(getDefaultProviderStates)
@@ -812,7 +812,7 @@ function DownloadsStep({
             type="text"
             value={downloadDir}
             onChange={(e) => onDirChange(e.target.value)}
-            placeholder="/libraries/manga"
+            placeholder="/data"
             className="mb-2 w-full rounded-xl border border-ink-700 bg-ink-800/50 px-4 py-3 text-sm text-ink-100 placeholder-ink-600 outline-none transition-colors focus:border-accent-500 focus:ring-1 focus:ring-accent-500/30"
           />
 

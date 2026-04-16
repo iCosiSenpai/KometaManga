@@ -13,7 +13,7 @@ data class DownloadTarget(
 
 @Serializable
 data class DownloadConfig(
-    val downloadDir: String = "./downloads",
+    val downloadDir: String = "/data",
     val komgaLibraryId: String? = null,
     val komgaLibraryPath: String? = null,
     val autoScanAfterDownload: Boolean = true,
