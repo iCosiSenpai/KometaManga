@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api, KomfConfig, DownloadTarget } from '@/api/client'
+import { deriveTargetName } from '@/utils/targets'
 import { useAutoSave } from '@/hooks/useAutoSave'
 import { PageHeader } from '@/components/PageHeader'
 import { PageSpinner } from '@/components/Spinner'
@@ -130,7 +131,13 @@ function DownloadTargetsSection({
 
   // Build unified list: default first, then extras
   const allTargets: Array<{ id: string; name: string; path: string; komgaLibId: string | null; isDefault: boolean }> = [
-    { id: 'default', name: 'Default', path: dl.downloadDir, komgaLibId: dl.komgaLibraryId ?? null, isDefault: true },
+    {
+      id: 'default',
+      name: deriveTargetName(dl.downloadDir, dl.komgaLibraryId ?? null, libraries),
+      path: dl.downloadDir,
+      komgaLibId: dl.komgaLibraryId ?? null,
+      isDefault: true,
+    },
     ...extraTargets.map((t) => ({ id: t.id, name: t.name, path: t.containerPath, komgaLibId: t.komgaLibraryId ?? null, isDefault: false })),
   ]
 
@@ -139,12 +146,12 @@ function DownloadTargetsSection({
     const target = extraTargets.find((t) => t.id === targetId)
     if (!target) return
 
-    // Current default becomes an extra target
+    // Current default becomes an extra target — preserve its original folder/library name
     const oldDefault: DownloadTarget = {
       id: typeof crypto !== 'undefined' && 'randomUUID' in crypto
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      name: 'Default',
+      name: deriveTargetName(dl.downloadDir, dl.komgaLibraryId ?? null, libraries),
       containerPath: dl.downloadDir,
       komgaLibraryId: dl.komgaLibraryId ?? null,
       komgaLibraryPath: dl.komgaLibraryPath ?? null,
@@ -213,15 +220,15 @@ function DownloadTargetsSection({
                     </span>
                   )}
                 </div>
-                {lib && (
-                  <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-400">
-                    <Library className="h-3 w-3" />
-                    Komga: {lib.name}
-                  </p>
-                )}
-                <p className="mt-0.5 truncate font-mono text-[11px] text-ink-500">
-                  {target.path}
-                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                  {lib && (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-ink-800/60 px-1.5 py-0.5 text-ink-300">
+                      <Library className="h-3 w-3" />
+                      {lib.name}
+                    </span>
+                  )}
+                  <span className="truncate font-mono text-ink-500">{target.path}</span>
+                </div>
               </div>
               <div className="flex items-center gap-1.5">
                 <button
@@ -242,6 +249,9 @@ function DownloadTargetsSection({
                 )}
               </div>
             </div>
+
+            {/* Always-visible compact status */}
+            {!isEditing && <DirTester path={target.path} compact />}
 
             {isEditing && (
               <div className="mt-4 space-y-3 border-t border-ink-800/40 pt-4">
@@ -355,31 +365,38 @@ function AddTargetForm({
         />
 
         {libraries.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {libraries.map((lib) => {
-              const isSelected = libId === lib.id
-              return (
-                <button
-                  key={lib.id}
-                  type="button"
-                  onClick={() => {
-                    const next = isSelected ? null : lib.id
-                    setLibId(next)
-                    if (next && !containerPath.trim()) {
-                      setContainerPath(lib.roots[0] ?? '')
-                    }
-                  }}
-                  className={clsx(
-                    'rounded-md px-2.5 py-1 text-xs transition-colors',
-                    isSelected
-                      ? 'bg-accent-600/20 text-accent-300 ring-1 ring-accent-500/30'
-                      : 'bg-ink-800/50 text-ink-400 hover:bg-ink-800 hover:text-ink-200',
-                  )}
-                >
-                  {lib.name}
-                </button>
-              )
-            })}
+          <div>
+            <p className="mb-1.5 text-[11px] text-ink-500">
+              Link to an existing Komga library (auto-fills the container path):
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {libraries.map((lib) => {
+                const isSelected = libId === lib.id
+                return (
+                  <button
+                    key={lib.id}
+                    type="button"
+                    onClick={() => {
+                      const next = isSelected ? null : lib.id
+                      setLibId(next)
+                      if (next) {
+                        setContainerPath(lib.roots[0] ?? '')
+                        if (!name.trim()) setName(lib.name)
+                      }
+                    }}
+                    className={clsx(
+                      'inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs transition-colors',
+                      isSelected
+                        ? 'bg-accent-600/20 text-accent-300 ring-1 ring-accent-500/30'
+                        : 'bg-ink-800/50 text-ink-400 hover:bg-ink-800 hover:text-ink-200',
+                    )}
+                  >
+                    <Library className="h-3 w-3" />
+                    {lib.name}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         )}
 
@@ -390,6 +407,7 @@ function AddTargetForm({
           onChange={(e) => setContainerPath(e.target.value)}
           className="w-full rounded-lg border border-ink-800 bg-ink-950/60 px-3 py-2 font-mono text-xs text-ink-100 placeholder-ink-600 outline-none focus:border-accent-500"
         />
+        {containerPath.trim() && <DirTester path={containerPath} compact />}
 
         <button
           type="button"
@@ -413,7 +431,7 @@ function AddTargetForm({
 /* ─── Directory tester ─── */
 type DirResult = { exists: boolean; writable: boolean; fileCount: number; sampleFiles: string[] }
 
-function DirTester({ path }: { path: string }) {
+function DirTester({ path, compact = false }: { path: string; compact?: boolean }) {
   const [result, setResult] = useState<DirResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -438,6 +456,54 @@ function DirTester({ path }: { path: string }) {
   }, [path])
 
   if (!path.trim()) return null
+
+  if (compact) {
+    return (
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+        {loading && (
+          <span className="inline-flex items-center gap-1 text-ink-500">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Checking…
+          </span>
+        )}
+        {error && !loading && (
+          <span className="inline-flex items-center gap-1 text-red-400">
+            <XCircle className="h-3 w-3" />
+            {error}
+          </span>
+        )}
+        {result && !loading && (
+          <>
+            {result.exists ? (
+              <>
+                <span className="inline-flex items-center gap-1 text-emerald-400">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Exists
+                </span>
+                <span className={clsx('inline-flex items-center gap-1', result.writable ? 'text-emerald-400' : 'text-amber-400')}>
+                  {result.writable ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                  {result.writable ? 'Writable' : 'Read-only'}
+                </span>
+                <span className="text-ink-500">
+                  {result.fileCount} item{result.fileCount !== 1 ? 's' : ''}
+                  {result.sampleFiles.length > 0 && (
+                    <span className="ml-1 text-ink-600">
+                      ({result.sampleFiles.slice(0, 3).join(', ')}{result.fileCount > 3 ? '…' : ''})
+                    </span>
+                  )}
+                </span>
+              </>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-red-400">
+                <XCircle className="h-3 w-3" />
+                Directory not found
+              </span>
+            )}
+          </>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="mt-2 rounded-lg border border-ink-800/40 bg-ink-900/30 p-3">

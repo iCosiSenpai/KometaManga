@@ -24,6 +24,11 @@ services:
     environment:
       - KOMF_CONFIG_DIR=/config
       - JAVA_TOOL_OPTIONS=-Xmx512m
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+          cpus: '2.0'
     networks:
       - kometahub
 

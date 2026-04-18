@@ -41,6 +41,7 @@ object MangaDexSourceMapper {
             coverUrl = coverUrl,
             year = manga.attributes.year,
             status = mapStatus(manga.attributes.status),
+            contentRating = manga.attributes.contentRating,
             sourceId = MangaSourceId.MANGADEX,
         )
     }

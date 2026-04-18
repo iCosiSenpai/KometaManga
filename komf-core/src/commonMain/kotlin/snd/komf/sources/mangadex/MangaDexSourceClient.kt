@@ -31,6 +31,7 @@ class MangaDexSourceClient(private val ktor: HttpClient) {
             parameter("contentRating[]", "safe")
             parameter("contentRating[]", "suggestive")
             parameter("contentRating[]", "erotica")
+            parameter("contentRating[]", "pornographic")
             parameter("title", query)
             availableTranslatedLanguage?.let { parameter("availableTranslatedLanguage[]", it) }
         }.body()

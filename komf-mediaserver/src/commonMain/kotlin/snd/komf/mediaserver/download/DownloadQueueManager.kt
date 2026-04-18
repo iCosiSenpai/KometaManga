@@ -48,6 +48,7 @@ class DownloadQueueManager(
     }
 
     fun start() {
+        if (processingJob?.isActive == true) return
         processingJob = scope.launch {
             for (signal in processChannel) {
                 processQueue()

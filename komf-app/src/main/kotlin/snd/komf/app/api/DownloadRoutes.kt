@@ -145,8 +145,8 @@ class DownloadRoutes(
             // Download history
             get("/history") {
                 val service = downloadService.first()
-                val limit = call.request.queryParameters["limit"]?.toLongOrNull() ?: 50
-                val offset = call.request.queryParameters["offset"]?.toLongOrNull() ?: 0
+                val limit = (call.request.queryParameters["limit"]?.toLongOrNull() ?: 50).coerceIn(1, 500)
+                val offset = (call.request.queryParameters["offset"]?.toLongOrNull() ?: 0).coerceAtLeast(0)
                 call.respond(service.getDownloadedChapters(limit, offset).map { it.toDto() })
             }
 

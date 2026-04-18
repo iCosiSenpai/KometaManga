@@ -157,6 +157,23 @@ class ConfigRoutes(
                 call.respond(DirValidationResult(exists = false, writable = false, fileCount = 0, sampleFiles = emptyList()))
                 return@post
             }
+
+            val current = config.first()
+            val allowedRoots = buildList {
+                current.download.downloadDir.takeIf { it.isNotBlank() }?.let { add(it) }
+                current.download.extraTargets.forEach { t ->
+                    t.containerPath.takeIf { it.isNotBlank() }?.let { add(it) }
+                }
+            }
+
+            if (allowedRoots.isNotEmpty() && !isPathWithinAllowed(path, allowedRoots)) {
+                call.respond(
+                    HttpStatusCode.Forbidden,
+                    KomfErrorResponse("Path is outside configured download targets")
+                )
+                return@post
+            }
+
             val dir = File(path)
             val exists = dir.exists() && dir.isDirectory
             val writable = exists && dir.canWrite()
@@ -165,6 +182,22 @@ class ConfigRoutes(
             val sampleFiles = files.take(5).map { it.name }
             call.respond(DirValidationResult(exists = exists, writable = writable, fileCount = fileCount, sampleFiles = sampleFiles))
         }
+    }
+
+    private fun isPathWithinAllowed(path: String, allowedRoots: List<String>): Boolean {
+        val target = try {
+            File(path).canonicalFile
+        } catch (_: Exception) {
+            File(path).absoluteFile
+        }
+        for (root in allowedRoots) {
+            val rootFile = try { File(root).canonicalFile } catch (_: Exception) { File(root).absoluteFile }
+            // Allow target to be the root, a child of root, or the root's parent chain (so user can browse up).
+            if (target.path == rootFile.path) return true
+            if (target.path.startsWith(rootFile.path + File.separator)) return true
+            if (rootFile.path.startsWith(target.path + File.separator)) return true
+        }
+        return false
     }
 
     private fun envOverrideConflictErrors(current: AppConfig, updated: AppConfig): List<String> {

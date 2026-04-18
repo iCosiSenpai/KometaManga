@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { api, imageProxyUrl, type DownloadTarget } from '@/api/client'
 import type { MangaChapterDto, MangaSourceId } from '@/api/sources'
+import { deriveTargetName } from '@/utils/targets'
 import { Card } from '@/components/Card'
 import { Button } from '@/components/Button'
 import { ErrorState } from '@/components/ErrorState'
@@ -100,18 +101,26 @@ export function MangaDetailPanel({
     staleTime: 60_000,
   })
 
+  const librariesQuery = useQuery({
+    queryKey: ['libraries'],
+    queryFn: api.getLibraries,
+    staleTime: 60_000 * 5,
+    retry: 1,
+  })
+
   const downloadTargets = useMemo<DownloadTarget[]>(() => {
     const dl = configQuery.data?.download
     if (!dl) return []
+    const libs = librariesQuery.data ?? []
     const defaultTarget: DownloadTarget = {
       id: 'default',
-      name: 'Default',
+      name: deriveTargetName(dl.downloadDir, dl.komgaLibraryId ?? null, libs),
       containerPath: dl.downloadDir,
       komgaLibraryId: dl.komgaLibraryId,
       komgaLibraryPath: dl.komgaLibraryPath,
     }
     return [defaultTarget, ...(dl.extraTargets ?? [])]
-  }, [configQuery.data])
+  }, [configQuery.data, librariesQuery.data])
 
   const [selectedTargetId, setSelectedTargetId] = useState<string>(() => {
     try { return localStorage.getItem('kometa.lastDownloadTargetId') ?? 'default' }
@@ -532,7 +541,7 @@ function FollowDialog({
                   >
                     {downloadTargets.map((t) => (
                       <option key={t.id} value={t.id} className="bg-ink-900 text-ink-100">
-                        {t.name}
+                        {t.name}{t.id === 'default' ? ' (default)' : ''}
                       </option>
                     ))}
                   </select>
@@ -769,7 +778,7 @@ function DetailHero({
                   >
                     {downloadTargets.map((t) => (
                       <option key={t.id} value={t.id} className="bg-ink-900 text-ink-100">
-                        {t.name}
+                        {t.name}{t.id === 'default' ? ' (default)' : ''}
                       </option>
                     ))}
                   </select>

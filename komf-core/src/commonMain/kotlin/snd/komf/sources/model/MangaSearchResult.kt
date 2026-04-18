@@ -11,5 +11,6 @@ data class MangaSearchResult(
     val coverUrl: String? = null,
     val year: Int? = null,
     val status: MangaStatus? = null,
+    val contentRating: String? = null,
     val sourceId: MangaSourceId,
 )

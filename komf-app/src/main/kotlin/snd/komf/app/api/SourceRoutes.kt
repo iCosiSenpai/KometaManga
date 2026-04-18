@@ -88,9 +88,10 @@ class SourceRoutes(
                 get("/search") {
                     val sourceId = call.parameters["sourceId"]?.let { MangaSourceId.valueOf(it) }
                         ?: throw IllegalArgumentException("sourceId is required")
-                    val query = call.request.queryParameters["query"]
-                        ?: throw IllegalArgumentException("query parameter is required")
-                    val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
+                    val query = (call.request.queryParameters["query"]
+                        ?: throw IllegalArgumentException("query parameter is required"))
+                        .take(500).trim()
+                    val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 20).coerceIn(1, 100)
                     val language = call.request.queryParameters["language"]
 
                     try {
@@ -155,6 +156,7 @@ class SourceRoutes(
         coverUrl = coverUrl,
         year = year,
         status = status?.toApiStatus(),
+        contentRating = contentRating,
         sourceId = KomfMangaSourceId.valueOf(sourceId.name),
     )
 

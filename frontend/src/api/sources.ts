@@ -38,6 +38,7 @@ export interface MangaSearchResultDto {
   coverUrl: string | null
   year: number | null
   status: MangaStatus | null
+  contentRating: string | null
   sourceId: MangaSourceId
 }
 

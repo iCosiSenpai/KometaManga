@@ -18,6 +18,7 @@ data class KomfMangaSearchResultDto(
     val coverUrl: String? = null,
     val year: Int? = null,
     val status: KomfMangaStatus? = null,
+    val contentRating: String? = null,
     val sourceId: KomfMangaSourceId,
 )
 

@@ -66,6 +66,7 @@ class AuthRoutes(
         }
 
         fun validateSessionToken(token: String, secret: String): String? {
+            if (secret.isBlank()) return null
             return try {
                 val decoded = String(Base64.getUrlDecoder().decode(token))
                 val parts = decoded.split(":")

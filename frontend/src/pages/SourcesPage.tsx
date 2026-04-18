@@ -19,6 +19,7 @@ import type {
   HealthStatus,
   MangaSearchResultDto,
   MangaSourceId,
+  MangaStatus,
 } from '@/api/sources'
 import { Button } from '@/components/Button'
 import { ErrorState } from '@/components/ErrorState'
@@ -28,6 +29,7 @@ import { MangaDetailPanel } from '@/components/MangaDetailPanel'
 import { Flag } from '@/components/Flag'
 import { SourceIcon } from '@/components/SourceIcon'
 import { SOURCE_BRAND, langLabel } from '@/lib/brand'
+import { ActiveFilterChips, type FilterChip } from '@/components/filters/ActiveFilterChips'
 
 // Pool of currently popular / frequently searched manga — rotated on each mount
 const TRENDING_POOL = [
@@ -216,6 +218,13 @@ export function SourcesPage() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [hideNsfw, setHideNsfw] = useState<boolean>(() => {
+    try { return localStorage.getItem('kometa.hideNsfw') !== 'false' } catch { return true }
+  })
+  const [statusFilter, setStatusFilter] = useState<MangaStatus | null>(null)
+  useEffect(() => {
+    try { localStorage.setItem('kometa.hideNsfw', String(hideNsfw)) } catch { /* ignore */ }
+  }, [hideNsfw])
   const [trendingPicks, setTrendingPicks] = useState<string[]>(() => pickTrending(5))
 
   // Rotate trending picks every 20 seconds while idle
@@ -436,13 +445,53 @@ export function SourcesPage() {
     [mergedResults],
   )
 
+  const filteredDirectoryEntries = useMemo(() => {
+    return directoryEntries.filter((entry) => {
+      if (hideNsfw) {
+        const anyNsfw = entry.variants.some(
+          (v) => v.contentRating === 'erotica' || v.contentRating === 'pornographic',
+        )
+        if (anyNsfw) return false
+      }
+      if (statusFilter && entry.lead.status !== statusFilter) return false
+      return true
+    })
+  }, [directoryEntries, hideNsfw, statusFilter])
+
   const isSearching = searchTerm.length >= 2
   const anyLoading = loadingCount > 0
   const activeLanguageLabel = langFilter
     ? langLabel(langFilter)
     : 'All languages'
   const hasActiveSources = activeSourceIds.length > 0
-  const totalDirectoryMatches = directoryEntries.length
+  const totalDirectoryMatches = filteredDirectoryEntries.length
+
+  const activeFilterChips: FilterChip[] = useMemo(() => {
+    const chips: FilterChip[] = []
+    if (statusFilter) {
+      chips.push({
+        key: 'status',
+        label: `status: ${statusFilter.toLowerCase()}`,
+        onRemove: () => setStatusFilter(null),
+      })
+    }
+    if (!hideNsfw) {
+      chips.push({
+        key: 'nsfw',
+        label: 'NSFW visible',
+        tone: 'warn',
+        onRemove: () => setHideNsfw(true),
+      })
+    }
+    if (langFilter) {
+      chips.push({
+        key: 'lang',
+        label: `lang: ${langLabel(langFilter)}`,
+        onRemove: () => setLangFilter(null),
+      })
+    }
+    return chips
+  }, [statusFilter, hideNsfw, langFilter])
 
   const handleSearch = useCallback(
     (event: React.FormEvent) => {
@@ -642,6 +691,9 @@ export function SourcesPage() {
 
       {/* ── Filter Strip ── */}
       <section className="mx-auto max-w-5xl">
+        {activeFilterChips.length > 0 && (
+          <ActiveFilterChips chips={activeFilterChips} className="mb-2 px-1" />
+        )}
         <div className="flex items-center gap-2">
         <button
           type="button"
@@ -739,6 +791,44 @@ export function SourcesPage() {
                   )
                 })}
               </div>
+            </div>
+
+            {/* Status */}
+            <div>
+              <span className="mb-2 block font-opsMono text-[10px] uppercase tracking-[0.2em] text-ink-500">Status</span>
+              <div className="flex flex-wrap gap-1.5">
+                {(
+                  [null, 'ONGOING', 'COMPLETED', 'HIATUS', 'CANCELLED'] as Array<MangaStatus | null>
+                ).map((s) => (
+                  <button
+                    key={s ?? 'all'}
+                    type="button"
+                    onClick={() => setStatusFilter(s)}
+                    className={clsx(
+                      'rounded-lg px-2.5 py-1.5 text-xs capitalize transition-colors',
+                      statusFilter === s
+                        ? 'bg-accent-600/15 text-accent-300'
+                        : 'text-ink-400 hover:text-ink-200',
+                    )}
+                  >
+                    {s ? s.toLowerCase() : 'All'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Content */}
+            <div>
+              <span className="mb-2 block font-opsMono text-[10px] uppercase tracking-[0.2em] text-ink-500">Content</span>
+              <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-ink-300">
+                <input
+                  type="checkbox"
+                  checked={hideNsfw}
+                  onChange={(e) => setHideNsfw(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-ink-700 bg-ink-900 accent-accent-500"
+                />
+                Hide NSFW (erotica &amp; pornographic)
+              </label>
             </div>
 
             {/* Languages */}
@@ -861,7 +951,7 @@ export function SourcesPage() {
             </div>
 
             <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {directoryEntries.map((entry) => (
+              {filteredDirectoryEntries.map((entry) => (
                 <MangaShelfCard
                   key={entry.key}
                   entry={entry}
@@ -914,7 +1004,22 @@ function MangaShelfCard({
   onOpenLead: () => void
 }) {
   const { lead } = entry
-  const meta = SOURCE_BRAND[lead.sourceId]
+
+  // Unique sources across all variants, ordered by variant ranking
+  const uniqueSources = useMemo(() => {
+    const seen = new Set<MangaSourceId>()
+    const out: MangaSourceId[] = []
+    for (const v of entry.variants) {
+      if (!seen.has(v.sourceId)) {
+        seen.add(v.sourceId)
+        out.push(v.sourceId)
+      }
+    }
+    return out
+  }, [entry.variants])
+
+  const visibleSources = uniqueSources.slice(0, 4)
+  const hiddenSourceCount = uniqueSources.length - visibleSources.length
 
   return (
     <div className="group animate-fade-in">
@@ -952,8 +1057,18 @@ function MangaShelfCard({
             <p className="mt-0.5 line-clamp-1 text-[11px] text-ink-500">{entry.primaryAltTitle}</p>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <SourceIcon sourceId={lead.sourceId} size={12} />
-            <span className="text-[11px] text-ink-500">{meta.label}</span>
+            <div
+              className="flex items-center gap-1"
+              title={uniqueSources.map((id) => SOURCE_BRAND[id].label).join(', ')}
+              aria-label={`Available on ${uniqueSources.length} source${uniqueSources.length !== 1 ? 's' : ''}`}
+            >
+              {visibleSources.map((sourceId) => (
+                <SourceIcon key={sourceId} sourceId={sourceId} size={14} />
+              ))}
+              {hiddenSourceCount > 0 && (
+                <span className="text-[10px] font-medium text-ink-500">+{hiddenSourceCount}</span>
+              )}
+            </div>
             {lead.status && lead.status !== 'UNKNOWN' && (
               <span
                 className={clsx(
