@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { Card } from '@/components/Card'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/Button'
+import { ConfirmDialog, useConfirm } from '@/components/ConfirmDialog'
 import { api, type MetadataJob, type JobStatus } from '@/api/client'
 import { Link } from 'react-router-dom'
 import {
@@ -42,6 +43,7 @@ export function JobsPage() {
   const [filter, setFilter] = useState<FilterStatus>('ALL')
   const [page, setPage] = useState(1)
   const [detailJob, setDetailJob] = useState<MetadataJob | null>(null)
+  const { confirm, dialogProps } = useConfirm()
 
   // Reset page when filter changes
   useEffect(() => setPage(1), [filter])
@@ -72,6 +74,7 @@ export function JobsPage() {
 
   return (
     <div className="animate-fade-in">
+      <ConfirmDialog {...dialogProps} />
       <PageHeader
         title="Jobs"
         description="Metadata processing job history and live progress."
@@ -98,9 +101,7 @@ export function JobsPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => {
-            if (confirm('Delete all job history?')) deleteAll.mutate()
-          }}
+          onClick={() => confirm('Delete all job history?', () => deleteAll.mutate())}
           disabled={deleteAll.isPending || jobs.length === 0}
         >
           <Trash2 className="h-3.5 w-3.5" />
@@ -110,7 +111,7 @@ export function JobsPage() {
 
       {/* Job Detail Modal */}
       {detailJob && (
-        <JobDetailModal job={detailJob} onClose={() => setDetailJob(null)} seriesName={nameMap.get(detailJob.seriesId)} />
+        <JobDetailModal job={detailJob} onClose={() => setDetailJob(null)} seriesName={nameMap.get(detailJob.seriesId)} confirm={confirm} />
       )}
 
       {/* Content */}
@@ -433,7 +434,7 @@ function RunningJobProgress({ jobId }: { jobId: string }) {
 // Job Detail Modal — full event timeline + metadata
 // ---------------------------------------------------------------------------
 
-function JobDetailModal({ job, onClose, seriesName }: { job: MetadataJob; onClose: () => void; seriesName?: string }) {
+function JobDetailModal({ job, onClose, seriesName, confirm }: { job: MetadataJob; onClose: () => void; seriesName?: string; confirm: (msg: string, action: () => void) => void }) {
   const [events, setEvents] = useState<JobProgressEvent[]>([])
   const esRef = useRef<EventSource | null>(null)
   const queryClient = useQueryClient()
@@ -602,9 +603,7 @@ function JobDetailModal({ job, onClose, seriesName }: { job: MetadataJob; onClos
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  if (confirm('Cancel this job?')) cancelMutation.mutate()
-                }}
+                onClick={() => confirm('Cancel this job?', () => cancelMutation.mutate())}
                 loading={cancelMutation.isPending}
                 className="text-red-400 hover:text-red-300"
               >
@@ -620,9 +619,7 @@ function JobDetailModal({ job, onClose, seriesName }: { job: MetadataJob; onClos
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  if (confirm('Retry this job? A new metadata match will be launched for this series.')) retryMutation.mutate()
-                }}
+                onClick={() => confirm('Retry this job? A new metadata match will be launched for this series.', () => retryMutation.mutate())}
                 loading={retryMutation.isPending}
                 className="text-accent-400 hover:text-accent-300"
               >

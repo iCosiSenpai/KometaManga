@@ -11,6 +11,7 @@ import {
   PublisherTagName,
 } from '@/api/client'
 import { useAutoSave } from '@/hooks/useAutoSave'
+import { ConfirmDialog, useConfirm } from '@/components/ConfirmDialog'
 import { PageHeader } from '@/components/PageHeader'
 import { PageSpinner } from '@/components/Spinner'
 import { ErrorState } from '@/components/ErrorState'
@@ -174,6 +175,7 @@ function ProcessingForm({
   libraries: { id: string; name: string }[]
 }) {
   const { status, error, save, dismissError } = useAutoSave()
+  const { confirm, dialogProps } = useConfirm()
   const [activeTab, setActiveTab] = useState<'default' | string>('default')
 
   const libraryOverrides = config.komga.metadataUpdate.library
@@ -201,6 +203,7 @@ function ProcessingForm({
 
   return (
     <div className="animate-fade-in">
+      <ConfirmDialog {...dialogProps} />
       <PageHeader
         title="Processing"
         description="Configure how metadata is processed and applied to your libraries."
@@ -217,8 +220,8 @@ function ProcessingForm({
             <button
               key={preset.label}
               onClick={() => {
-                if (confirm(`Apply "${preset.label}" preset to ${activeTab === 'default' ? 'default' : 'current library'} settings?`))
-                  saveProcessing(preset.config, true)
+                confirm(`Apply "${preset.label}" preset to ${activeTab === 'default' ? 'default' : 'current library'} settings?`, () =>
+                  saveProcessing(preset.config, true))
               }}
               className="rounded-lg border border-ink-800/50 bg-ink-900/30 px-3 py-1.5 text-xs text-ink-300 transition-colors hover:border-accent-600/30 hover:bg-ink-800/40 hover:text-ink-100"
               title={preset.description}

@@ -113,9 +113,10 @@ export function MangaDetailPanel({
     return [defaultTarget, ...(dl.extraTargets ?? [])]
   }, [configQuery.data])
 
-  const [selectedTargetId, setSelectedTargetId] = useState<string>(
-    () => localStorage.getItem('kometa.lastDownloadTargetId') ?? 'default',
-  )
+  const [selectedTargetId, setSelectedTargetId] = useState<string>(() => {
+    try { return localStorage.getItem('kometa.lastDownloadTargetId') ?? 'default' }
+    catch { return 'default' }
+  })
 
   useEffect(() => {
     if (downloadTargets.length === 0) return
@@ -165,6 +166,8 @@ export function MangaDetailPanel({
         mangaTitle: title,
         language: languageFilter,
         enabled: true,
+        komgaLibraryId: activeTarget?.komgaLibraryId ?? null,
+        komgaLibraryPath: activeTarget?.containerPath ?? null,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['auto-downloader-rules'] })
@@ -178,7 +181,10 @@ export function MangaDetailPanel({
   })
 
   const unfollowMutation = useMutation({
-    mutationFn: () => api.deleteAutoDownloaderRule(existingRule!.id),
+    mutationFn: () => {
+      if (!existingRule) throw new Error('No follow rule found')
+      return api.deleteAutoDownloaderRule(existingRule.id)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['auto-downloader-rules'] })
       toast('Auto-download follow removed', 'success')
@@ -245,7 +251,7 @@ export function MangaDetailPanel({
   const handleDownload = useCallback(() => {
     if (selectedChapters.size === 0) return
     if (activeTarget) {
-      localStorage.setItem('kometa.lastDownloadTargetId', activeTarget.id)
+      try { localStorage.setItem('kometa.lastDownloadTargetId', activeTarget.id) } catch {}
     }
     onDownload(sourceId, mangaId, Array.from(selectedChapters), resolveTargetPayload())
     setSelectedChapters(new Set())
@@ -313,7 +319,7 @@ export function MangaDetailPanel({
             onSuccess: () => {
               if (downloadExisting && sortedChapters.length > 0) {
                 if (activeTarget) {
-                  localStorage.setItem('kometa.lastDownloadTargetId', activeTarget.id)
+                  try { localStorage.setItem('kometa.lastDownloadTargetId', activeTarget.id) } catch {}
                 }
                 onDownload(
                   sourceId,
@@ -732,7 +738,7 @@ function DetailHero({
                 className={clsx(
                   'justify-center',
                   isFollowing
-                    ? 'border-white/10 bg-white/5 text-white hover:bg-white/10'
+                    ? 'border-white/10 bg-white/5 text-ink-100 hover:bg-white/10'
                     : 'bg-rose-500 text-white hover:bg-rose-400',
                 )}
               >
@@ -884,7 +890,7 @@ function SelectionRail({
             <Button
               variant="secondary"
               onClick={onToggleSort}
-              className="justify-between border-white/10 bg-white/5 text-white hover:bg-white/10"
+              className="justify-between border-white/10 bg-white/5 text-ink-100 hover:bg-white/10"
             >
               <span>{sortAsc ? 'Ascending order' : 'Descending order'}</span>
               {sortAsc ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -893,7 +899,7 @@ function SelectionRail({
               variant="secondary"
               onClick={onSelectAll}
               disabled={chapterCount === 0}
-              className="justify-center border-white/10 bg-white/5 text-white hover:bg-white/10"
+              className="justify-center border-white/10 bg-white/5 text-ink-100 hover:bg-white/10"
             >
               Select all visible
             </Button>
@@ -932,7 +938,7 @@ function SelectionRail({
             className={clsx(
               'w-full justify-center',
               isFollowing
-                ? 'border-white/10 bg-white/5 text-white hover:bg-white/10'
+                ? 'border-white/10 bg-white/5 text-ink-100 hover:bg-white/10'
                 : 'bg-rose-500 text-white hover:bg-rose-400',
             )}
           >
@@ -1009,7 +1015,7 @@ function ChapterSection({
                   className={clsx(
                     'px-2 py-1 text-[10px] font-mono transition-colors',
                     chapterLimit === limit
-                      ? 'bg-white/15 text-white'
+                      ? 'bg-white/15 text-ink-100'
                       : 'text-ink-500 hover:bg-white/5 hover:text-ink-300',
                   )}
                 >

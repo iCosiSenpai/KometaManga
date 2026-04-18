@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { Skeleton } from '@/components/Skeleton'
 import { useToast } from '@/components/Toast'
+import { ConfirmDialog, useConfirm } from '@/components/ConfirmDialog'
 import {
   Ban,
   Download,
@@ -41,6 +42,7 @@ export function DownloadsPage() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const [tab, setTab] = useState<Tab>('queue')
+  const { confirm, dialogProps } = useConfirm()
 
   // SSE for real-time updates
   useDownloadSSE()
@@ -147,6 +149,7 @@ export function DownloadsPage() {
 
   return (
     <div className="animate-page-in">
+      <ConfirmDialog {...dialogProps} />
       <PageHeader
         title="Downloads"
         description="Manual queue, download history, and automatic chapter tracking"
@@ -235,11 +238,10 @@ export function DownloadsPage() {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => {
-                  if (confirm(`Cancel all ${activeItems.filter(i => i.status === 'QUEUED').length} queued downloads?`)) {
-                    cancelAllMutation.mutate()
-                  }
-                }}
+                onClick={() => confirm(
+                  `Cancel all ${activeItems.filter(i => i.status === 'QUEUED').length} queued downloads?`,
+                  () => cancelAllMutation.mutate(),
+                )}
                 loading={cancelAllMutation.isPending}
               >
                 <Ban className="h-3.5 w-3.5" />
@@ -261,11 +263,10 @@ export function DownloadsPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  if (confirm(`Clear ${completedItems.length} completed download${completedItems.length !== 1 ? 's' : ''}?`)) {
-                    clearCompletedMutation.mutate()
-                  }
-                }}
+                onClick={() => confirm(
+                  `Clear ${completedItems.length} completed download${completedItems.length !== 1 ? 's' : ''}?`,
+                  () => clearCompletedMutation.mutate(),
+                )}
               >
                 Clear Done
               </Button>
@@ -274,11 +275,10 @@ export function DownloadsPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  if (confirm(`Clear ${erroredItems.length} errored download${erroredItems.length !== 1 ? 's' : ''}?`)) {
-                    clearErrorsMutation.mutate()
-                  }
-                }}
+                onClick={() => confirm(
+                  `Clear ${erroredItems.length} errored download${erroredItems.length !== 1 ? 's' : ''}?`,
+                  () => clearErrorsMutation.mutate(),
+                )}
               >
                 Clear Errors
               </Button>
@@ -385,6 +385,7 @@ export function DownloadsPage() {
 function AutoDownloadSection() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  const { confirm, dialogProps: autoDialogProps } = useConfirm()
   const [showCreate, setShowCreate] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
 
@@ -453,6 +454,7 @@ function AutoDownloadSection() {
 
   return (
     <div className="space-y-4">
+      <ConfirmDialog {...autoDialogProps} />
       {/* Status & actions bar */}
       <div className="flex flex-col gap-3 rounded-2xl border border-ink-800/40 bg-ink-900/40 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-4 text-sm">
@@ -549,11 +551,10 @@ function AutoDownloadSection() {
               onToggle={(enabled) =>
                 toggleMutation.mutate({ id: rule.id, enabled })
               }
-              onDelete={() => {
-                if (confirm(`Delete rule "${rule.mangaTitle}"?`)) {
-                  deleteMutation.mutate(rule.id)
-                }
-              }}
+              onDelete={() => confirm(
+                `Delete rule "${rule.mangaTitle}"?`,
+                () => deleteMutation.mutate(rule.id),
+              )}
               onUpdate={(body) =>
                 updateMutation.mutate({ id: rule.id, body })
               }

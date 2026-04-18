@@ -224,15 +224,13 @@ function DownloadTargetsSection({
                 </p>
               </div>
               <div className="flex items-center gap-1.5">
-                {target.isDefault && (
-                  <button
-                    onClick={() => setEditingId(isEditing ? null : target.id)}
-                    className="text-ink-400 hover:text-ink-200"
-                    title="Edit"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                )}
+                <button
+                  onClick={() => setEditingId(isEditing ? null : target.id)}
+                  className="text-ink-400 hover:text-ink-200"
+                  title="Edit"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
                 {canDelete && (
                   <button
                     onClick={() => deleteTarget(target.id)}
@@ -245,28 +243,59 @@ function DownloadTargetsSection({
               </div>
             </div>
 
-            {isEditing && target.isDefault && (
+            {isEditing && (
               <div className="mt-4 space-y-3 border-t border-ink-800/40 pt-4">
-                {locks.downloadDir && <EnvManagedHint envName="KOMF_DOWNLOAD_DIR" />}
+                {target.isDefault && locks.downloadDir && <EnvManagedHint envName="KOMF_DOWNLOAD_DIR" />}
                 <KomgaLibraryPicker
-                  selectedLibraryId={dl.komgaLibraryId ?? null}
-                  onSelect={(libId, libPath) =>
-                    onSave({
-                      komgaLibraryId: libId,
-                      komgaLibraryPath: libPath,
-                      downloadDir: libPath ?? dl.downloadDir,
-                    })
-                  }
+                  selectedLibraryId={target.isDefault ? (dl.komgaLibraryId ?? null) : (target.komgaLibId)}
+                  onSelect={(libId, libPath) => {
+                    if (target.isDefault) {
+                      onSave({
+                        komgaLibraryId: libId,
+                        komgaLibraryPath: libPath,
+                        downloadDir: libPath ?? dl.downloadDir,
+                      })
+                    } else {
+                      const updated = extraTargets.map((t) =>
+                        t.id === target.id
+                          ? { ...t, komgaLibraryId: libId, komgaLibraryPath: libPath, containerPath: libPath ?? t.containerPath }
+                          : t,
+                      )
+                      onSave({ extraTargets: updated })
+                    }
+                  }}
                 />
                 <TextField
                   label="Container path"
-                  value={dl.downloadDir}
-                  disabled={!!locks.downloadDir}
+                  value={target.path}
+                  disabled={target.isDefault && !!locks.downloadDir}
                   placeholder="/data"
                   description="Path inside the container where chapters are saved. Should match a Komga library mount (e.g. /data/manga)."
-                  onChange={(v) => onSave({ downloadDir: v })}
+                  onChange={(v) => {
+                    if (target.isDefault) {
+                      onSave({ downloadDir: v })
+                    } else {
+                      const updated = extraTargets.map((t) =>
+                        t.id === target.id ? { ...t, containerPath: v } : t,
+                      )
+                      onSave({ extraTargets: updated })
+                    }
+                  }}
                 />
-                <DirTester path={dl.downloadDir} />
+                {!target.isDefault && (
+                  <TextField
+                    label="Target name"
+                    value={target.name}
+                    placeholder="e.g. Webtoon, Light Novels"
+                    onChange={(v) => {
+                      const updated = extraTargets.map((t) =>
+                        t.id === target.id ? { ...t, name: v } : t,
+                      )
+                      onSave({ extraTargets: updated })
+                    }}
+                  />
+                )}
+                <DirTester path={target.path} />
               </div>
             )}
           </div>

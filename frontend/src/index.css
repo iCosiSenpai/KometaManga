@@ -117,6 +117,7 @@ html.light .bg-ink-800\/50 { background-color: rgba(238,238,240,0.5); }
 html.light .bg-ink-800\/60 { background-color: rgba(238,238,240,0.6); }
 html.light .bg-ink-800\/30 { background-color: rgba(238,238,240,0.3); }
 html.light .bg-ink-800\/20 { background-color: rgba(238,238,240,0.2); }
+html.light .bg-ink-800\/40 { background-color: rgba(238,238,240,0.4); }
 
 /* Light: text */
 html.light .text-ink-100 { color: #18181b; }
@@ -132,6 +133,7 @@ html.light .border-ink-800\/50 { border-color: rgba(212,212,216,0.5); }
 html.light .border-ink-800\/60 { border-color: rgba(212,212,216,0.6); }
 html.light .border-ink-800\/40 { border-color: rgba(212,212,216,0.4); }
 html.light .border-ink-800\/30 { border-color: rgba(212,212,216,0.3); }
+html.light .border-ink-800 { border-color: #d4d4d8; }
 
 /* Light: placeholder */
 html.light .placeholder-ink-600::placeholder { color: #a1a1aa; }
@@ -162,3 +164,27 @@ html.light .shadow-2xl { box-shadow: 0 20px 60px -12px rgba(0,0,0,0.15); }
 html.light .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08); }
 html.light .shadow-card { box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 html.light .shadow-card-hover { box-shadow: 0 4px 12px rgba(0,0,0,0.10); }
+
+/* Light: hover:text-white → dark text */
+html.light .hover\:text-white:hover { color: #18181b; }
+
+/* Light: bg-ink-950/60 for inputs */
+html.light .bg-ink-950\/60 { background-color: rgba(247,247,248,0.6); }
+
+/* Light: border-white for active pills */
+html.light .border-white { border-color: rgba(0,0,0,0.15); }
+html.light .bg-white { background-color: #ffffff; }
+html.light .bg-white.text-ink-950 { color: #18181b; }
+
+/* Light: hover overrides */
+html.light .hover\:bg-white\/10:hover { background-color: rgba(0,0,0,0.06); }
+html.light .hover\:bg-white\/5:hover { background-color: rgba(0,0,0,0.03); }
+html.light .hover\:border-white\/15:hover { border-color: rgba(0,0,0,0.10); }
+html.light .hover\:border-white\/25:hover { border-color: rgba(0,0,0,0.16); }
+
+/* Light: text-white/70 for decorative elements */
+html.light .text-white\/70 { color: rgba(0,0,0,0.5); }
+
+/* Light: bg-ink-900/40, bg-ink-900/50 */
+html.light .bg-ink-900\/40 { background-color: rgba(255,255,255,0.4); }
+html.light .bg-ink-900\/50 { background-color: rgba(255,255,255,0.5); }

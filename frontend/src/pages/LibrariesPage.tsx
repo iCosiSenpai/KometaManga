@@ -3,6 +3,7 @@ import { api, type Library, type KomfConfig, type MetadataJob, type MetadataProc
 import { PageHeader } from '@/components/PageHeader'
 import { Card } from '@/components/Card'
 import { Button } from '@/components/Button'
+import { ConfirmDialog, useConfirm } from '@/components/ConfirmDialog'
 import { PageSpinner } from '@/components/Spinner'
 import { ErrorState } from '@/components/ErrorState'
 import { EmptyState } from '@/components/EmptyState'
@@ -154,6 +155,7 @@ function LibraryCard({
   queryClient: ReturnType<typeof useQueryClient>
 }) {
   const { toast } = useToast()
+  const { confirm, dialogProps } = useConfirm()
   const [expanded, setExpanded] = useState(false)
   const [identifyOpen, setIdentifyOpen] = useState(false)
   const [smartMatchOpen, setSmartMatchOpen] = useState(false)
@@ -280,6 +282,7 @@ function LibraryCard({
 
   return (
     <>
+      <ConfirmDialog {...dialogProps} />
       <Card>
         {/* Header row */}
         <div className="flex items-center justify-between">
@@ -481,10 +484,10 @@ function LibraryCard({
                 <Button variant="secondary" size="sm" loading={matchLibrary.isPending} disabled={anyPending} onClick={() => setSmartMatchOpen(true)}>
                   <Play className="h-3.5 w-3.5" /> Match All Series
                 </Button>
-                <Button variant="ghost" size="sm" loading={resetLibrary.isPending} disabled={anyPending} onClick={() => { if (confirm(`Reset all metadata for "${library.name}"?`)) resetLibrary.mutate(false) }}>
+                <Button variant="ghost" size="sm" loading={resetLibrary.isPending} disabled={anyPending} onClick={() => confirm(`Reset all metadata for "${library.name}"?`, () => resetLibrary.mutate(false))}>
                   <RotateCcw className="h-3.5 w-3.5" /> Reset Metadata
                 </Button>
-                <Button variant="ghost" size="sm" loading={resetLibrary.isPending} disabled={anyPending} onClick={() => { if (confirm(`Reset all metadata + remove ComicInfo for "${library.name}"? This cannot be undone.`)) resetLibrary.mutate(true) }}>
+                <Button variant="ghost" size="sm" loading={resetLibrary.isPending} disabled={anyPending} onClick={() => confirm(`Reset all metadata + remove ComicInfo for "${library.name}"? This cannot be undone.`, () => resetLibrary.mutate(true))}>
                   <RotateCcw className="h-3.5 w-3.5" /> Reset + ComicInfo
                 </Button>
                 <Button variant="secondary" size="sm" onClick={() => setIdentifyOpen(true)}>
@@ -568,10 +571,10 @@ function LibraryCard({
                   <Button variant="secondary" size="sm" disabled={!selectedSeries || anyPending} loading={matchSeries.isPending} onClick={() => matchSeries.mutate()}>
                     <Play className="h-3.5 w-3.5" /> Match
                   </Button>
-                  <Button variant="ghost" size="sm" disabled={!selectedSeries || anyPending} loading={resetSeries.isPending} onClick={() => { if (confirm(`Reset metadata for "${selectedSeries?.name}"?`)) resetSeries.mutate(false) }}>
+                  <Button variant="ghost" size="sm" disabled={!selectedSeries || anyPending} loading={resetSeries.isPending} onClick={() => confirm(`Reset metadata for "${selectedSeries?.name}"?`, () => resetSeries.mutate(false))}>
                     <RotateCcw className="h-3.5 w-3.5" /> Reset
                   </Button>
-                  <Button variant="ghost" size="sm" disabled={!selectedSeries || anyPending} loading={resetSeries.isPending} onClick={() => { if (confirm(`Reset metadata + remove ComicInfo for "${selectedSeries?.name}"?`)) resetSeries.mutate(true) }}>
+                  <Button variant="ghost" size="sm" disabled={!selectedSeries || anyPending} loading={resetSeries.isPending} onClick={() => confirm(`Reset metadata + remove ComicInfo for "${selectedSeries?.name}"?`, () => resetSeries.mutate(true))}>
                     <RotateCcw className="h-3.5 w-3.5" /> Reset + CI
                   </Button>
                 </div>
@@ -585,9 +588,7 @@ function LibraryCard({
                       size="sm"
                       loading={bulkMatch.isPending}
                       disabled={anyPending}
-                      onClick={() => {
-                        if (confirm(`Start bulk match for ${bulkSelected.size} series?`)) bulkMatch.mutate()
-                      }}
+                      onClick={() => confirm(`Start bulk match for ${bulkSelected.size} series?`, () => bulkMatch.mutate())}
                     >
                       <Play className="h-3.5 w-3.5" /> Bulk Match
                     </Button>
