@@ -1,17 +1,13 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
 import { clsx } from 'clsx'
 import {
   BookOpen,
-  ChevronDown,
   Command,
-  Filter,
   Layers,
   Loader2,
   RefreshCw,
   Search,
-  Settings,
   X,
 } from 'lucide-react'
 import { api, imageProxyUrl } from '@/api/client'
@@ -21,7 +17,6 @@ import type {
   MangaSourceId,
   MangaStatus,
 } from '@/api/sources'
-import { Button } from '@/components/Button'
 import { ErrorState } from '@/components/ErrorState'
 import { Skeleton } from '@/components/Skeleton'
 import { useToast } from '@/components/Toast'
@@ -30,8 +25,8 @@ import { Flag } from '@/components/Flag'
 import { SourceIcon } from '@/components/SourceIcon'
 import { SOURCE_BRAND, langLabel } from '@/lib/brand'
 import { ActiveFilterChips, type FilterChip } from '@/components/filters/ActiveFilterChips'
+import { Eyebrow, HeroTitle, SectionTitle } from '@/components/atelier'
 
-// Pool of currently popular / frequently searched manga — rotated on each mount
 const TRENDING_POOL = [
   'One Piece', 'Jujutsu Kaisen', 'Chainsaw Man', 'Solo Leveling', 'Dandadan',
   'Kagurabachi', 'Berserk', 'Blue Lock', 'Kaiju No. 8', 'Sakamoto Days',
@@ -52,45 +47,30 @@ function pickTrending(count: number): string[] {
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.userAgent)
 
-const HEALTH_META: Record<
-  HealthStatus,
-  { label: string; dot: string; pill: string; note: string }
-> = {
-  GREEN: {
-    label: 'Stable',
-    dot: 'bg-emerald-400',
-    pill: 'bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20',
-    note: 'Healthy and responsive',
-  },
-  YELLOW: {
-    label: 'Watch',
-    dot: 'bg-amber-400',
-    pill: 'bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/20',
-    note: 'Slow or partially degraded',
-  },
-  RED: {
-    label: 'Down',
-    dot: 'bg-red-400',
-    pill: 'bg-red-500/10 text-red-300 ring-1 ring-red-500/20',
-    note: 'Unavailable or failing',
-  },
+const HEALTH_DOT: Record<HealthStatus, string> = {
+  GREEN: 'ma-bg-ok',
+  YELLOW: 'ma-bg-warn',
+  RED: 'ma-bg-accent',
 }
 
-const STATUS_META: Record<
-  'ONGOING' | 'COMPLETED' | 'HIATUS' | 'CANCELLED' | 'UNKNOWN',
-  string
-> = {
-  ONGOING: 'bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20',
-  COMPLETED: 'bg-sky-500/10 text-sky-300 ring-1 ring-sky-500/20',
-  HIATUS: 'bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/20',
-  CANCELLED: 'bg-red-500/10 text-red-300 ring-1 ring-red-500/20',
-  UNKNOWN: 'bg-ink-800/80 text-ink-300 ring-1 ring-ink-700/60',
+const HEALTH_NOTE: Record<HealthStatus, string> = {
+  GREEN: 'Stabile',
+  YELLOW: 'Lenta o degradata',
+  RED: 'Non disponibile',
+}
+
+const STATUS_LABEL: Record<MangaStatus, string> = {
+  ONGOING: 'In corso',
+  COMPLETED: 'Completato',
+  HIATUS: 'In pausa',
+  CANCELLED: 'Cancellato',
+  UNKNOWN: 'Ignoto',
 }
 
 const EMPTY_SOURCE_LIST: Array<{ sourceId: MangaSourceId; languages: string[] }> = []
 
 function formatLatency(latencyMs: number | null | undefined) {
-  if (latencyMs == null) return 'pending'
+  if (latencyMs == null) return '—'
   if (latencyMs >= 1000) return `${(latencyMs / 1000).toFixed(1)} s`
   return `${latencyMs} ms`
 }
@@ -217,7 +197,6 @@ export function SourcesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const [filtersOpen, setFiltersOpen] = useState(false)
   const [hideNsfw, setHideNsfw] = useState<boolean>(() => {
     try { return localStorage.getItem('kometa.hideNsfw') !== 'false' } catch { return true }
   })
@@ -227,13 +206,13 @@ export function SourcesPage() {
   }, [hideNsfw])
   const [trendingPicks, setTrendingPicks] = useState<string[]>(() => pickTrending(5))
 
-  // Rotate trending picks every 20 seconds while idle
   useEffect(() => {
     const id = window.setInterval(() => {
       setTrendingPicks(pickTrending(5))
     }, 20000)
     return () => window.clearInterval(id)
   }, [])
+
   const [selectedManga, setSelectedManga] = useState<{
     sourceId: MangaSourceId
     mangaId: string
@@ -242,9 +221,6 @@ export function SourcesPage() {
     language?: string | null
   } | null>(null)
 
-  // Wire the browser back button to close the detail panel instead of
-  // unmounting the whole page. Push a history entry on open; on popstate
-  // while a manga is selected, close it and stay on Browse Sources.
   useEffect(() => {
     if (!selectedManga) return
     window.history.pushState({ kometaDetail: true }, '')
@@ -280,10 +256,10 @@ export function SourcesPage() {
     mutationFn: api.refreshSourcesHealth,
     onSuccess: (data) => {
       queryClient.setQueryData(['manga-sources-health'], data)
-      toast('Source health refreshed', 'success')
+      toast('Stato delle sorgenti aggiornato', 'success')
     },
     onError: (error: Error) => {
-      toast(error.message || 'Unable to refresh source health', 'error')
+      toast(error.message || 'Impossibile aggiornare lo stato delle sorgenti', 'error')
     },
   })
 
@@ -291,14 +267,14 @@ export function SourcesPage() {
     mutationFn: api.downloadChapters,
     onSuccess: (items) => {
       toast(
-        `Queued ${items.length} chapter${items.length !== 1 ? 's' : ''} for download`,
+        `${items.length} capitol${items.length !== 1 ? 'i' : 'o'} in coda per il download`,
         'success',
       )
       queryClient.invalidateQueries({ queryKey: ['download-queue'] })
       queryClient.invalidateQueries({ queryKey: ['download-status'] })
     },
     onError: (error: Error) => {
-      toast(error.message || 'Failed to queue downloads', 'error')
+      toast(error.message || 'Impossibile accodare i download', 'error')
     },
   })
 
@@ -415,20 +391,6 @@ export function SourcesPage() {
     }
   }, [searchQueries])
 
-  const healthSummary = useMemo(() => {
-    let green = 0
-    let yellow = 0
-    let red = 0
-
-    for (const health of healthQuery.data ?? []) {
-      if (health.status === 'GREEN') green += 1
-      if (health.status === 'YELLOW') yellow += 1
-      if (health.status === 'RED') red += 1
-    }
-
-    return { green, yellow, red }
-  }, [healthQuery.data])
-
   const sourceDeck = useMemo(() => {
     return [...filteredSources].sort((left, right) => {
       const leftActive = enabledSources.has(left.sourceId) ? 1 : 0
@@ -460,25 +422,26 @@ export function SourcesPage() {
 
   const isSearching = searchTerm.length >= 2
   const anyLoading = loadingCount > 0
-  const activeLanguageLabel = langFilter
-    ? langLabel(langFilter)
-    : 'All languages'
   const hasActiveSources = activeSourceIds.length > 0
   const totalDirectoryMatches = filteredDirectoryEntries.length
+  const healthyCount = useMemo(
+    () => sources.filter((s) => (healthMap.get(s.sourceId)?.status ?? 'GREEN') !== 'RED').length,
+    [sources, healthMap],
+  )
 
   const activeFilterChips: FilterChip[] = useMemo(() => {
     const chips: FilterChip[] = []
     if (statusFilter) {
       chips.push({
         key: 'status',
-        label: `status: ${statusFilter.toLowerCase()}`,
+        label: `stato · ${STATUS_LABEL[statusFilter].toLowerCase()}`,
         onRemove: () => setStatusFilter(null),
       })
     }
     if (!hideNsfw) {
       chips.push({
         key: 'nsfw',
-        label: 'NSFW visible',
+        label: 'NSFW visibile',
         tone: 'warn',
         onRemove: () => setHideNsfw(true),
       })
@@ -486,7 +449,7 @@ export function SourcesPage() {
     if (langFilter) {
       chips.push({
         key: 'lang',
-        label: `lang: ${langLabel(langFilter)}`,
+        label: `lingua · ${langLabel(langFilter)}`,
         onRemove: () => setLangFilter(null),
       })
     }
@@ -563,7 +526,6 @@ export function SourcesPage() {
         initialCoverUrl={selectedManga.coverUrl}
         initialLanguage={selectedManga.language}
         onBack={() => {
-          // Prefer the browser history so back-button state stays consistent
           if (window.history.state?.kometaDetail) window.history.back()
           else setSelectedManga(null)
         }}
@@ -589,8 +551,8 @@ export function SourcesPage() {
     return (
       <div className="animate-fade-in">
         <ErrorState
-          message="Unable to load manga sources"
-          hint="The source registry did not answer. Retry when the backend is back on station."
+          message="Impossibile caricare le sorgenti."
+          hint="Il registro non risponde. Riprova quando il backend è online."
           onRetry={() => sourcesQuery.refetch()}
         />
       </div>
@@ -598,64 +560,63 @@ export function SourcesPage() {
   }
 
   return (
-    <div className="animate-fade-in font-jpSans space-y-4 pb-12">
+    <div className="animate-fade-in pb-16">
       <div aria-live="polite" className="sr-only">
         {isSearching
-          ? `${totalDirectoryMatches} grouped matches across ${activeSourceIds.length} active sources`
-          : `${filteredSources.length} sources ready to search`}
+          ? `${totalDirectoryMatches} risultati aggregati su ${activeSourceIds.length} sorgenti attive`
+          : `${filteredSources.length} sorgenti pronte per la ricerca`}
       </div>
 
-      {/* ── Command Bar ── */}
-      <section className="mx-auto max-w-2xl pt-6 pb-2">
-        <h1 className="text-center font-display text-lg font-medium tracking-tight text-ink-300">
-          Browse Sources
-        </h1>
+      {/* ── Hero ── */}
+      <section className="pt-4 pb-10">
+        <Eyebrow jp="ソース" en="Sources" />
+        <HeroTitle className="mt-4 max-w-3xl">Trova un titolo.</HeroTitle>
+        <p className="mt-4 max-w-xl font-sans text-[15px] leading-relaxed ma-muted">
+          Cerca in parallelo su {filteredSources.length} sorgent{filteredSources.length === 1 ? 'e' : 'i'}
+          {' '}— rimuovo i doppioni e ti mostro un solo risultato per titolo.
+        </p>
 
-        <form onSubmit={handleSearch} className="mt-4">
-          <div
-            className={clsx(
-              'flex items-center gap-3 rounded-2xl border bg-ink-950/80 px-4 py-3.5 shadow-card transition-all duration-200',
-              'border-ink-800/50 focus-within:border-ink-600/60 focus-within:shadow-card-hover focus-within:ring-1 focus-within:ring-ink-700/30',
-            )}
-          >
+        <form onSubmit={handleSearch} className="mt-8 max-w-3xl">
+          <div className="ma-input-line">
             {anyLoading ? (
-              <Loader2 className="h-5 w-5 shrink-0 animate-spin text-accent-400" />
+              <Loader2 className="h-5 w-5 shrink-0 animate-spin ma-accent" aria-hidden />
             ) : (
-              <Search className="h-5 w-5 shrink-0 text-ink-500" />
+              <Search className="h-5 w-5 shrink-0 ma-faint" aria-hidden />
             )}
             <input
               ref={inputRef}
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search manga across all sources..."
-              className="min-w-0 flex-1 bg-transparent text-base text-ink-100 placeholder:text-ink-600 focus:outline-none"
+              placeholder="Cerca un manga…"
+              aria-label="Cerca manga"
             />
             {query && (
               <button
                 type="button"
                 onClick={handleClearSearch}
-                className="rounded-full p-1 text-ink-500 transition-colors hover:bg-white/5 hover:text-ink-200"
-                aria-label="Clear search"
+                className="shrink-0 rounded-full p-1 ma-faint transition-colors hover:ma-text"
+                aria-label="Pulisci ricerca"
               >
                 <X className="h-4 w-4" />
               </button>
             )}
-            <kbd className="hidden items-center gap-0.5 rounded-md border border-ink-800/50 bg-ink-900/60 px-1.5 py-0.5 font-mono text-[10px] text-ink-600 sm:inline-flex">
+            <span className="ma-kbd" aria-hidden>
               {isMac ? <><Command className="h-2.5 w-2.5" />K</> : 'Ctrl+K'}
-            </kbd>
+            </span>
           </div>
         </form>
 
-        {!isSearching && (
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-            <span className="font-opsMono text-[10px] uppercase tracking-[0.2em] text-ink-600">Most researched</span>
+        {/* Trending strip (idle) / Live counters (searching) */}
+        {!isSearching ? (
+          <div className="mt-5 flex max-w-3xl flex-wrap items-center gap-2">
+            <Eyebrow jp="人気" en="In tendenza" className="mr-2" />
             {trendingPicks.map((s) => (
               <button
                 key={s}
                 type="button"
                 onClick={() => handleSuggestedQuery(s)}
-                className="rounded-full border border-ink-800/50 bg-ink-900/40 px-3 py-1 text-xs text-ink-400 transition-colors hover:bg-ink-800/60 hover:text-ink-200"
+                className="ma-chip"
               >
                 {s}
               </button>
@@ -663,294 +624,232 @@ export function SourcesPage() {
             <button
               type="button"
               onClick={() => setTrendingPicks(pickTrending(5))}
-              className="flex h-6 w-6 items-center justify-center rounded-full text-ink-600 transition-colors hover:bg-ink-800/60 hover:text-ink-200"
-              title="Refresh suggestions"
-              aria-label="Refresh suggestions"
+              className="ma-microlink ml-1"
+              title="Altri suggerimenti"
             >
               <RefreshCw className="h-3 w-3" />
+              Altri
             </button>
           </div>
-        )}
-
-        {isSearching && (
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-ink-500">
-            <span>{activeSourceIds.length} source{activeSourceIds.length !== 1 ? 's' : ''} active</span>
-            <span className="h-1 w-1 rounded-full bg-ink-700" />
-            <span>{totalDirectoryMatches} result{totalDirectoryMatches !== 1 ? 's' : ''}</span>
-            <span className="h-1 w-1 rounded-full bg-ink-700" />
-            <span>{activeLanguageLabel}</span>
+        ) : (
+          <div className="mt-5 flex max-w-3xl flex-wrap items-center gap-x-3 gap-y-1 font-opsMono text-[11px] uppercase tracking-[0.18em] ma-muted">
+            <span>{activeSourceIds.length} attiv{activeSourceIds.length === 1 ? 'a' : 'e'}</span>
+            <span aria-hidden className="ma-faint">·</span>
+            <span>{totalDirectoryMatches} risultat{totalDirectoryMatches === 1 ? 'o' : 'i'}</span>
+            {errorCount > 0 && (
+              <>
+                <span aria-hidden className="ma-faint">·</span>
+                <span className="ma-warn">{errorCount} in errore</span>
+              </>
+            )}
             {anyLoading && (
               <>
-                <span className="h-1 w-1 rounded-full bg-ink-700" />
-                <span className="text-accent-400">{loadingCount} loading...</span>
+                <span aria-hidden className="ma-faint">·</span>
+                <span className="ma-accent">{loadingCount} in corso</span>
               </>
             )}
           </div>
         )}
       </section>
 
-      {/* ── Filter Strip ── */}
-      <section className="mx-auto max-w-5xl">
+      {/* ── Filter Strip (always visible) ── */}
+      <section className="pb-10">
         {activeFilterChips.length > 0 && (
-          <ActiveFilterChips chips={activeFilterChips} className="mb-2 px-1" />
+          <ActiveFilterChips chips={activeFilterChips} className="mb-6" />
         )}
-        <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setFiltersOpen(!filtersOpen)}
-          className="group flex flex-1 items-center justify-between rounded-xl border border-ink-800/40 bg-ink-900/40 px-4 py-2.5 text-left transition-colors hover:bg-ink-900/60"
-        >
-          <div className="flex items-center gap-3">
-            <Filter className="h-4 w-4 text-ink-500" />
-            <span className="text-sm font-medium text-ink-300">Filters</span>
-            <div className="flex items-center gap-1.5">
-              {healthSummary.green > 0 && (
-                <span className="h-2 w-2 rounded-full bg-emerald-400" title={`${healthSummary.green} stable`} />
-              )}
-              {healthSummary.yellow > 0 && (
-                <span className="h-2 w-2 rounded-full bg-amber-400" title={`${healthSummary.yellow} degraded`} />
-              )}
-              {healthSummary.red > 0 && (
-                <span className="h-2 w-2 rounded-full bg-red-400" title={`${healthSummary.red} down`} />
-              )}
-              <span className="ml-1 text-xs text-ink-500">
-                {activeSourceIds.length}/{filteredSources.length} sources
-              </span>
-              {langFilter && (
-                <span className="rounded-full bg-accent-600/15 px-2 py-0.5 text-[10px] text-accent-300">
-                  {activeLanguageLabel}
-                </span>
-              )}
-            </div>
-          </div>
-          <ChevronDown
-            className={clsx(
-              'h-4 w-4 text-ink-500 transition-transform duration-200',
-              filtersOpen && 'rotate-180',
-            )}
-          />
-        </button>
-        <Link
-          to="/settings/sources"
-          className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-ink-800/40 bg-ink-900/40 text-ink-400 transition-colors hover:bg-ink-900/60 hover:text-ink-200"
-          title="Source settings"
-        >
-          <Settings className="h-4 w-4" />
-        </Link>
+
+        <SectionTitle
+          title="Sorgenti"
+          jp="ソース"
+          size="md"
+          action={{ label: 'Gestisci', to: '/settings/sources' }}
+        />
+
+        <div className="flex flex-wrap items-center gap-2">
+          {sourceDeck.map((source) => {
+            const meta = SOURCE_BRAND[source.sourceId]
+            const active = enabledSources.has(source.sourceId)
+            const health = healthMap.get(source.sourceId)
+            const dotClass = health ? HEALTH_DOT[health.status] : 'ma-bg-accent-soft'
+            return (
+              <button
+                key={source.sourceId}
+                type="button"
+                onClick={() => toggleSource(source.sourceId)}
+                className={clsx('ma-chip', active && 'ma-chip-active', !active && 'ma-chip-disabled')}
+                title={health ? HEALTH_NOTE[health.status] : undefined}
+              >
+                <SourceIcon sourceId={source.sourceId} size={14} />
+                <span>{meta.label}</span>
+                <span className={clsx('h-1.5 w-1.5 rounded-full', dotClass)} aria-hidden />
+                {isSearching && active && (
+                  <span className="font-opsMono text-[10px] ma-faint">
+                    {resultCountBySource.get(source.sourceId) ?? 0}
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
 
-        {filtersOpen && (
-          <div className="mt-2 animate-slide-up space-y-4 rounded-xl border border-ink-800/40 bg-ink-900/40 p-4">
-            {/* Sources */}
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <span className="font-opsMono text-[10px] uppercase tracking-[0.2em] text-ink-500">Sources</span>
-                <div className="flex gap-3">
-                  <button type="button" onClick={enableAllSources} className="text-[11px] text-ink-400 transition-colors hover:text-ink-200">
-                    All
-                  </button>
-                  <button type="button" onClick={enableHealthySources} className="text-[11px] text-ink-400 transition-colors hover:text-ink-200">
-                    Healthy only
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => refreshHealthMutation.mutate()}
-                    className="flex items-center gap-1 text-[11px] text-ink-400 transition-colors hover:text-ink-200"
-                  >
-                    <RefreshCw className={clsx('h-3 w-3', refreshHealthMutation.isPending && 'animate-spin')} />
-                    Refresh
-                  </button>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {sourceDeck.map((source) => {
-                  const meta = SOURCE_BRAND[source.sourceId]
-                  const active = enabledSources.has(source.sourceId)
-                  const health = healthMap.get(source.sourceId)
-                  return (
-                    <button
-                      key={source.sourceId}
-                      type="button"
-                      onClick={() => toggleSource(source.sourceId)}
-                      className={clsx(
-                        'flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition-all duration-150',
-                        active
-                          ? 'bg-ink-800/80 text-ink-100 ring-1 ring-ink-700/50'
-                          : 'bg-ink-950/50 text-ink-500 hover:bg-ink-900/60 hover:text-ink-300',
-                      )}
-                    >
-                      <SourceIcon sourceId={source.sourceId} size={14} />
-                      {meta.label}
-                      {health && <span className={clsx('h-1.5 w-1.5 rounded-full', HEALTH_META[health.status].dot)} />}
-                      {isSearching && (
-                        <span className="font-opsMono text-[10px] text-ink-500">
-                          {resultCountBySource.get(source.sourceId) ?? 0}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
+        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
+          <button type="button" onClick={enableAllSources} className="ma-microlink">
+            Tutte
+          </button>
+          <button type="button" onClick={enableHealthySources} className="ma-microlink">
+            Solo sane
+          </button>
+          <button
+            type="button"
+            onClick={() => refreshHealthMutation.mutate()}
+            disabled={refreshHealthMutation.isPending}
+            className="ma-microlink"
+          >
+            <RefreshCw className={clsx('h-3 w-3', refreshHealthMutation.isPending && 'animate-spin')} />
+            Aggiorna stato
+          </button>
+        </div>
 
-            {/* Status */}
-            <div>
-              <span className="mb-2 block font-opsMono text-[10px] uppercase tracking-[0.2em] text-ink-500">Status</span>
-              <div className="flex flex-wrap gap-1.5">
-                {(
-                  [null, 'ONGOING', 'COMPLETED', 'HIATUS', 'CANCELLED'] as Array<MangaStatus | null>
-                ).map((s) => (
-                  <button
-                    key={s ?? 'all'}
-                    type="button"
-                    onClick={() => setStatusFilter(s)}
-                    className={clsx(
-                      'rounded-lg px-2.5 py-1.5 text-xs capitalize transition-colors',
-                      statusFilter === s
-                        ? 'bg-accent-600/15 text-accent-300'
-                        : 'text-ink-400 hover:text-ink-200',
-                    )}
-                  >
-                    {s ? s.toLowerCase() : 'All'}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Content */}
-            <div>
-              <span className="mb-2 block font-opsMono text-[10px] uppercase tracking-[0.2em] text-ink-500">Content</span>
-              <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-ink-300">
-                <input
-                  type="checkbox"
-                  checked={hideNsfw}
-                  onChange={(e) => setHideNsfw(e.target.checked)}
-                  className="h-3.5 w-3.5 rounded border-ink-700 bg-ink-900 accent-accent-500"
-                />
-                Hide NSFW (erotica &amp; pornographic)
-              </label>
-            </div>
-
-            {/* Languages */}
-            <div>
-              <span className="mb-2 block font-opsMono text-[10px] uppercase tracking-[0.2em] text-ink-500">Language</span>
-              <div className="flex flex-wrap gap-1.5">
+        <div className="mt-10 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Lingua */}
+          <div>
+            <Eyebrow jp="言語" en="Lingua" />
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setLangFilter(null)}
+                className={clsx('ma-chip', !langFilter && 'ma-chip-active')}
+              >
+                Tutte
+              </button>
+              {availableLanguages.map((lang) => (
                 <button
+                  key={lang}
                   type="button"
-                  onClick={() => setLangFilter(null)}
-                  className={clsx(
-                    'rounded-lg px-2.5 py-1.5 text-xs transition-colors',
-                    !langFilter ? 'bg-accent-600/15 text-accent-300' : 'text-ink-400 hover:text-ink-200',
-                  )}
+                  onClick={() => setLangFilter((current) => (current === lang ? null : lang))}
+                  className={clsx('ma-chip', langFilter === lang && 'ma-chip-active')}
                 >
-                  All
+                  <Flag code={lang} />
+                  {langLabel(lang)}
                 </button>
-                {availableLanguages.map((lang) => (
-                  <button
-                    key={lang}
-                    type="button"
-                    onClick={() => setLangFilter((current) => (current === lang ? null : lang))}
-                    className={clsx(
-                      'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-colors',
-                      langFilter === lang ? 'bg-accent-600/15 text-accent-300' : 'text-ink-400 hover:text-ink-200',
-                    )}
-                  >
-                    <Flag code={lang} />
-                    {langLabel(lang)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Health summary */}
-            <div className="flex items-center gap-4 border-t border-ink-800/30 pt-3 text-xs text-ink-500">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                {healthSummary.green} stable
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-amber-400" />
-                {healthSummary.yellow} watch
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-red-400" />
-                {healthSummary.red} down
-              </span>
+              ))}
             </div>
           </div>
-        )}
+
+          {/* Stato */}
+          <div>
+            <Eyebrow jp="状態" en="Stato" />
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setStatusFilter(null)}
+                className={clsx('ma-chip', !statusFilter && 'ma-chip-active')}
+              >
+                Tutti
+              </button>
+              {(['ONGOING', 'COMPLETED', 'HIATUS', 'CANCELLED'] as MangaStatus[]).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setStatusFilter((current) => (current === s ? null : s))}
+                  className={clsx('ma-chip', statusFilter === s && 'ma-chip-active')}
+                >
+                  {STATUS_LABEL[s]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Contenuto */}
+          <div>
+            <Eyebrow jp="内容" en="Contenuto" />
+            <label className="mt-3 inline-flex cursor-pointer items-center gap-2 font-sans text-[13px] ma-text">
+              <input
+                type="checkbox"
+                checked={hideNsfw}
+                onChange={(e) => setHideNsfw(e.target.checked)}
+                className="h-3.5 w-3.5 rounded border-[color:var(--ma-hair-strong)] bg-transparent"
+                style={{ accentColor: 'var(--ma-accent)' }}
+              />
+              Nascondi NSFW
+            </label>
+            <p className="mt-1.5 font-sans text-[11px] ma-faint">
+              Erotica &amp; pornografico
+            </p>
+          </div>
+        </div>
       </section>
 
-      {/* ── Results Area ── */}
-      <section className="mx-auto max-w-6xl">
-        {/* Landing */}
+      {/* ── Results area ── */}
+      <section>
         {!isSearching && (
           <div className="animate-fade-in">
-            <div className="flex flex-col items-center py-10 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-ink-800/40 text-ink-400">
-                <BookOpen className="h-7 w-7" />
-              </div>
-              <h2 className="mt-4 font-display text-xl font-semibold text-ink-200">
-                Search across {filteredSources.length} sources at once
-              </h2>
-              <p className="mt-2 max-w-md text-sm text-ink-500">
-                Type a manga title above. Results from all active sources are merged, deduplicated, and ranked automatically.
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <SectionTitle
+              title="Fonti"
+              jp="情報源"
+              size="lg"
+              right={
+                <span className="font-opsMono text-[11px] uppercase tracking-[0.2em] ma-muted">
+                  {healthyCount}/{sources.length} stabili
+                </span>
+              }
+            />
+            <div className="grid gap-x-10 gap-y-0 sm:grid-cols-2 lg:grid-cols-3">
               {sourceDeck.map((source) => (
-                <SourceLandingCard key={source.sourceId} source={source} health={healthMap.get(source.sourceId)} />
+                <SourceLandingRow
+                  key={source.sourceId}
+                  source={source}
+                  health={healthMap.get(source.sourceId)}
+                />
               ))}
             </div>
           </div>
         )}
 
-        {/* No sources selected */}
         {isSearching && !hasActiveSources && (
           <div role="alert">
             <ErrorState
-              message="No source selected"
-              hint="Open filters and enable at least one source before searching."
+              message="Nessuna sorgente selezionata."
+              hint="Apri almeno una sorgente qui sopra prima di cercare."
             />
           </div>
         )}
 
-        {/* Loading */}
-        {isSearching && anyLoading && totalCount === 0 && hasActiveSources && <DirectoryLoadingState />}
+        {isSearching && anyLoading && totalCount === 0 && hasActiveSources && (
+          <DirectoryLoadingState />
+        )}
 
-        {/* Errors */}
         {isSearching && !anyLoading && errorCount > 0 && totalCount === 0 && hasActiveSources && (
           <div role="alert">
             <ErrorState
-              message={`Search failed on ${errorCount} source${errorCount !== 1 ? 's' : ''}`}
-              hint="Try refreshing source health, widening the language filter, or reducing active sources."
+              message={`Ricerca fallita su ${errorCount} sorgent${errorCount === 1 ? 'e' : 'i'}.`}
+              hint="Aggiorna lo stato delle sorgenti o riduci i filtri attivi."
               onRetry={() => queryClient.invalidateQueries({ queryKey: ['manga-search'] })}
             />
           </div>
         )}
 
-        {/* No results */}
         {isSearching && !anyLoading && totalCount === 0 && errorCount === 0 && hasActiveSources && (
-          <DirectoryNoResults searchTerm={searchTerm} onSuggestionClick={handleSuggestedQuery} suggestions={trendingPicks} />
+          <DirectoryNoResults
+            searchTerm={searchTerm}
+            onSuggestionClick={handleSuggestedQuery}
+            suggestions={trendingPicks}
+          />
         )}
 
-        {/* Results grid */}
         {isSearching && totalCount > 0 && (
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-end justify-between gap-3 px-1">
-              <h2 className="font-display text-lg font-semibold text-ink-100">
-                {totalDirectoryMatches} result{totalDirectoryMatches !== 1 ? 's' : ''}
-                <span className="ml-2 font-normal text-ink-500">for &ldquo;{searchTerm}&rdquo;</span>
-              </h2>
-              <div className="flex items-center gap-3 text-xs text-ink-500">
-                <span>{totalCount} raw hits</span>
-                <span>{activeSourceIds.length} sources</span>
-                {errorCount > 0 && <span className="text-red-400">{errorCount} failed</span>}
-              </div>
-            </div>
-
-            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          <div className="animate-fade-in">
+            <SectionTitle
+              title="Risultati"
+              jp="結果"
+              size="lg"
+              right={
+                <span className="font-opsMono text-[11px] uppercase tracking-[0.2em] ma-muted">
+                  &ldquo;{searchTerm}&rdquo; · {totalCount} grezzi
+                </span>
+              }
+            />
+            <div className="grid gap-x-6 gap-y-8 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {filteredDirectoryEntries.map((entry) => (
                 <MangaShelfCard
                   key={entry.key}
@@ -968,7 +867,7 @@ export function SourcesPage() {
 
 /* ── Sub-components ── */
 
-function SourceLandingCard({
+function SourceLandingRow({
   source,
   health,
 }: {
@@ -976,19 +875,26 @@ function SourceLandingCard({
   health?: { status: HealthStatus; latencyMs: number | null; error: string | null }
 }) {
   const meta = SOURCE_BRAND[source.sourceId]
-  const healthMeta = health ? HEALTH_META[health.status] : null
+  const dotClass = health ? HEALTH_DOT[health.status] : 'ma-bg-accent-soft'
 
   return (
-    <div className="group flex items-start gap-3 rounded-xl border border-ink-800/40 bg-ink-900/40 p-4 transition-colors hover:bg-ink-900/60">
-      <SourceIcon sourceId={source.sourceId} size={20} className="mt-0.5 shrink-0" />
+    <div className="flex items-start gap-4 border-b ma-hair py-4 last:border-b-0">
+      <SourceIcon sourceId={source.sourceId} size={22} className="mt-1 shrink-0" />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-ink-200">{meta.label}</span>
-          {healthMeta && <span className={clsx('h-2 w-2 rounded-full', healthMeta.dot)} />}
+        <div className="flex items-center gap-2">
+          <h3 className="font-serif italic text-[20px] leading-none tracking-[-0.01em] ma-text">
+            {meta.label}
+          </h3>
+          <span className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', dotClass)} aria-hidden />
         </div>
-        <p className="mt-1 line-clamp-1 text-xs text-ink-500">{meta.blurb}</p>
-        <div className="mt-2 flex items-center gap-3 text-[11px] text-ink-600">
-          <span>{source.languages.length} lang</span>
+        {meta.blurb && (
+          <p className="mt-2 font-sans text-[13px] leading-snug ma-muted line-clamp-2">
+            {meta.blurb}
+          </p>
+        )}
+        <div className="mt-3 flex items-center gap-3 font-opsMono text-[10px] uppercase tracking-[0.18em] ma-faint">
+          <span>{source.languages.length} lingu{source.languages.length === 1 ? 'a' : 'e'}</span>
+          <span aria-hidden>·</span>
           <span>{formatLatency(health?.latencyMs)}</span>
         </div>
       </div>
@@ -1005,7 +911,6 @@ function MangaShelfCard({
 }) {
   const { lead } = entry
 
-  // Unique sources across all variants, ordered by variant ranking
   const uniqueSources = useMemo(() => {
     const seen = new Set<MangaSourceId>()
     const out: MangaSourceId[] = []
@@ -1018,83 +923,87 @@ function MangaShelfCard({
     return out
   }, [entry.variants])
 
-  const visibleSources = uniqueSources.slice(0, 4)
+  const visibleSources = uniqueSources.slice(0, 3)
   const hiddenSourceCount = uniqueSources.length - visibleSources.length
+  const statusLabel = lead.status && lead.status !== 'UNKNOWN' ? STATUS_LABEL[lead.status] : null
 
   return (
-    <div className="group animate-fade-in">
-      <button type="button" onClick={onOpenLead} className="relative w-full overflow-hidden rounded-xl bg-ink-900/60 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover">
-        {/* Cover */}
-        <div className="aspect-[2/3] w-full overflow-hidden bg-ink-950/80">
+    <button
+      type="button"
+      onClick={onOpenLead}
+      className="group animate-fade-in flex flex-col items-stretch text-left"
+    >
+      <div className="relative overflow-hidden rounded-sm border ma-hair bg-[var(--ma-surface)] transition-colors group-hover:border-[color:var(--ma-hair-strong)]">
+        <div className="aspect-[2/3] w-full overflow-hidden">
           {lead.coverUrl ? (
             <img
               src={imageProxyUrl(lead.coverUrl) ?? lead.coverUrl}
               alt={lead.title}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:-translate-y-1"
               loading="lazy"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-ink-700">
+            <div className="flex h-full items-center justify-center ma-faint">
               <BookOpen className="h-8 w-8" />
             </div>
           )}
-
-          {/* Source count overlay (top-right) */}
-          {entry.sourceCount > 1 && (
-            <div className="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-ink-950/80 px-2 py-1 text-[10px] font-medium text-ink-200 backdrop-blur-sm">
-              <Layers className="h-3 w-3" />
-              {entry.sourceCount}
-            </div>
-          )}
         </div>
-
-        {/* Title area */}
-        <div className="p-3 text-left">
-          <h3 className="line-clamp-2 text-sm font-medium leading-snug text-ink-100 group-hover:text-white">
-            {lead.title}
-          </h3>
-          {entry.primaryAltTitle && (
-            <p className="mt-0.5 line-clamp-1 text-[11px] text-ink-500">{entry.primaryAltTitle}</p>
-          )}
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <div
-              className="flex items-center gap-1"
-              title={uniqueSources.map((id) => SOURCE_BRAND[id].label).join(', ')}
-              aria-label={`Available on ${uniqueSources.length} source${uniqueSources.length !== 1 ? 's' : ''}`}
-            >
-              {visibleSources.map((sourceId) => (
-                <SourceIcon key={sourceId} sourceId={sourceId} size={14} />
-              ))}
-              {hiddenSourceCount > 0 && (
-                <span className="text-[10px] font-medium text-ink-500">+{hiddenSourceCount}</span>
-              )}
-            </div>
-            {lead.status && lead.status !== 'UNKNOWN' && (
-              <span
-                className={clsx(
-                  'rounded px-1.5 py-0 text-[9px] font-semibold uppercase tracking-wider',
-                  STATUS_META[lead.status],
-                )}
-              >
-                {lead.status}
-              </span>
-            )}
-            {lead.year && <span className="ml-auto text-[11px] text-ink-600">{lead.year}</span>}
+        {entry.sourceCount > 1 && (
+          <div className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-sm border ma-hair-strong bg-[color:var(--ma-surface-2)]/90 px-1.5 py-0.5 font-opsMono text-[10px] uppercase tracking-[0.14em] ma-text backdrop-blur-sm">
+            <Layers className="h-2.5 w-2.5" />
+            +{entry.sourceCount - 1}
           </div>
+        )}
+      </div>
+
+      <div className="mt-3 px-0.5">
+        <h3 className="font-serif italic text-[15px] leading-snug ma-text line-clamp-2">
+          {lead.title}
+        </h3>
+        {entry.primaryAltTitle && (
+          <p className="mt-1 font-sans text-[11px] leading-snug ma-faint line-clamp-1">
+            {entry.primaryAltTitle}
+          </p>
+        )}
+        <div className="mt-2 flex items-center gap-2">
+          <div
+            className="flex items-center gap-1"
+            title={uniqueSources.map((id) => SOURCE_BRAND[id].label).join(', ')}
+          >
+            {visibleSources.map((sourceId) => (
+              <SourceIcon key={sourceId} sourceId={sourceId} size={12} />
+            ))}
+            {hiddenSourceCount > 0 && (
+              <span className="font-opsMono text-[10px] ma-faint">+{hiddenSourceCount}</span>
+            )}
+          </div>
+          {statusLabel && (
+            <span className="font-opsMono text-[10px] uppercase tracking-[0.16em] ma-muted">
+              {statusLabel}
+            </span>
+          )}
+          {lead.year && (
+            <span className="ml-auto font-opsMono text-[11px] ma-faint">{lead.year}</span>
+          )}
         </div>
-      </button>
-    </div>
+      </div>
+    </button>
   )
 }
 
 function DirectoryLoadingState() {
   return (
-    <div className="mx-auto max-w-6xl">
-      <Skeleton className="mb-4 h-6 w-48" />
-      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+    <div className="animate-fade-in">
+      <SectionTitle
+        title="Risultati"
+        jp="結果"
+        size="lg"
+        right={<span className="font-opsMono text-[11px] uppercase tracking-[0.2em] ma-faint">in corso…</span>}
+      />
+      <div className="grid gap-x-6 gap-y-8 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {Array.from({ length: 12 }, (_, i) => (
-          <div key={i} className="space-y-2">
-            <Skeleton className="aspect-[2/3] w-full rounded-xl" />
+          <div key={i} className="space-y-3">
+            <Skeleton className="aspect-[2/3] w-full rounded-sm" />
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-3 w-1/2" />
           </div>
@@ -1114,22 +1023,27 @@ function DirectoryNoResults({
   suggestions: string[]
 }) {
   return (
-    <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-ink-800/50 bg-ink-900/20 text-center animate-fade-in">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-ink-800/40 text-ink-500">
-        <Search className="h-6 w-6" />
-      </div>
-      <div className="max-w-xs">
-        <p className="font-display font-semibold text-ink-300">No results for &ldquo;{searchTerm}&rdquo;</p>
-        <p className="mt-1.5 text-sm leading-relaxed text-ink-500">
-          Try a different title, remove language filters, or enable more sources.
+    <div className="animate-fade-in">
+      <SectionTitle title="Nessun risultato" jp="該当なし" size="lg" />
+      <div className="max-w-2xl">
+        <p className="font-serif italic text-[28px] leading-[1.1] tracking-[-0.01em] ma-text sm:text-[34px]">
+          Niente per &ldquo;{searchTerm}&rdquo;.
         </p>
-      </div>
-      <div className="flex flex-wrap justify-center gap-2">
-        {suggestions.map((s) => (
-          <Button key={s} variant="ghost" size="sm" onClick={() => onSuggestionClick(s)}>
-            {s}
-          </Button>
-        ))}
+        <p className="mt-4 font-sans text-[14px] leading-relaxed ma-muted">
+          Proviamo con una variante del titolo — oppure apri più sorgenti qui sopra.
+        </p>
+        <div className="mt-6 flex flex-wrap gap-2">
+          {suggestions.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => onSuggestionClick(s)}
+              className="ma-chip"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -1137,17 +1051,24 @@ function DirectoryNoResults({
 
 function SourcesPageSkeleton() {
   return (
-    <div className="animate-fade-in space-y-6 pb-12">
-      <div className="mx-auto max-w-2xl space-y-4 pt-6">
-        <Skeleton className="mx-auto h-5 w-32" />
-        <Skeleton className="h-14 w-full rounded-2xl" />
+    <div className="animate-fade-in pb-16">
+      <div className="pt-4 pb-10 space-y-4">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-14 w-2/3" />
+        <Skeleton className="h-5 w-1/2" />
+        <Skeleton className="h-10 w-full max-w-3xl" />
       </div>
-      <div className="mx-auto max-w-5xl">
-        <Skeleton className="h-12 w-full rounded-xl" />
+      <div className="pb-10 space-y-4">
+        <Skeleton className="h-6 w-40" />
+        <div className="flex flex-wrap gap-2">
+          {Array.from({ length: 6 }, (_, i) => (
+            <Skeleton key={i} className="h-7 w-28 rounded-full" />
+          ))}
+        </div>
       </div>
-      <div className="mx-auto max-w-5xl grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-x-10 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }, (_, i) => (
-          <Skeleton key={i} className="h-20 rounded-xl" />
+          <Skeleton key={i} className="h-20 w-full" />
         ))}
       </div>
     </div>

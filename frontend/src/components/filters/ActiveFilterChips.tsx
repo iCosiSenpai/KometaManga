@@ -11,22 +11,21 @@ export interface FilterChip {
 export function ActiveFilterChips({ chips, className }: { chips: FilterChip[]; className?: string }) {
   if (chips.length === 0) return null
   return (
-    <div className={clsx('flex flex-wrap items-center gap-1.5', className)}>
+    <div className={clsx('flex flex-wrap items-center gap-2', className)}>
       {chips.map((chip) => (
         <button
           key={chip.key}
           type="button"
           onClick={chip.onRemove}
           className={clsx(
-            'group inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] transition-colors',
-            chip.tone === 'warn'
-              ? 'bg-amber-500/15 text-amber-200 hover:bg-amber-500/25'
-              : 'bg-accent-600/15 text-accent-200 hover:bg-accent-600/25',
+            'group inline-flex items-center gap-1.5 rounded-full border ma-hair px-2.5 py-1 text-[11px] transition-colors',
+            chip.tone === 'warn' ? 'ma-warn' : 'ma-muted',
+            'hover:ma-text hover:border-[var(--ma-hair-strong)]',
           )}
-          title={`Remove ${chip.label}`}
+          title={`Rimuovi: ${chip.label}`}
         >
           {chip.label}
-          <X className="h-3 w-3 opacity-70 group-hover:opacity-100" />
+          <X className="h-3 w-3 opacity-60 transition-opacity group-hover:opacity-100 group-hover:ma-accent" />
         </button>
       ))}
     </div>

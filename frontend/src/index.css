@@ -212,6 +212,91 @@ html.light {
 .ma-bar-complete { background: var(--ma-fg-faint); }
 .ma-bar-failed   { background: var(--ma-accent); }
 
+/* Editorial command-line search input: single hair underline that
+   deepens on focus. No card, no ring, no shadow. */
+.ma-input-line {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.25rem;
+  border-bottom: 1px solid var(--ma-hair);
+  transition: border-color 0.2s ease;
+}
+.ma-input-line:focus-within { border-bottom-color: var(--ma-hair-strong); }
+.ma-input-line input {
+  background: transparent;
+  border: 0;
+  outline: none;
+  flex: 1;
+  min-width: 0;
+  color: var(--ma-fg);
+  font-family: 'Instrument Serif', 'Noto Serif JP', Georgia, serif;
+  font-style: italic;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+}
+.ma-input-line input::placeholder {
+  color: var(--ma-fg-faint);
+  font-style: italic;
+}
+.ma-input-line .ma-kbd {
+  display: none;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--ma-hair);
+  border-radius: 0.25rem;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--ma-fg-faint);
+}
+@media (min-width: 640px) { .ma-input-line .ma-kbd { display: inline-flex; } }
+
+/* Neutral chip used across filters, trending pills, status/lang toggles.
+   No filled background; rely on hair border + color. Active state uses
+   a warm surface tint. */
+.ma-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--ma-hair);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ma-fg-muted);
+  font-family: 'Fira Sans', 'Inter', system-ui, sans-serif;
+  font-size: 12px;
+  letter-spacing: -0.005em;
+  line-height: 1.1;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  cursor: pointer;
+}
+.ma-chip:hover { color: var(--ma-fg); border-color: var(--ma-hair-strong); }
+.ma-chip-active {
+  background: var(--ma-surface-2);
+  border-color: var(--ma-hair-strong);
+  color: var(--ma-fg);
+}
+.ma-chip-disabled { opacity: 0.55; }
+
+/* Mono micro-link: used for "All", "Healthy only", "↻ refresh" strips.
+   Keeps typography disciplined around editorial blocks. */
+.ma-microlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ma-fg-muted);
+  transition: color 0.15s ease;
+  cursor: pointer;
+}
+.ma-microlink:hover { color: var(--ma-fg); }
+.ma-microlink:disabled { opacity: 0.5; cursor: default; }
+
 /* Light mode overrides — recolor semantic grays via CSS custom properties */
 html.light {
   --tw-bg-ink-950: #f7f7f8;
