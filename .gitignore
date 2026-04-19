@@ -68,3 +68,6 @@ kls-classpath*
 
 ### neovim ###
 .nvim.lua
+temp/
+.claude/scheduled_tasks.lock
+.claude/settings.local.json

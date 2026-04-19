@@ -1,25 +1,36 @@
 import { useEffect, useRef, useState } from 'react'
 import { clsx } from 'clsx'
+import { Link } from 'react-router-dom'
+import { ArrowUpRight } from 'lucide-react'
 
 export interface StatColumnProps {
   label: string
   value: number | string
   unit?: string
   accent?: boolean
+  to?: string
   className?: string
 }
 
 /**
  * Large editorial stat. Numeric values animate from 0 to target once
- * (count-up, 600ms). String values render instantly.
+ * (count-up, 600ms). String values render instantly. When `to` is
+ * provided, the whole column becomes a link with a subtle hover
+ * affordance (arrow slides, underline draws).
  */
-export function StatColumn({ label, value, unit, accent, className }: StatColumnProps) {
+export function StatColumn({ label, value, unit, accent, to, className }: StatColumnProps) {
   const display = useCountUp(value)
 
-  return (
-    <div className={clsx('flex flex-col items-start', className)}>
-      <span className="ma-faint font-opsMono text-[10px] uppercase tracking-[0.24em]">
+  const inner = (
+    <>
+      <span className="flex items-center gap-2 ma-faint font-opsMono text-[10px] uppercase tracking-[0.24em]">
         {label}
+        {to && (
+          <ArrowUpRight
+            className="h-3 w-3 translate-y-px opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100"
+            aria-hidden
+          />
+        )}
       </span>
       <span
         className={clsx(
@@ -34,8 +45,24 @@ export function StatColumn({ label, value, unit, accent, className }: StatColumn
           {unit}
         </span>
       )}
-    </div>
+    </>
   )
+
+  const baseClass = clsx(
+    'flex flex-col items-start',
+    to && 'group cursor-pointer',
+    className,
+  )
+
+  if (to) {
+    return (
+      <Link to={to} className={baseClass}>
+        {inner}
+      </Link>
+    )
+  }
+
+  return <div className={baseClass}>{inner}</div>
 }
 
 function useCountUp(value: number | string): string {
@@ -56,7 +83,7 @@ function useCountUp(value: number | string): string {
 
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / duration)
-      const eased = 1 - Math.pow(1 - t, 3) // ease-out cubic
+      const eased = 1 - Math.pow(1 - t, 3)
       const current = Math.round(startVal + (target - startVal) * eased)
       setShown(current)
       if (t < 1) frameRef.current = requestAnimationFrame(tick)

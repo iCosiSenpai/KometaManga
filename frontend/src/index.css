@@ -109,6 +109,8 @@ html.dark {
   --ma-accent:       #dc2626;
   --ma-accent-soft:  rgba(220,38,38,0.10);
   --ma-accent-fg:    #f5f1e8;
+  --ma-ok:           #4d9d6e;
+  --ma-warn:         #c9922a;
   --ma-paper-tint:   radial-gradient(1200px 600px at 20% -10%, rgba(220,38,38,0.04), transparent 60%);
 }
 
@@ -124,6 +126,8 @@ html.light {
   --ma-accent:       #b91c1c;
   --ma-accent-soft:  rgba(185,28,28,0.08);
   --ma-accent-fg:    #faf7ef;
+  --ma-ok:           #3a7a54;
+  --ma-warn:         #9c7020;
   --ma-paper-tint:   radial-gradient(1200px 600px at 20% -10%, rgba(185,28,28,0.035), transparent 60%);
 }
 
@@ -138,6 +142,10 @@ html.light {
 .ma-accent         { color: var(--ma-accent); }
 .ma-bg-accent      { background-color: var(--ma-accent); color: var(--ma-accent-fg); }
 .ma-bg-accent-soft { background-color: var(--ma-accent-soft); }
+.ma-ok             { color: var(--ma-ok); }
+.ma-warn           { color: var(--ma-warn); }
+.ma-bg-ok          { background-color: var(--ma-ok); }
+.ma-bg-warn        { background-color: var(--ma-warn); }
 .ma-hair           { border-color: var(--ma-hair); }
 .ma-hair-strong    { border-color: var(--ma-hair-strong); }
 .font-serif        { font-family: 'Instrument Serif', 'Noto Serif JP', Georgia, serif; }

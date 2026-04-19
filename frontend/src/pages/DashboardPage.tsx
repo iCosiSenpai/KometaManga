@@ -7,7 +7,6 @@ import {
   ArrowRight,
   Bell,
   BookOpen,
-  ChevronRight,
   Database,
   Download,
   Library,
@@ -18,7 +17,7 @@ import {
 import { api } from '@/api/client'
 import type { JobStatus } from '@/api/client'
 import type { SourceHealthDto } from '@/api/sources'
-import { DataRow, Eyebrow, HairRule, HeroTitle, StatColumn } from '@/components/atelier'
+import { DataRow, Eyebrow, HeroTitle, SectionTitle, StatColumn } from '@/components/atelier'
 import { ErrorState } from '@/components/ErrorState'
 import { PageSpinner } from '@/components/Spinner'
 
@@ -189,6 +188,16 @@ export function DashboardPage() {
   const totalChannels = discordCount + appriseCount
 
   const greeting = useMemo(getGreeting, [])
+  const hasWarnings =
+    failedDownloads > 0 ||
+    healthCounts.down > 0 ||
+    healthCounts.watch > 0 ||
+    jobStats.failed > 0
+  const systemStatus: 'online' | 'warn' | 'offline' = !isConnected
+    ? 'offline'
+    : hasWarnings
+      ? 'warn'
+      : 'online'
   const oneLiner = buildOneLiner({
     isConnected,
     failedDownloads,
@@ -223,7 +232,7 @@ export function DashboardPage() {
       <section className="relative">
         <div className="flex flex-wrap items-center gap-3">
           <Eyebrow jp="ダッシュボード" en="Dashboard" />
-          <StatusDot online={isConnected} />
+          <StatusDot status={systemStatus} hasWarnings={hasWarnings} />
           <VersionChip current={version?.current} updateAvailable={version?.updateAvailable} latest={version?.latest} releaseUrl={version?.releaseUrl} />
         </div>
         <HeroTitle className="mt-5">
@@ -252,13 +261,14 @@ export function DashboardPage() {
 
       {/* STATO / STATE TRIO */}
       <section>
-        <HairRule label="Stato" jp="状態" />
-        <div className="mt-8 grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-8">
+        <SectionTitle title="Stato" jp="状態" />
+        <div className="mt-2 grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-8">
           <StatColumn
             label="In coda"
             value={queueSize}
             unit={`${completedToday} completati oggi`}
             accent={queueSize > 0}
+            to="/downloads"
           />
           <StatColumn
             label="Sorgenti"
@@ -273,38 +283,43 @@ export function DashboardPage() {
                     : 'tutte stabili'
             }
             accent={healthCounts.down > 0}
+            to="/settings/sources"
           />
           <StatColumn
             label="Librerie"
             value={libraries.length}
             unit={`${libraryRootCount} percorsi radice`}
+            to="/libraries"
           />
         </div>
       </section>
 
       {/* ATTIVITÀ / ACTIVITY */}
       <section>
-        <HairRule label="Attività" jp="活動" />
-        <div className="mt-8 grid grid-cols-1 gap-12 xl:grid-cols-[1.35fr_1fr] xl:gap-14">
+        <SectionTitle title="Attività" jp="活動" />
+        <div className="mt-2 grid grid-cols-1 gap-14 xl:grid-cols-[1.35fr_1fr] xl:gap-16">
           {/* Left column */}
-          <div className="space-y-12">
+          <div className="space-y-14">
             {/* Jobs block */}
             <div>
-              <div className="flex flex-wrap items-baseline justify-between gap-3">
-                <Eyebrow en="Job recenti" jp="最近" />
-                <div className="flex items-center gap-5 font-opsMono text-[11px] uppercase tracking-[0.18em]">
-                  <span className="ma-faint">
-                    OK <span className="ma-text">{jobStats.completed}</span>
-                  </span>
-                  <span className="ma-faint">
-                    KO <span className={clsx(jobStats.failed > 0 && 'ma-accent', jobStats.failed === 0 && 'ma-text')}>{jobStats.failed}</span>
-                  </span>
-                  <span className="ma-faint">
-                    Live <span className="ma-text">{jobStats.running}</span>
-                  </span>
-                </div>
+              <SectionTitle
+                title="Job recenti"
+                jp="最近"
+                size="md"
+                action={{ label: 'Tutti i job', to: '/jobs' }}
+              />
+              <div className="flex items-center justify-end gap-5 -mt-2 mb-4 font-opsMono text-[11px] uppercase tracking-[0.18em]">
+                <span className="ma-faint">
+                  OK <span className="ma-text">{jobStats.completed}</span>
+                </span>
+                <span className="ma-faint">
+                  KO <span className={clsx(jobStats.failed > 0 ? 'ma-accent' : 'ma-text')}>{jobStats.failed}</span>
+                </span>
+                <span className="ma-faint">
+                  Live <span className="ma-text">{jobStats.running}</span>
+                </span>
               </div>
-              <Sparkline data={sparklineData} className="mt-5" />
+              <Sparkline data={sparklineData} />
               <div className="mt-5">
                 {recentJobs.slice(0, 6).map((job) => (
                   <TimelineRow key={job.id} job={job} />
@@ -315,13 +330,18 @@ export function DashboardPage() {
 
             {/* Sources block */}
             <div>
-              <div className="flex flex-wrap items-baseline justify-between gap-3">
-                <Eyebrow en="Sorgenti" jp="ソース" />
+              <SectionTitle
+                title="Sorgenti"
+                jp="ソース"
+                size="md"
+                action={{ label: 'Gestisci', to: '/settings/sources' }}
+              />
+              <div className="flex items-center justify-end -mt-2 mb-4">
                 <span className="font-opsMono text-[11px] uppercase tracking-[0.18em] ma-faint">
                   {healthCounts.stable} stabili · {healthCounts.watch} watch · {healthCounts.down} down
                 </span>
               </div>
-              <div className="mt-5">
+              <div>
                 {sourceRows.map((entry) => (
                   <SourceRow key={entry.sourceId} entry={entry} />
                 ))}
@@ -331,17 +351,18 @@ export function DashboardPage() {
           </div>
 
           {/* Right column */}
-          <div className="space-y-12">
+          <div className="space-y-14">
             {/* System posture */}
             <div>
-              <Eyebrow en="Stato sistema" jp="システム" />
-              <div className="mt-5">
+              <SectionTitle title="Stato sistema" jp="システム" size="md" />
+              <div>
                 <DataRow
                   icon={<Database className="h-3.5 w-3.5" />}
                   title="Komga"
                   note={isConnected ? 'Connesso e pronto' : 'Nessuna risposta'}
                   value={isConnected ? 'online' : 'offline'}
-                  tone={isConnected ? 'default' : 'accent'}
+                  tone={isConnected ? 'ok' : 'accent'}
+                  to="/komga"
                 />
                 <DataRow
                   icon={<Download className="h-3.5 w-3.5" />}
@@ -349,12 +370,14 @@ export function DashboardPage() {
                   note={failedDownloads > 0 ? `${failedDownloads} falliti` : 'Tutto liscio'}
                   value={`${queueSize} in coda`}
                   tone={failedDownloads > 0 ? 'accent' : 'default'}
+                  to="/downloads"
                 />
                 <DataRow
                   icon={<Radio className="h-3.5 w-3.5" />}
                   title="Auto-downloader"
                   note={activeRules === 0 ? 'Nessuna regola attiva' : 'Scansione periodica'}
                   value={`${activeRules} regol${activeRules === 1 ? 'a' : 'e'}`}
+                  to="/downloads"
                 />
                 <DataRow
                   icon={<Bell className="h-3.5 w-3.5" />}
@@ -365,20 +388,27 @@ export function DashboardPage() {
                       : `Discord ${discordCount} · Apprise ${appriseCount}`
                   }
                   value={totalChannels === 0 ? '—' : `${totalChannels} canal${totalChannels === 1 ? 'e' : 'i'}`}
+                  to="/settings/notifications"
                 />
                 <DataRow
                   icon={<Shield className="h-3.5 w-3.5" />}
                   title="Provider metadata"
                   note={enabledProviderNames.slice(0, 4).join(' · ') || 'Nessuno attivo'}
                   value={`${enabledProviders}`}
+                  to="/settings/providers"
                 />
               </div>
             </div>
 
             {/* Storage block */}
             <div>
-              <Eyebrow en="Archivio" jp="保管" />
-              <div className="mt-5">
+              <SectionTitle
+                title="Archivio"
+                jp="保管"
+                size="md"
+                action={{ label: 'Impostazioni', to: '/settings/download' }}
+              />
+              <div>
                 <div className="flex items-baseline gap-3">
                   <span className="font-serif italic text-[44px] leading-none ma-text">
                     {storage ? formatBytes(storage.usedBytes) : '—'}
@@ -414,17 +444,13 @@ export function DashboardPage() {
 
             {/* Libraries list */}
             <div>
-              <div className="flex items-baseline justify-between">
-                <Eyebrow en="Librerie" jp="書庫" />
-                <Link
-                  to="/libraries"
-                  className="inline-flex items-center gap-1 font-opsMono text-[11px] uppercase tracking-[0.18em] ma-muted transition-colors hover:ma-text"
-                >
-                  vedi tutte
-                  <ChevronRight className="h-3 w-3" />
-                </Link>
-              </div>
-              <div className="mt-5">
+              <SectionTitle
+                title="Librerie"
+                jp="書庫"
+                size="md"
+                action={{ label: 'Vedi tutte', to: '/libraries' }}
+              />
+              <div>
                 {libraries.slice(0, 5).map((lib) => (
                   <DataRow
                     key={lib.id}
@@ -432,6 +458,7 @@ export function DashboardPage() {
                     title={lib.name}
                     note={lib.roots[0] ?? '—'}
                     value={`${lib.roots.length} root${lib.roots.length === 1 ? '' : 's'}`}
+                    to="/libraries"
                   />
                 ))}
                 {libraries.length === 0 && <EmptyLine text="Nessuna libreria collegata." />}
@@ -446,18 +473,46 @@ export function DashboardPage() {
 
 // ── Sub-components ──────────────────────────────────────────
 
-function StatusDot({ online }: { online: boolean }) {
+function StatusDot({
+  status,
+  hasWarnings,
+}: {
+  status: 'online' | 'warn' | 'offline'
+  hasWarnings: boolean
+}) {
+  const label =
+    status === 'offline'
+      ? 'komga offline'
+      : status === 'warn'
+        ? hasWarnings ? 'komga · attenzione' : 'komga online'
+        : 'komga online'
+
+  const dotClass = clsx(
+    'relative inline-block h-2 w-2 rounded-full',
+    status === 'online' && 'ma-bg-ok',
+    status === 'warn' && 'ma-bg-warn',
+    status === 'offline' && 'ma-bg-accent',
+  )
+
   return (
-    <span className="inline-flex items-center gap-1.5 font-opsMono text-[11px] uppercase tracking-[0.2em] ma-muted">
-      <span
-        className={clsx(
-          'inline-block h-1.5 w-1.5 rounded-full',
-          online ? 'ma-bg-accent' : 'bg-current opacity-30',
+    <Link
+      to="/komga"
+      className="group inline-flex items-center gap-2 font-opsMono text-[11px] uppercase tracking-[0.2em] ma-muted transition-colors hover:ma-text"
+      title={
+        status === 'offline'
+          ? 'Komga non risponde — apri impostazioni'
+          : status === 'warn'
+            ? 'Online ma con avvisi aperti — controlla i dettagli'
+            : 'Connesso e pronto'
+      }
+    >
+      <span className={dotClass} aria-hidden>
+        {status === 'warn' && (
+          <span className="absolute inset-0 rounded-full ma-bg-warn opacity-60 animate-ping" />
         )}
-        aria-hidden
-      />
-      {online ? 'komga online' : 'komga offline'}
-    </span>
+      </span>
+      {label}
+    </Link>
   )
 }
 
