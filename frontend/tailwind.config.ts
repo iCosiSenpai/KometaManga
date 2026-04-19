@@ -7,6 +7,7 @@ export default {
       fontFamily: {
         sans: ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
         display: ['"Outfit"', '"Inter"', 'system-ui', 'sans-serif'],
+        serif: ['"Instrument Serif"', '"Noto Serif JP"', 'Georgia', 'serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
         ops: ['"Fira Sans"', 'system-ui', '-apple-system', 'sans-serif'],
         opsMono: ['"Fira Code"', 'ui-monospace', 'monospace'],
@@ -57,6 +58,20 @@ export default {
           raised: '#fafafa',
           sunken: '#f4f4f5',
           overlay: 'rgba(0, 0, 0, 0.5)',
+        },
+        // Manga Atelier tokens → map to CSS vars, so they adapt to light/dark
+        ma: {
+          bg: 'var(--ma-bg)',
+          surface: 'var(--ma-surface)',
+          'surface-2': 'var(--ma-surface-2)',
+          fg: 'var(--ma-fg)',
+          muted: 'var(--ma-fg-muted)',
+          faint: 'var(--ma-fg-faint)',
+          hair: 'var(--ma-hair)',
+          'hair-strong': 'var(--ma-hair-strong)',
+          accent: 'var(--ma-accent)',
+          'accent-soft': 'var(--ma-accent-soft)',
+          'accent-fg': 'var(--ma-accent-fg)',
         },
       },
       borderRadius: {

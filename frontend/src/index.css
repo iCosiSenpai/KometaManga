@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -89,6 +89,120 @@
     transform: translateY(0);
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────
+   MANGA ATELIER — design tokens
+   Monochromatic warm scale + single vermilion accent.
+   Used by the Dashboard redesign and future pages via CSS vars.
+   ────────────────────────────────────────────────────────────────── */
+
+:root,
+html.dark {
+  --ma-bg:           #0c0b09;
+  --ma-surface:      #16140f;
+  --ma-surface-2:    #1e1b15;
+  --ma-fg:           #ebe5d6;
+  --ma-fg-muted:     #9a938a;
+  --ma-fg-faint:     #706a60;
+  --ma-hair:         #2d2920;
+  --ma-hair-strong:  #3a362c;
+  --ma-accent:       #dc2626;
+  --ma-accent-soft:  rgba(220,38,38,0.10);
+  --ma-accent-fg:    #f5f1e8;
+  --ma-paper-tint:   radial-gradient(1200px 600px at 20% -10%, rgba(220,38,38,0.04), transparent 60%);
+}
+
+html.light {
+  --ma-bg:           #f5f1e8;
+  --ma-surface:      #faf7ef;
+  --ma-surface-2:    #efeadc;
+  --ma-fg:           #1a1a1a;
+  --ma-fg-muted:     #5c5751;
+  --ma-fg-faint:     #8b867d;
+  --ma-hair:         #d6cdb9;
+  --ma-hair-strong:  #bdb29a;
+  --ma-accent:       #b91c1c;
+  --ma-accent-soft:  rgba(185,28,28,0.08);
+  --ma-accent-fg:    #faf7ef;
+  --ma-paper-tint:   radial-gradient(1200px 600px at 20% -10%, rgba(185,28,28,0.035), transparent 60%);
+}
+
+/* Atelier utility classes — used by the Dashboard redesign */
+.ma-page           { background: var(--ma-bg); color: var(--ma-fg); }
+.ma-page-tinted    { background: var(--ma-bg) var(--ma-paper-tint); color: var(--ma-fg); }
+.ma-surface        { background-color: var(--ma-surface); }
+.ma-surface-2      { background-color: var(--ma-surface-2); }
+.ma-text           { color: var(--ma-fg); }
+.ma-muted          { color: var(--ma-fg-muted); }
+.ma-faint          { color: var(--ma-fg-faint); }
+.ma-accent         { color: var(--ma-accent); }
+.ma-bg-accent      { background-color: var(--ma-accent); color: var(--ma-accent-fg); }
+.ma-bg-accent-soft { background-color: var(--ma-accent-soft); }
+.ma-hair           { border-color: var(--ma-hair); }
+.ma-hair-strong    { border-color: var(--ma-hair-strong); }
+.font-serif        { font-family: 'Instrument Serif', 'Noto Serif JP', Georgia, serif; }
+
+/* Hair rule that draws in on mount */
+.ma-rule {
+  height: 1px;
+  background: var(--ma-hair);
+  transform-origin: left center;
+  animation: maRuleDraw 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes maRuleDraw {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* Staggered fade-in for Dashboard hero/sections */
+.ma-stagger > * {
+  animation: maStagger 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.ma-stagger > *:nth-child(1) { animation-delay: 0.00s; }
+.ma-stagger > *:nth-child(2) { animation-delay: 0.06s; }
+.ma-stagger > *:nth-child(3) { animation-delay: 0.12s; }
+.ma-stagger > *:nth-child(4) { animation-delay: 0.18s; }
+.ma-stagger > *:nth-child(5) { animation-delay: 0.24s; }
+.ma-stagger > *:nth-child(6) { animation-delay: 0.30s; }
+@keyframes maStagger {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Primary CTA (Next action) */
+.ma-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.7rem 1.15rem;
+  border-radius: 999px;
+  background: var(--ma-accent);
+  color: var(--ma-accent-fg);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.05), 0 8px 24px -12px var(--ma-accent);
+}
+.ma-cta:hover { transform: translateY(-1px); filter: brightness(1.06); box-shadow: 0 2px 0 rgba(0,0,0,0.06), 0 14px 30px -12px var(--ma-accent); }
+.ma-cta svg { transition: transform 0.2s ease; }
+.ma-cta:hover svg { transform: translateX(3px); }
+
+/* Quick-link pill (secondary) */
+.ma-quick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--ma-hair);
+  color: var(--ma-fg-muted);
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+.ma-quick:hover { color: var(--ma-fg); border-color: var(--ma-hair-strong); background: var(--ma-surface); }
+
+/* Bar chart (sparkline) recolored to atelier */
+.ma-bar-complete { background: var(--ma-fg-faint); }
+.ma-bar-failed   { background: var(--ma-accent); }
 
 /* Light mode overrides — recolor semantic grays via CSS custom properties */
 html.light {
@@ -188,3 +302,106 @@ html.light .text-white\/70 { color: rgba(0,0,0,0.5); }
 /* Light: bg-ink-900/40, bg-ink-900/50 */
 html.light .bg-ink-900\/40 { background-color: rgba(255,255,255,0.4); }
 html.light .bg-ink-900\/50 { background-color: rgba(255,255,255,0.5); }
+
+/* ──────────────────────────────────────────────────────────────────
+   Light-mode opacity coverage — full sweep for all bg-ink-*/XX,
+   border-ink-*/XX, text-ink-* combinations actually used in code.
+   This makes every non-redesigned page legible in light mode without
+   editing its JSX. Keep these in sync with component usage.
+   ────────────────────────────────────────────────────────────────── */
+
+/* bg-ink-950 opacities (page-tone surfaces) */
+html.light .bg-ink-950\/55 { background-color: rgba(247,247,248,0.55); }
+html.light .bg-ink-950\/65 { background-color: rgba(247,247,248,0.65); }
+html.light .bg-ink-950\/70 { background-color: rgba(247,247,248,0.7); }
+html.light .bg-ink-950\/75 { background-color: rgba(247,247,248,0.75); }
+html.light .bg-ink-950\/85 { background-color: rgba(247,247,248,0.85); }
+html.light .bg-ink-950\/90 { background-color: rgba(247,247,248,0.92); }
+html.light .bg-ink-950\/98 { background-color: rgba(247,247,248,0.98); }
+html.light .bg-ink-950\/20 { background-color: rgba(238,238,240,0.2); }
+html.light .bg-ink-950\/40 { background-color: rgba(247,247,248,0.4); }
+
+/* bg-ink-900 opacities (card surfaces) */
+html.light .bg-ink-900\/55 { background-color: rgba(255,255,255,0.55); }
+html.light .bg-ink-900\/60 { background-color: rgba(255,255,255,0.75); }
+html.light .bg-ink-900\/65 { background-color: rgba(255,255,255,0.8); }
+html.light .bg-ink-900\/70 { background-color: rgba(255,255,255,0.85); }
+html.light .bg-ink-900\/75 { background-color: rgba(255,255,255,0.88); }
+html.light .bg-ink-900\/80 { background-color: rgba(255,255,255,0.92); }
+html.light .bg-ink-900\/90 { background-color: rgba(255,255,255,0.96); }
+
+/* bg-ink-800 opacities (hover/subtle surfaces) */
+html.light .bg-ink-800\/70 { background-color: rgba(228,228,233,0.7); }
+html.light .bg-ink-800\/80 { background-color: rgba(228,228,233,0.85); }
+
+/* borders */
+html.light .border-ink-700\/50 { border-color: rgba(212,212,216,0.7); }
+html.light .border-ink-700\/60 { border-color: rgba(212,212,216,0.8); }
+html.light .border-ink-700\/80 { border-color: rgba(212,212,216,0.9); }
+html.light .border-ink-900 { border-color: #d4d4d8; }
+html.light .border-ink-900\/50 { border-color: rgba(212,212,216,0.5); }
+html.light .hover\:border-ink-700\/50:hover { border-color: rgba(212,212,216,0.85); }
+html.light .hover\:border-ink-700\/60:hover { border-color: rgba(212,212,216,0.9); }
+html.light .hover\:border-ink-700\/30:hover { border-color: rgba(212,212,216,0.6); }
+
+/* hover surfaces */
+html.light .hover\:bg-ink-800:hover { background-color: #e4e4e7; }
+html.light .hover\:bg-ink-800\/50:hover { background-color: rgba(228,228,233,0.7); }
+html.light .hover\:bg-ink-800\/60:hover { background-color: rgba(228,228,233,0.8); }
+html.light .hover\:bg-ink-900\/50:hover { background-color: rgba(255,255,255,0.6); }
+html.light .hover\:bg-ink-900\/60:hover { background-color: rgba(255,255,255,0.8); }
+html.light .hover\:bg-ink-900\/75:hover { background-color: rgba(255,255,255,0.9); }
+html.light .hover\:bg-ink-900\/80:hover { background-color: rgba(255,255,255,0.94); }
+html.light .hover\:bg-ink-950\/75:hover { background-color: rgba(238,238,240,0.55); }
+html.light .hover\:bg-ink-950\/80:hover { background-color: rgba(238,238,240,0.65); }
+html.light .hover\:text-ink-100:hover { color: #18181b; }
+html.light .hover\:text-ink-200:hover { color: #27272a; }
+html.light .hover\:text-ink-300:hover { color: #3f3f46; }
+
+/* low-prominence text we missed */
+html.light .text-ink-700 { color: #d4d4d8; }
+html.light .text-ink-800 { color: #e4e4e7; }
+html.light .text-ink-900 { color: #f4f4f5; }
+
+/* black overlay tints (modals/backdrops) should stay dark in light too
+   but softer so cards show through */
+html.light .bg-black\/50 { background-color: rgba(0,0,0,0.35); }
+html.light .bg-black\/10 { background-color: rgba(0,0,0,0.04); }
+html.light .bg-black\/40 { background-color: rgba(0,0,0,0.25); }
+html.light .bg-black\/60 { background-color: rgba(0,0,0,0.45); }
+
+/* dashed empty-state borders */
+html.light .border-dashed { border-style: dashed; }
+
+/* shadow-lg on cards in light mode — softer */
+html.light .shadow-xl { box-shadow: 0 12px 30px -12px rgba(0,0,0,0.12); }
+
+/* Accent pills (keep emerald/amber/red but tint their backgrounds lighter
+   so ring + text stay readable on paper) */
+html.light .bg-emerald-500\/10 { background-color: rgba(16,185,129,0.12); }
+html.light .bg-amber-500\/10   { background-color: rgba(245,158,11,0.14); }
+html.light .bg-red-500\/10     { background-color: rgba(239,68,68,0.12); }
+html.light .bg-sky-500\/10     { background-color: rgba(14,165,233,0.12); }
+html.light .bg-accent-500\/10  { background-color: rgba(220,38,38,0.10); }
+html.light .bg-emerald-950\/10 { background-color: rgba(16,185,129,0.06); }
+html.light .bg-amber-950\/10   { background-color: rgba(245,158,11,0.07); }
+html.light .bg-amber-950\/20   { background-color: rgba(245,158,11,0.10); }
+html.light .bg-red-950\/10     { background-color: rgba(239,68,68,0.06); }
+html.light .bg-red-950\/20     { background-color: rgba(239,68,68,0.10); }
+html.light .bg-sky-950\/10     { background-color: rgba(14,165,233,0.06); }
+html.light .bg-sky-950\/20     { background-color: rgba(14,165,233,0.10); }
+html.light .bg-accent-950\/15  { background-color: rgba(220,38,38,0.08); }
+html.light .bg-accent-950\/20  { background-color: rgba(220,38,38,0.10); }
+html.light .bg-accent-950\/25  { background-color: rgba(220,38,38,0.12); }
+html.light .bg-accent-950\/30  { background-color: rgba(220,38,38,0.14); }
+html.light .bg-emerald-950\/20 { background-color: rgba(16,185,129,0.08); }
+html.light .text-emerald-300   { color: #047857; }
+html.light .text-emerald-400   { color: #059669; }
+html.light .text-amber-300     { color: #b45309; }
+html.light .text-amber-400     { color: #d97706; }
+html.light .text-red-300       { color: #b91c1c; }
+html.light .text-red-400       { color: #dc2626; }
+html.light .text-sky-300       { color: #0369a1; }
+html.light .text-sky-400       { color: #0284c7; }
+html.light .text-accent-300    { color: #b91c1c; }
+html.light .text-accent-400    { color: #991b1b; }
