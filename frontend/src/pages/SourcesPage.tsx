@@ -1,9 +1,9 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { clsx } from 'clsx'
 import {
   BookOpen,
   Command,
+  Filter,
   Layers,
   Loader2,
   RefreshCw,
@@ -21,10 +21,11 @@ import { ErrorState } from '@/components/ErrorState'
 import { Skeleton } from '@/components/Skeleton'
 import { useToast } from '@/components/Toast'
 import { MangaDetailPanel } from '@/components/MangaDetailPanel'
-import { Flag } from '@/components/Flag'
 import { SourceIcon } from '@/components/SourceIcon'
 import { SOURCE_BRAND, langLabel } from '@/lib/brand'
 import { ActiveFilterChips, type FilterChip } from '@/components/filters/ActiveFilterChips'
+import { SourcesFilterRail } from '@/components/filters/SourcesFilterRail'
+import { SourcesFilterDrawer } from '@/components/filters/SourcesFilterDrawer'
 import { Eyebrow, HeroTitle, SectionTitle } from '@/components/atelier'
 
 const TRENDING_POOL = [
@@ -47,18 +48,6 @@ function pickTrending(count: number): string[] {
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.userAgent)
 
-const HEALTH_DOT: Record<HealthStatus, string> = {
-  GREEN: 'ma-bg-ok',
-  YELLOW: 'ma-bg-warn',
-  RED: 'ma-bg-accent',
-}
-
-const HEALTH_NOTE: Record<HealthStatus, string> = {
-  GREEN: 'Stabile',
-  YELLOW: 'Lenta o degradata',
-  RED: 'Non disponibile',
-}
-
 const STATUS_LABEL: Record<MangaStatus, string> = {
   ONGOING: 'In corso',
   COMPLETED: 'Completato',
@@ -68,12 +57,6 @@ const STATUS_LABEL: Record<MangaStatus, string> = {
 }
 
 const EMPTY_SOURCE_LIST: Array<{ sourceId: MangaSourceId; languages: string[] }> = []
-
-function formatLatency(latencyMs: number | null | undefined) {
-  if (latencyMs == null) return '—'
-  if (latencyMs >= 1000) return `${(latencyMs / 1000).toFixed(1)} s`
-  return `${latencyMs} ms`
-}
 
 function statusWeight(status: MangaSearchResultDto['status']) {
   switch (status) {
@@ -197,6 +180,7 @@ export function SourcesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const [hideNsfw, setHideNsfw] = useState<boolean>(() => {
     try { return localStorage.getItem('kometa.hideNsfw') !== 'false' } catch { return true }
   })
@@ -204,11 +188,11 @@ export function SourcesPage() {
   useEffect(() => {
     try { localStorage.setItem('kometa.hideNsfw', String(hideNsfw)) } catch { /* ignore */ }
   }, [hideNsfw])
-  const [trendingPicks, setTrendingPicks] = useState<string[]>(() => pickTrending(5))
+  const [trendingPicks, setTrendingPicks] = useState<string[]>(() => pickTrending(8))
 
   useEffect(() => {
     const id = window.setInterval(() => {
-      setTrendingPicks(pickTrending(5))
+      setTrendingPicks(pickTrending(8))
     }, 20000)
     return () => window.clearInterval(id)
   }, [])
@@ -391,17 +375,6 @@ export function SourcesPage() {
     }
   }, [searchQueries])
 
-  const sourceDeck = useMemo(() => {
-    return [...filteredSources].sort((left, right) => {
-      const leftActive = enabledSources.has(left.sourceId) ? 1 : 0
-      const rightActive = enabledSources.has(right.sourceId) ? 1 : 0
-      if (leftActive !== rightActive) return rightActive - leftActive
-      return SOURCE_BRAND[left.sourceId].label.localeCompare(
-        SOURCE_BRAND[right.sourceId].label,
-      )
-    })
-  }, [enabledSources, filteredSources])
-
   const directoryEntries = useMemo(
     () => buildDirectoryEntries(mergedResults),
     [mergedResults],
@@ -424,10 +397,16 @@ export function SourcesPage() {
   const anyLoading = loadingCount > 0
   const hasActiveSources = activeSourceIds.length > 0
   const totalDirectoryMatches = filteredDirectoryEntries.length
-  const healthyCount = useMemo(
-    () => sources.filter((s) => (healthMap.get(s.sourceId)?.status ?? 'GREEN') !== 'RED').length,
-    [sources, healthMap],
-  )
+
+  const activeFilterCount = useMemo(() => {
+    const excluded = sources.length - enabledSources.size
+    return (
+      Math.max(0, excluded) +
+      (langFilter ? 1 : 0) +
+      (statusFilter ? 1 : 0) +
+      (!hideNsfw ? 1 : 0)
+    )
+  }, [sources, enabledSources, langFilter, statusFilter, hideNsfw])
 
   const activeFilterChips: FilterChip[] = useMemo(() => {
     const chips: FilterChip[] = []
@@ -517,6 +496,33 @@ export function SourcesPage() {
     [langFilter],
   )
 
+  const handleResetFilters = useCallback(() => {
+    setEnabledSources(new Set(sources.map((s) => s.sourceId)))
+    setLangFilter(null)
+    setStatusFilter(null)
+    setHideNsfw(true)
+  }, [sources])
+
+  const railProps = {
+    sources,
+    enabledSources,
+    availableLanguages,
+    langFilter,
+    statusFilter,
+    hideNsfw,
+    healthMap,
+    resultCountBySource,
+    isSearching,
+    refreshHealthPending: refreshHealthMutation.isPending,
+    onToggleSource: toggleSource,
+    onEnableAll: enableAllSources,
+    onEnableHealthy: enableHealthySources,
+    onRefreshHealth: () => refreshHealthMutation.mutate(),
+    onSetLang: setLangFilter,
+    onSetStatus: setStatusFilter,
+    onSetHideNsfw: setHideNsfw,
+  }
+
   if (selectedManga) {
     return (
       <MangaDetailPanel
@@ -560,257 +566,140 @@ export function SourcesPage() {
   }
 
   return (
-    <div className="animate-fade-in pb-16">
+    <div className="animate-fade-in pb-16 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-12 xl:grid-cols-[280px_minmax(0,1fr)] xl:gap-16">
       <div aria-live="polite" className="sr-only">
         {isSearching
           ? `${totalDirectoryMatches} risultati aggregati su ${activeSourceIds.length} sorgenti attive`
           : `${filteredSources.length} sorgenti pronte per la ricerca`}
       </div>
 
-      {/* ── Hero ── */}
-      <section className="pt-4 pb-10">
-        <Eyebrow jp="ソース" en="Sources" />
-        <HeroTitle className="mt-4 max-w-3xl">Trova un titolo.</HeroTitle>
-        <p className="mt-4 max-w-xl font-sans text-[15px] leading-relaxed ma-muted">
-          Cerca in parallelo su {filteredSources.length} sorgent{filteredSources.length === 1 ? 'e' : 'i'}
-          {' '}— rimuovo i doppioni e ti mostro un solo risultato per titolo.
-        </p>
+      {/* Desktop rail */}
+      <aside className="hidden lg:block lg:sticky lg:top-8 lg:self-start lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto lg:pr-2">
+        <SourcesFilterRail {...railProps} />
+      </aside>
 
-        <form onSubmit={handleSearch} className="mt-8 max-w-3xl">
-          <div className="ma-input-line">
-            {anyLoading ? (
-              <Loader2 className="h-5 w-5 shrink-0 animate-spin ma-accent" aria-hidden />
-            ) : (
-              <Search className="h-5 w-5 shrink-0 ma-faint" aria-hidden />
-            )}
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Cerca un manga…"
-              aria-label="Cerca manga"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={handleClearSearch}
-                className="shrink-0 rounded-full p-1 ma-faint transition-colors hover:ma-text"
-                aria-label="Pulisci ricerca"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-            <span className="ma-kbd" aria-hidden>
-              {isMac ? <><Command className="h-2.5 w-2.5" />K</> : 'Ctrl+K'}
-            </span>
-          </div>
-        </form>
+      {/* Right pane */}
+      <div className="min-w-0">
+        <section className="pt-4 pb-8">
+          <Eyebrow jp="ソース" en="Sources" />
+          <HeroTitle className="mt-4 max-w-3xl">Trova un titolo.</HeroTitle>
+          <p className="mt-4 max-w-xl font-sans text-[15px] leading-relaxed ma-muted">
+            Cerca in parallelo su {filteredSources.length} sorgent{filteredSources.length === 1 ? 'e' : 'i'}
+            {' '}— rimuovo i doppioni e ti mostro un solo risultato per titolo.
+          </p>
 
-        {/* Trending strip (idle) / Live counters (searching) */}
-        {!isSearching ? (
-          <div className="mt-5 flex max-w-3xl flex-wrap items-center gap-2">
-            <Eyebrow jp="人気" en="In tendenza" className="mr-2" />
-            {trendingPicks.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => handleSuggestedQuery(s)}
-                className="ma-chip"
-              >
-                {s}
-              </button>
-            ))}
+          <form onSubmit={handleSearch} className="mt-8 max-w-3xl">
+            <div className="ma-input-line">
+              {anyLoading ? (
+                <Loader2 className="h-5 w-5 shrink-0 animate-spin ma-accent" aria-hidden />
+              ) : (
+                <Search className="h-5 w-5 shrink-0 ma-faint" aria-hidden />
+              )}
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Cerca un manga…"
+                aria-label="Cerca manga"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="shrink-0 rounded-full p-1 ma-faint transition-colors hover:ma-text"
+                  aria-label="Pulisci ricerca"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+              <span className="ma-kbd" aria-hidden>
+                {isMac ? <><Command className="h-2.5 w-2.5" />K</> : 'Ctrl+K'}
+              </span>
+            </div>
+          </form>
+
+          {/* Mobile filter trigger */}
+          <div className="mt-4 flex items-center justify-between lg:hidden">
             <button
               type="button"
-              onClick={() => setTrendingPicks(pickTrending(5))}
-              className="ma-microlink ml-1"
-              title="Altri suggerimenti"
+              onClick={() => setDrawerOpen(true)}
+              className="ma-chip"
+              aria-label="Apri filtri"
             >
-              <RefreshCw className="h-3 w-3" />
-              Altri
+              <Filter className="h-3.5 w-3.5" />
+              Filtri
+              {activeFilterCount > 0 && (
+                <span className="ma-accent font-opsMono">{activeFilterCount}</span>
+              )}
             </button>
-          </div>
-        ) : (
-          <div className="mt-5 flex max-w-3xl flex-wrap items-center gap-x-3 gap-y-1 font-opsMono text-[11px] uppercase tracking-[0.18em] ma-muted">
-            <span>{activeSourceIds.length} attiv{activeSourceIds.length === 1 ? 'a' : 'e'}</span>
-            <span aria-hidden className="ma-faint">·</span>
-            <span>{totalDirectoryMatches} risultat{totalDirectoryMatches === 1 ? 'o' : 'i'}</span>
-            {errorCount > 0 && (
-              <>
-                <span aria-hidden className="ma-faint">·</span>
-                <span className="ma-warn">{errorCount} in errore</span>
-              </>
-            )}
-            {anyLoading && (
-              <>
-                <span aria-hidden className="ma-faint">·</span>
-                <span className="ma-accent">{loadingCount} in corso</span>
-              </>
+            {isSearching && (
+              <span className="font-opsMono text-[10px] uppercase tracking-[0.18em] ma-faint">
+                {totalDirectoryMatches} risultat{totalDirectoryMatches === 1 ? 'o' : 'i'}
+              </span>
             )}
           </div>
-        )}
-      </section>
 
-      {/* ── Filter Strip (always visible) ── */}
-      <section className="pb-10">
-        {activeFilterChips.length > 0 && (
+          {/* Idle: trending */}
+          {!isSearching ? (
+            <div className="mt-8 max-w-3xl">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <Eyebrow jp="人気" en="In tendenza" />
+                <button
+                  type="button"
+                  onClick={() => setTrendingPicks(pickTrending(8))}
+                  className="ma-microlink"
+                  title="Altri suggerimenti"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Altri
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {trendingPicks.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => handleSuggestedQuery(s)}
+                    className="ma-chip"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="mt-5 flex max-w-3xl flex-wrap items-center gap-x-3 gap-y-1 font-opsMono text-[11px] uppercase tracking-[0.18em] ma-muted">
+              <span>{activeSourceIds.length} attiv{activeSourceIds.length === 1 ? 'a' : 'e'}</span>
+              <span aria-hidden className="ma-faint">·</span>
+              <span>{totalDirectoryMatches} risultat{totalDirectoryMatches === 1 ? 'o' : 'i'}</span>
+              {errorCount > 0 && (
+                <>
+                  <span aria-hidden className="ma-faint">·</span>
+                  <span className="ma-warn">{errorCount} in errore</span>
+                </>
+              )}
+              {anyLoading && (
+                <>
+                  <span aria-hidden className="ma-faint">·</span>
+                  <span className="ma-accent">{loadingCount} in corso</span>
+                </>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* Active filter chips (when searching) */}
+        {isSearching && activeFilterChips.length > 0 && (
           <ActiveFilterChips chips={activeFilterChips} className="mb-6" />
         )}
 
-        <SectionTitle
-          title="Sorgenti"
-          jp="ソース"
-          size="md"
-          action={{ label: 'Gestisci', to: '/settings/sources' }}
-        />
-
-        <div className="flex flex-wrap items-center gap-2">
-          {sourceDeck.map((source) => {
-            const meta = SOURCE_BRAND[source.sourceId]
-            const active = enabledSources.has(source.sourceId)
-            const health = healthMap.get(source.sourceId)
-            const dotClass = health ? HEALTH_DOT[health.status] : 'ma-bg-accent-soft'
-            return (
-              <button
-                key={source.sourceId}
-                type="button"
-                onClick={() => toggleSource(source.sourceId)}
-                className={clsx('ma-chip', active && 'ma-chip-active', !active && 'ma-chip-disabled')}
-                title={health ? HEALTH_NOTE[health.status] : undefined}
-              >
-                <SourceIcon sourceId={source.sourceId} size={14} />
-                <span>{meta.label}</span>
-                <span className={clsx('h-1.5 w-1.5 rounded-full', dotClass)} aria-hidden />
-                {isSearching && active && (
-                  <span className="font-opsMono text-[10px] ma-faint">
-                    {resultCountBySource.get(source.sourceId) ?? 0}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
-          <button type="button" onClick={enableAllSources} className="ma-microlink">
-            Tutte
-          </button>
-          <button type="button" onClick={enableHealthySources} className="ma-microlink">
-            Solo sane
-          </button>
-          <button
-            type="button"
-            onClick={() => refreshHealthMutation.mutate()}
-            disabled={refreshHealthMutation.isPending}
-            className="ma-microlink"
-          >
-            <RefreshCw className={clsx('h-3 w-3', refreshHealthMutation.isPending && 'animate-spin')} />
-            Aggiorna stato
-          </button>
-        </div>
-
-        <div className="mt-10 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Lingua */}
-          <div>
-            <Eyebrow jp="言語" en="Lingua" />
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => setLangFilter(null)}
-                className={clsx('ma-chip', !langFilter && 'ma-chip-active')}
-              >
-                Tutte
-              </button>
-              {availableLanguages.map((lang) => (
-                <button
-                  key={lang}
-                  type="button"
-                  onClick={() => setLangFilter((current) => (current === lang ? null : lang))}
-                  className={clsx('ma-chip', langFilter === lang && 'ma-chip-active')}
-                >
-                  <Flag code={lang} />
-                  {langLabel(lang)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Stato */}
-          <div>
-            <Eyebrow jp="状態" en="Stato" />
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => setStatusFilter(null)}
-                className={clsx('ma-chip', !statusFilter && 'ma-chip-active')}
-              >
-                Tutti
-              </button>
-              {(['ONGOING', 'COMPLETED', 'HIATUS', 'CANCELLED'] as MangaStatus[]).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setStatusFilter((current) => (current === s ? null : s))}
-                  className={clsx('ma-chip', statusFilter === s && 'ma-chip-active')}
-                >
-                  {STATUS_LABEL[s]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Contenuto */}
-          <div>
-            <Eyebrow jp="内容" en="Contenuto" />
-            <label className="mt-3 inline-flex cursor-pointer items-center gap-2 font-sans text-[13px] ma-text">
-              <input
-                type="checkbox"
-                checked={hideNsfw}
-                onChange={(e) => setHideNsfw(e.target.checked)}
-                className="h-3.5 w-3.5 rounded border-[color:var(--ma-hair-strong)] bg-transparent"
-                style={{ accentColor: 'var(--ma-accent)' }}
-              />
-              Nascondi NSFW
-            </label>
-            <p className="mt-1.5 font-sans text-[11px] ma-faint">
-              Erotica &amp; pornografico
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Results area ── */}
-      <section>
-        {!isSearching && (
-          <div className="animate-fade-in">
-            <SectionTitle
-              title="Fonti"
-              jp="情報源"
-              size="lg"
-              right={
-                <span className="font-opsMono text-[11px] uppercase tracking-[0.2em] ma-muted">
-                  {healthyCount}/{sources.length} stabili
-                </span>
-              }
-            />
-            <div className="grid gap-x-10 gap-y-0 sm:grid-cols-2 lg:grid-cols-3">
-              {sourceDeck.map((source) => (
-                <SourceLandingRow
-                  key={source.sourceId}
-                  source={source}
-                  health={healthMap.get(source.sourceId)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
+        {/* Results */}
         {isSearching && !hasActiveSources && (
           <div role="alert">
             <ErrorState
               message="Nessuna sorgente selezionata."
-              hint="Apri almeno una sorgente qui sopra prima di cercare."
+              hint="Apri il pannello filtri e abilita almeno una sorgente."
             />
           </div>
         )}
@@ -833,7 +722,7 @@ export function SourcesPage() {
           <DirectoryNoResults
             searchTerm={searchTerm}
             onSuggestionClick={handleSuggestedQuery}
-            suggestions={trendingPicks}
+            suggestions={trendingPicks.slice(0, 6)}
           />
         )}
 
@@ -849,7 +738,7 @@ export function SourcesPage() {
                 </span>
               }
             />
-            <div className="grid gap-x-6 gap-y-8 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            <div className="grid gap-x-6 gap-y-8 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {filteredDirectoryEntries.map((entry) => (
                 <MangaShelfCard
                   key={entry.key}
@@ -860,47 +749,20 @@ export function SourcesPage() {
             </div>
           </div>
         )}
-      </section>
+      </div>
+
+      {/* Mobile drawer */}
+      <SourcesFilterDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onReset={handleResetFilters}
+        {...railProps}
+      />
     </div>
   )
 }
 
 /* ── Sub-components ── */
-
-function SourceLandingRow({
-  source,
-  health,
-}: {
-  source: { sourceId: MangaSourceId; languages: string[] }
-  health?: { status: HealthStatus; latencyMs: number | null; error: string | null }
-}) {
-  const meta = SOURCE_BRAND[source.sourceId]
-  const dotClass = health ? HEALTH_DOT[health.status] : 'ma-bg-accent-soft'
-
-  return (
-    <div className="flex items-start gap-4 border-b ma-hair py-4 last:border-b-0">
-      <SourceIcon sourceId={source.sourceId} size={22} className="mt-1 shrink-0" />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <h3 className="font-serif italic text-[20px] leading-none tracking-[-0.01em] ma-text">
-            {meta.label}
-          </h3>
-          <span className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', dotClass)} aria-hidden />
-        </div>
-        {meta.blurb && (
-          <p className="mt-2 font-sans text-[13px] leading-snug ma-muted line-clamp-2">
-            {meta.blurb}
-          </p>
-        )}
-        <div className="mt-3 flex items-center gap-3 font-opsMono text-[10px] uppercase tracking-[0.18em] ma-faint">
-          <span>{source.languages.length} lingu{source.languages.length === 1 ? 'a' : 'e'}</span>
-          <span aria-hidden>·</span>
-          <span>{formatLatency(health?.latencyMs)}</span>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function MangaShelfCard({
   entry,
@@ -1000,7 +862,7 @@ function DirectoryLoadingState() {
         size="lg"
         right={<span className="font-opsMono text-[11px] uppercase tracking-[0.2em] ma-faint">in corso…</span>}
       />
-      <div className="grid gap-x-6 gap-y-8 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+      <div className="grid gap-x-6 gap-y-8 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {Array.from({ length: 12 }, (_, i) => (
           <div key={i} className="space-y-3">
             <Skeleton className="aspect-[2/3] w-full rounded-sm" />
@@ -1030,7 +892,7 @@ function DirectoryNoResults({
           Niente per &ldquo;{searchTerm}&rdquo;.
         </p>
         <p className="mt-4 font-sans text-[14px] leading-relaxed ma-muted">
-          Proviamo con una variante del titolo — oppure apri più sorgenti qui sopra.
+          Proviamo con una variante del titolo — oppure apri più sorgenti nel pannello filtri.
         </p>
         <div className="mt-6 flex flex-wrap gap-2">
           {suggestions.map((s) => (
@@ -1051,25 +913,21 @@ function DirectoryNoResults({
 
 function SourcesPageSkeleton() {
   return (
-    <div className="animate-fade-in pb-16">
-      <div className="pt-4 pb-10 space-y-4">
+    <div className="animate-fade-in pb-16 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-12">
+      <aside className="hidden lg:block">
+        <Skeleton className="h-4 w-20" />
+        <div className="mt-5 space-y-3">
+          <Skeleton className="h-5 w-24" />
+          {Array.from({ length: 6 }, (_, i) => (
+            <Skeleton key={i} className="h-5 w-full" />
+          ))}
+        </div>
+      </aside>
+      <div className="pt-4 space-y-4">
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-14 w-2/3" />
         <Skeleton className="h-5 w-1/2" />
         <Skeleton className="h-10 w-full max-w-3xl" />
-      </div>
-      <div className="pb-10 space-y-4">
-        <Skeleton className="h-6 w-40" />
-        <div className="flex flex-wrap gap-2">
-          {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="h-7 w-28 rounded-full" />
-          ))}
-        </div>
-      </div>
-      <div className="grid gap-x-10 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }, (_, i) => (
-          <Skeleton key={i} className="h-20 w-full" />
-        ))}
       </div>
     </div>
   )
