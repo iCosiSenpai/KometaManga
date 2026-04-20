@@ -271,6 +271,19 @@ export const api = {
     request<void>('/downloads/queue/resume', { method: 'POST' }),
   cancelAllDownloads: () =>
     request<void>('/downloads/queue/cancel-all', { method: 'POST' }),
+  pauseDownloadItem: (id: string) =>
+    request<void>(`/downloads/queue/${id}/pause`, { method: 'POST' }),
+  resumeDownloadItem: (id: string) =>
+    request<void>(`/downloads/queue/${id}/resume`, { method: 'POST' }),
+  cancelDownloadItem: (id: string) =>
+    request<void>(`/downloads/queue/${id}/cancel`, { method: 'POST' }),
+  retryDownloadItem: (id: string) =>
+    request<void>(`/downloads/queue/${id}/retry`, { method: 'POST' }),
+  moveDownloadItem: (id: string, direction: import('./sources').DownloadMoveDirection) =>
+    request<void>(`/downloads/queue/${id}/move`, {
+      method: 'POST',
+      body: JSON.stringify({ direction }),
+    }),
   getDownloadHistory: (limit = 50, offset = 0) =>
     request<import('./sources').DownloadedChapterDto[]>(
       `/downloads/history?limit=${limit}&offset=${offset}`,

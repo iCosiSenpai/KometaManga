@@ -359,6 +359,7 @@ class MediaServerModule(
                 idAdapter = DownloadItemIdAdapter,
                 sourceIdAdapter = MangaSourceIdAdapter,
                 statusAdapter = EnumColumnAdapter(),
+                pausedAtAdapter = InstantAdapter,
                 createdAtAdapter = InstantAdapter,
                 updatedAtAdapter = InstantAdapter,
             ),

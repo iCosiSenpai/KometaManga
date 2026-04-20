@@ -21,6 +21,9 @@ export type DownloadItemStatus =
   | 'IMPORTING'
   | 'COMPLETED'
   | 'ERROR'
+  | 'PAUSED'
+
+export type DownloadMoveDirection = 'UP' | 'DOWN'
 
 // --- Sources ---
 
@@ -99,6 +102,13 @@ export interface DownloadQueueItemDto {
   progress: number | null
   totalPages: number | null
   error: string | null
+  bytesDownloaded: number | null
+  speedBps: number | null
+  etaSec: number | null
+  pausedAt: string | null
+  position: number
+  libraryPath: string | null
+  libraryId: string | null
 }
 
 export interface DownloadStatusDto {
@@ -107,6 +117,8 @@ export interface DownloadStatusDto {
   completedToday: number
   failedCount: number
   paused: boolean
+  totalSpeedBps: number
+  totalEtaSec: number | null
 }
 
 export interface DownloadedChapterDto {
@@ -175,10 +187,24 @@ export interface UpdateAutoDownloaderRuleDto {
 // --- SSE Download Events ---
 
 export type DownloadEvent =
-  | { type: 'QueuedEvent'; chapterId: string; mangaTitle: string; chapterNumber: string }
-  | { type: 'DownloadStartedEvent'; chapterId: string; totalPages: number }
-  | { type: 'PageDownloadedEvent'; chapterId: string; currentPage: number; totalPages: number }
-  | { type: 'PackagingEvent'; chapterId: string }
-  | { type: 'CompletedEvent'; chapterId: string; filePath: string; fileSize: number }
-  | { type: 'ErrorEvent'; chapterId: string; errorMessage: string }
+  | { type: 'QueuedEvent'; itemId: string; chapterId: string; mangaTitle: string; chapterNumber: string }
+  | { type: 'DownloadStartedEvent'; itemId: string; chapterId: string; totalPages: number }
+  | {
+      type: 'PageDownloadedEvent'
+      itemId: string
+      chapterId: string
+      currentPage: number
+      totalPages: number
+      bytesDownloaded: number | null
+      speedBps: number | null
+      etaSec: number | null
+    }
+  | { type: 'PackagingEvent'; itemId: string; chapterId: string }
+  | { type: 'ImportingEvent'; itemId: string; chapterId: string }
+  | { type: 'CompletedEvent'; itemId: string; chapterId: string; filePath: string; fileSize: number }
+  | { type: 'ErrorEvent'; itemId: string; chapterId: string; errorMessage: string }
+  | { type: 'ItemPausedEvent'; itemId: string; chapterId: string }
+  | { type: 'ItemResumedEvent'; itemId: string; chapterId: string }
+  | { type: 'ItemCancelledEvent'; itemId: string; chapterId: string }
+  | { type: 'ReorderEvent'; itemId: string; newPosition: number }
   | { type: 'QueueProgressEvent'; completedCount: number; totalCount: number }

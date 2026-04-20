@@ -296,19 +296,21 @@ export function Layout() {
         </div>
       </main>
 
-      {/* Desktop decorative verticals — fixed to viewport edges, behind content */}
+      {/* Desktop decorative verticals — fixed to viewport edges, behind content.
+          On lg: ambient blur at low opacity so text stays readable.
+          On xl+: crisp full-opacity imagery. */}
       <img
         src="/vertical1.png"
         alt=""
         aria-hidden
-        className="pointer-events-none fixed bottom-0 z-[1] hidden h-[70vh] max-h-[850px] w-auto select-none object-contain opacity-80 xl:block"
+        className="pointer-events-none fixed bottom-0 z-[1] hidden h-[60vh] max-h-[700px] w-auto select-none object-contain opacity-30 blur-2xl motion-safe:transition-[opacity,filter] motion-safe:duration-500 lg:block xl:h-[70vh] xl:max-h-[850px] xl:opacity-80 xl:blur-0"
         style={{ left: collapsed ? 96 : 304 }}
       />
       <img
         src="/vertical3.png"
         alt=""
         aria-hidden
-        className="pointer-events-none fixed bottom-0 right-4 z-[1] hidden h-[70vh] max-h-[850px] w-auto select-none object-contain opacity-80 xl:block"
+        className="pointer-events-none fixed bottom-0 right-4 z-[1] hidden h-[60vh] max-h-[700px] w-auto select-none object-contain opacity-30 blur-2xl motion-safe:transition-[opacity,filter] motion-safe:duration-500 lg:block xl:h-[70vh] xl:max-h-[850px] xl:opacity-80 xl:blur-0"
       />
     </div>
   )

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo, type ComponentType } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, type ProvidersConfigUpdateRequest } from '@/api/client'
 import { Button } from '@/components/Button'
@@ -22,6 +22,9 @@ import {
   ChevronDown,
   ChevronUp,
   GripVertical,
+  Download,
+  Zap,
+  Clock,
 } from 'lucide-react'
 
 interface SetupWizardProps {
@@ -29,7 +32,32 @@ interface SetupWizardProps {
   onComplete: () => void
 }
 
-type Step = 'welcome' | 'account' | 'server' | 'credentials' | 'downloads' | 'bridge' | 'providers' | 'done'
+type Step =
+  | 'welcome'
+  | 'intro'
+  | 'account'
+  | 'komga-prompt'
+  | 'server'
+  | 'credentials'
+  | 'downloads'
+  | 'metadata-prompt'
+  | 'providers'
+  | 'done'
+
+const STEP_LABELS: Record<Step, string> = {
+  welcome: 'Benvenuto',
+  intro: 'Introduzione',
+  account: 'Account',
+  'komga-prompt': 'Komga',
+  server: 'Server Komga',
+  credentials: 'Credenziali',
+  downloads: 'Download',
+  'metadata-prompt': 'Metadati',
+  providers: 'Provider',
+  done: 'Completato',
+}
+
+const DRAFT_KEY = 'kometa.setupDraft'
 
 // ── Provider definitions ──
 
@@ -170,6 +198,10 @@ function getDefaultProviderStates(): Record<string, ProviderState> {
 export function SetupWizard({ defaultBaseUri, onComplete }: SetupWizardProps) {
   const queryClient = useQueryClient()
   const [step, setStep] = useState<Step>('welcome')
+  const [, setStepHistory] = useState<Step[]>([])
+  const [wantsKomga, setWantsKomga] = useState<boolean | null>(null)
+  const [wantsMetadata, setWantsMetadata] = useState<boolean | null>(null)
+
   const [baseUri, setBaseUri] = useState(defaultBaseUri || 'http://komga:25600')
   const [komgaUser, setKomgaUser] = useState('')
   const [komgaPassword, setKomgaPassword] = useState('')
@@ -182,12 +214,64 @@ export function SetupWizard({ defaultBaseUri, onComplete }: SetupWizardProps) {
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({ malClientId: '', comicVineClientId: '' })
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null)
 
+  // Restore non-sensitive draft on mount
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY)
+      if (!raw) return
+      const d = JSON.parse(raw) as Record<string, unknown>
+      if (typeof d.baseUri === 'string') setBaseUri(d.baseUri)
+      if (typeof d.downloadDir === 'string') setDownloadDir(d.downloadDir)
+      if (d.selectedLibraryId === null || typeof d.selectedLibraryId === 'string') setSelectedLibraryId(d.selectedLibraryId as string | null)
+      if (d.selectedLibraryPath === null || typeof d.selectedLibraryPath === 'string') setSelectedLibraryPath(d.selectedLibraryPath as string | null)
+      if (d.providerStates && typeof d.providerStates === 'object') setProviderStates(d.providerStates as Record<string, ProviderState>)
+      if (d.apiKeys && typeof d.apiKeys === 'object') setApiKeys(d.apiKeys as Record<string, string>)
+      if (d.selectedPreset === null || typeof d.selectedPreset === 'string') setSelectedPreset(d.selectedPreset as string | null)
+      if (typeof d.authUsername === 'string') setAuthUsername(d.authUsername)
+      if (typeof d.wantsKomga === 'boolean' || d.wantsKomga === null) setWantsKomga(d.wantsKomga as boolean | null)
+      if (typeof d.wantsMetadata === 'boolean' || d.wantsMetadata === null) setWantsMetadata(d.wantsMetadata as boolean | null)
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Autosave draft (never persists passwords)
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+        baseUri,
+        downloadDir,
+        selectedLibraryId,
+        selectedLibraryPath,
+        providerStates,
+        apiKeys,
+        selectedPreset,
+        authUsername,
+        wantsKomga,
+        wantsMetadata,
+      }))
+    } catch { /* ignore */ }
+  }, [baseUri, downloadDir, selectedLibraryId, selectedLibraryPath, providerStates, apiKeys, selectedPreset, authUsername, wantsKomga, wantsMetadata])
+
+  const goTo = useCallback((next: Step) => {
+    setStepHistory((h) => [...h, step])
+    setStep(next)
+  }, [step])
+
+  const goBack = useCallback(() => {
+    setStepHistory((h) => {
+      if (h.length === 0) return h
+      const prev = h[h.length - 1]!
+      setStep(prev)
+      return h.slice(0, -1)
+    })
+  }, [])
+
   const setupAuthMutation = useMutation({
     mutationFn: () =>
       api.setupAuth({ username: authUsername, password: authPassword }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['auth-status'] })
-      setStep('server')
+      goTo('komga-prompt')
     },
   })
 
@@ -206,7 +290,7 @@ export function SetupWizard({ defaultBaseUri, onComplete }: SetupWizardProps) {
   const testMutation = useMutation({
     mutationFn: () => api.getConnected(),
     onSuccess: (data) => {
-      if (data.success) setStep('downloads')
+      if (data.success) goTo('downloads')
     },
   })
 
@@ -221,7 +305,7 @@ export function SetupWizard({ defaultBaseUri, onComplete }: SetupWizardProps) {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['config'] })
-      setStep('bridge')
+      goTo('metadata-prompt')
     },
   })
 
@@ -244,9 +328,29 @@ export function SetupWizard({ defaultBaseUri, onComplete }: SetupWizardProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['config'] })
-      setStep('done')
+      goTo('done')
     },
   })
+
+  const projectedPath = useMemo<Step[]>(() => {
+    const path: Step[] = ['intro', 'account', 'komga-prompt']
+    if (wantsKomga === true) path.push('server', 'credentials', 'downloads')
+    path.push('metadata-prompt')
+    if (wantsMetadata === true) path.push('providers')
+    return path
+  }, [wantsKomga, wantsMetadata])
+
+  const currentIdx = projectedPath.indexOf(step)
+  const totalSteps = projectedPath.length
+  const displayIdx = currentIdx >= 0 ? currentIdx + 1 : 1
+  const progress = currentIdx >= 0
+    ? ((currentIdx + 1) / totalSteps) * 100
+    : 0
+
+  const handleComplete = useCallback(() => {
+    try { sessionStorage.removeItem(DRAFT_KEY) } catch { /* ignore */ }
+    onComplete()
+  }, [onComplete])
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink-950 py-6 sm:py-10">
@@ -277,49 +381,21 @@ export function SetupWizard({ defaultBaseUri, onComplete }: SetupWizardProps) {
             />
           </div>
 
-        {/* Step indicator */}
-        {step !== 'welcome' && step !== 'done' && (
+        {/* Step indicator — dynamic, reflects the current branch */}
+        {step !== 'welcome' && step !== 'done' && currentIdx >= 0 && (
           <div className="mb-8">
-            {(() => {
-              const stepOrder = ['account', 'server', 'credentials', 'downloads', 'bridge', 'providers'] as const
-              const stepLabels = ['Account', 'Server', 'Credentials', 'Downloads', 'Extras', 'Providers']
-              const currentIdx = stepOrder.indexOf(step as typeof stepOrder[number])
-              const progress = ((currentIdx) / (stepOrder.length - 1)) * 100
-              return (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-[11px] text-ink-500">
-                    <span>Step {currentIdx + 1} of {stepOrder.length}</span>
-                    <span className="font-medium text-ink-300">{stepLabels[currentIdx]}</span>
-                  </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink-800/50">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-accent-600 to-accent-500 transition-all duration-500 ease-out"
-                      style={{ width: `${Math.max(progress, 8)}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between">
-                    {stepOrder.map((s, i) => {
-                      const isCompleted = i < currentIdx
-                      const isCurrent = i === currentIdx
-                      return (
-                        <div
-                          key={s}
-                          className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-all ${
-                            isCurrent
-                              ? 'bg-accent-600 text-white ring-2 ring-accent-500/30'
-                              : isCompleted
-                                ? 'bg-emerald-600/20 text-emerald-400'
-                                : 'bg-ink-800/60 text-ink-600'
-                          }`}
-                        >
-                          {isCompleted ? <CheckCircle2 className="h-3 w-3" /> : i + 1}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
-            })()}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-[11px] text-ink-500">
+                <span>Passo {displayIdx} di {totalSteps}</span>
+                <span className="font-medium text-ink-300">{STEP_LABELS[step]}</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink-800/50">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-accent-600 to-accent-500 transition-all duration-500 ease-out"
+                  style={{ width: `${Math.max(progress, 8)}%` }}
+                />
+              </div>
+            </div>
           </div>
         )}
 
@@ -327,7 +403,10 @@ export function SetupWizard({ defaultBaseUri, onComplete }: SetupWizardProps) {
         <div className="relative rounded-3xl border border-ink-800/40 bg-ink-900/90 p-7 shadow-2xl shadow-black/50 backdrop-blur-md sm:p-9">
           <div className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-br from-accent-500/8 via-transparent to-violet-500/8 opacity-60" />
           {step === 'welcome' && (
-            <WelcomeStep onNext={() => setStep('account')} />
+            <WelcomeStep onNext={() => goTo('intro')} />
+          )}
+          {step === 'intro' && (
+            <IntroStep onNext={() => goTo('account')} onBack={goBack} />
           )}
           {step === 'account' && (
             <AccountStep
@@ -339,20 +418,40 @@ export function SetupWizard({ defaultBaseUri, onComplete }: SetupWizardProps) {
                 if (authUsername.trim() && authPassword.length >= 4) {
                   setupAuthMutation.mutate()
                 } else {
-                  // Skip auth setup
-                  setStep('server')
+                  goTo('komga-prompt')
                 }
               }}
-              onSkip={() => setStep('server')}
+              onSkip={() => goTo('komga-prompt')}
+              onBack={goBack}
               saving={setupAuthMutation.isPending}
               error={setupAuthMutation.isError ? (setupAuthMutation.error as Error).message : null}
+            />
+          )}
+          {step === 'komga-prompt' && (
+            <ChoiceStep
+              icon={Server}
+              iconColor="text-accent-400"
+              iconBg="bg-accent-600/10"
+              eyebrow="Media server"
+              title="Vuoi connettere Komga adesso?"
+              subtitle="Komga gestisce la libreria e serve i capitoli scaricati. Serve solo l'URL del server e le credenziali admin."
+              primaryLabel="Sì, configura ora"
+              primaryDescription="URL del server → credenziali → cartella di download"
+              primaryIcon={ArrowRight}
+              secondaryLabel="Più tardi dalle impostazioni"
+              secondaryDescription="Salto questo passaggio e continuo con i metadati"
+              secondaryIcon={Clock}
+              onPrimary={() => { setWantsKomga(true); goTo('server') }}
+              onSecondary={() => { setWantsKomga(false); goTo('metadata-prompt') }}
+              onBack={goBack}
             />
           )}
           {step === 'server' && (
             <ServerStep
               baseUri={baseUri}
               onChange={setBaseUri}
-              onNext={() => setStep('credentials')}
+              onNext={() => goTo('credentials')}
+              onBack={goBack}
             />
           )}
           {step === 'credentials' && (
@@ -361,7 +460,7 @@ export function SetupWizard({ defaultBaseUri, onComplete }: SetupWizardProps) {
               komgaPassword={komgaPassword}
               onUserChange={setKomgaUser}
               onPasswordChange={setKomgaPassword}
-              onBack={() => setStep('server')}
+              onBack={goBack}
               onSave={() => saveMutation.mutate()}
               saving={saveMutation.isPending || testMutation.isPending}
               error={
@@ -383,17 +482,30 @@ export function SetupWizard({ defaultBaseUri, onComplete }: SetupWizardProps) {
                 setSelectedLibraryPath(libPath)
                 if (libPath) setDownloadDir(libPath)
               }}
-              onBack={() => setStep('credentials')}
+              onBack={goBack}
               onNext={() => saveDownloadMutation.mutate()}
-              onSkip={() => setStep('bridge')}
+              onSkip={() => goTo('metadata-prompt')}
               saving={saveDownloadMutation.isPending}
               error={saveDownloadMutation.isError ? (saveDownloadMutation.error as Error).message : null}
             />
           )}
-          {step === 'bridge' && (
-            <BridgeStep
-              onConfigure={() => setStep('providers')}
-              onSkip={() => setStep('done')}
+          {step === 'metadata-prompt' && (
+            <ChoiceStep
+              icon={BookOpen}
+              iconColor="text-violet-400"
+              iconBg="bg-violet-600/10"
+              eyebrow="Metadata"
+              title="Vuoi configurare i metadati?"
+              subtitle="Provider come AniList, MangaUpdates e MangaDex arricchiscono copertine, generi, voti e descrizioni."
+              primaryLabel="Sì, configura i provider"
+              primaryDescription="14 provider disponibili, con preset rapidi per manga / comics / light novel / webtoon"
+              primaryIcon={ArrowRight}
+              secondaryLabel="Salta per ora"
+              secondaryDescription="Posso configurarli quando voglio dalle Impostazioni → Provider"
+              secondaryIcon={Clock}
+              onPrimary={() => { setWantsMetadata(true); goTo('providers') }}
+              onSecondary={() => { setWantsMetadata(false); goTo('done') }}
+              onBack={goBack}
             />
           )}
           {step === 'providers' && (
@@ -404,13 +516,13 @@ export function SetupWizard({ defaultBaseUri, onComplete }: SetupWizardProps) {
               onApiKeysChange={setApiKeys}
               selectedPreset={selectedPreset}
               onPresetChange={setSelectedPreset}
-              onBack={() => setStep('bridge')}
+              onBack={goBack}
               onSave={() => saveProvidersMutation.mutate()}
               saving={saveProvidersMutation.isPending}
               error={saveProvidersMutation.isError ? (saveProvidersMutation.error as Error).message : null}
             />
           )}
-          {step === 'done' && <DoneStep onComplete={onComplete} />}
+          {step === 'done' && <DoneStep onComplete={handleComplete} />}
         </div>
 
         {/* Hero below card */}
@@ -422,6 +534,154 @@ export function SetupWizard({ defaultBaseUri, onComplete }: SetupWizardProps) {
           />
         </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Intro Step ──
+
+function IntroStep({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
+  const points: Array<{ icon: ComponentType<{ className?: string }>; title: string; body: string }> = [
+    {
+      icon: Search,
+      title: 'Catalogo multi-sorgente',
+      body: 'Cerca in parallelo su MangaDex, Comick, MangaWorld e altre sorgenti. Risultati deduplicati per titolo.',
+    },
+    {
+      icon: Download,
+      title: 'Download automatici',
+      body: 'Metti in coda i capitoli che ti servono o fai "follow" di una serie — nuovi capitoli scaricati senza interventi manuali.',
+    },
+    {
+      icon: Zap,
+      title: 'Metadati arricchiti',
+      body: 'Provider come AniList, MangaUpdates e MangaDex compilano copertine, generi, autori e descrizioni per la tua libreria.',
+    },
+  ]
+
+  return (
+    <div>
+      <div className="mb-6 text-center">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-600/10 ring-1 ring-accent-500/20">
+          <BookOpen className="h-7 w-7 text-accent-400" />
+        </div>
+        <h2 className="mb-2 font-display text-2xl font-bold text-ink-100">Come funziona</h2>
+        <p className="text-sm leading-relaxed text-ink-400">
+          Tre cose che KometaManga fa per te. Nessuna è obbligatoria — attivi solo quello che ti serve.
+        </p>
+      </div>
+
+      <div className="mb-6 space-y-3">
+        {points.map(({ icon: Icon, title, body }) => (
+          <div key={title} className="flex gap-3 rounded-2xl border border-ink-800/40 bg-ink-800/30 p-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-600/10 ring-1 ring-accent-500/15">
+              <Icon className="h-5 w-5 text-accent-400" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-ink-100">{title}</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-ink-400">{body}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-3">
+        <Button variant="ghost" size="md" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4" /> Indietro
+        </Button>
+        <Button size="lg" onClick={onNext} className="flex-1">
+          Inizia la configurazione <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// ── Choice Step (Yes/No decision gate) ──
+
+function ChoiceStep({
+  icon: Icon,
+  iconColor,
+  iconBg,
+  eyebrow,
+  title,
+  subtitle,
+  primaryLabel,
+  primaryDescription,
+  primaryIcon: PrimaryIcon,
+  secondaryLabel,
+  secondaryDescription,
+  secondaryIcon: SecondaryIcon,
+  onPrimary,
+  onSecondary,
+  onBack,
+}: {
+  icon: ComponentType<{ className?: string }>
+  iconColor: string
+  iconBg: string
+  eyebrow: string
+  title: string
+  subtitle: string
+  primaryLabel: string
+  primaryDescription: string
+  primaryIcon: ComponentType<{ className?: string }>
+  secondaryLabel: string
+  secondaryDescription: string
+  secondaryIcon: ComponentType<{ className?: string }>
+  onPrimary: () => void
+  onSecondary: () => void
+  onBack: () => void
+}) {
+  return (
+    <div>
+      <div className="mb-6 flex items-center gap-3">
+        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconBg}`}>
+          <Icon className={`h-5 w-5 ${iconColor}`} />
+        </div>
+        <div>
+          <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-ink-500">{eyebrow}</p>
+          <h2 className="font-display text-lg font-bold text-ink-100">{title}</h2>
+        </div>
+      </div>
+
+      <p className="mb-5 text-sm leading-relaxed text-ink-400">{subtitle}</p>
+
+      <div className="space-y-3">
+        <button
+          type="button"
+          onClick={onPrimary}
+          className="group flex w-full items-start gap-3 rounded-2xl border border-accent-500/30 bg-accent-600/10 p-4 text-left transition-all hover:border-accent-500/50 hover:bg-accent-600/15 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-600/20 ring-1 ring-accent-500/30">
+            <PrimaryIcon className="h-4 w-4 text-accent-300" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-ink-100">{primaryLabel}</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-ink-400">{primaryDescription}</p>
+          </div>
+          <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-accent-300 transition-transform group-hover:translate-x-0.5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={onSecondary}
+          className="group flex w-full items-start gap-3 rounded-2xl border border-ink-800/60 bg-ink-800/30 p-4 text-left transition-all hover:border-ink-700 hover:bg-ink-800/60 focus:outline-none focus:ring-2 focus:ring-ink-600/60"
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ink-800/60 ring-1 ring-ink-700/60">
+            <SecondaryIcon className="h-4 w-4 text-ink-400" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-ink-200">{secondaryLabel}</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-ink-500">{secondaryDescription}</p>
+          </div>
+        </button>
+      </div>
+
+      <div className="mt-5 flex">
+        <Button variant="ghost" size="md" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4" /> Indietro
+        </Button>
       </div>
     </div>
   )
@@ -456,6 +716,7 @@ function AccountStep({
   onPasswordChange,
   onNext,
   onSkip,
+  onBack,
   saving,
   error,
 }: {
@@ -465,6 +726,7 @@ function AccountStep({
   onPasswordChange: (v: string) => void
   onNext: () => void
   onSkip: () => void
+  onBack?: () => void
   saving: boolean
   error: string | null
 }) {
@@ -529,6 +791,11 @@ function AccountStep({
       )}
 
       <div className="mt-6 flex gap-3">
+        {onBack && (
+          <Button variant="ghost" size="md" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4" /> Back
+          </Button>
+        )}
         <Button variant="ghost" size="md" onClick={onSkip}>
           Skip
         </Button>
@@ -548,10 +815,12 @@ function ServerStep({
   baseUri,
   onChange,
   onNext,
+  onBack,
 }: {
   baseUri: string
   onChange: (v: string) => void
   onNext: () => void
+  onBack?: () => void
 }) {
   const valid = baseUri.startsWith('http://') || baseUri.startsWith('https://')
   const isLocalhost = /localhost|127\.0\.0\.1/i.test(baseUri)
@@ -602,9 +871,16 @@ function ServerStep({
         </p>
       )}
 
-      <Button size="lg" onClick={onNext} disabled={!valid} className="w-full">
-        Next <ArrowRight className="h-4 w-4" />
-      </Button>
+      <div className="flex gap-3">
+        {onBack && (
+          <Button variant="ghost" size="md" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4" /> Back
+          </Button>
+        )}
+        <Button size="lg" onClick={onNext} disabled={!valid} className="flex-1">
+          Next <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   )
 }
@@ -899,69 +1175,6 @@ function DoneStep({ onComplete }: { onComplete: () => void }) {
       <Button size="lg" onClick={onComplete} className="w-full">
         Go to Dashboard <ArrowRight className="h-4 w-4" />
       </Button>
-    </div>
-  )
-}
-
-// ── Bridge Step ──
-
-function BridgeStep({
-  onConfigure,
-  onSkip,
-}: {
-  onConfigure: () => void
-  onSkip: () => void
-}) {
-  const coreItems = [
-    { label: 'Admin account', icon: Shield },
-    { label: 'Komga server', icon: Server },
-    { label: 'Komga credentials', icon: KeyRound },
-    { label: 'Download directory', icon: FolderOpen },
-  ]
-
-  return (
-    <div>
-      <div className="mb-5 text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600/20">
-          <CheckCircle2 className="h-6 w-6 text-emerald-400" />
-        </div>
-        <h2 className="font-display text-lg font-bold text-ink-100">Core Setup Complete!</h2>
-        <p className="mt-1 text-sm text-ink-400">The essentials are configured. Want to set up metadata providers?</p>
-      </div>
-
-      <div className="mb-5 grid grid-cols-2 gap-2">
-        {coreItems.map(({ label }) => (
-          <div key={label} className="flex items-center gap-2 rounded-xl bg-emerald-600/5 px-3 py-2.5 ring-1 ring-emerald-500/10">
-            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
-            <span className="text-xs font-medium text-emerald-300">{label}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="mb-5 rounded-xl border border-accent-500/20 bg-accent-600/5 p-4">
-        <div className="mb-2 flex items-center gap-2">
-          <BookOpen className="h-4 w-4 text-accent-400" />
-          <span className="text-sm font-semibold text-ink-200">Metadata Providers</span>
-        </div>
-        <p className="text-xs leading-relaxed text-ink-400">
-          Providers like <span className="text-ink-300">AniList</span>, <span className="text-ink-300">MangaUpdates</span>,
-          and <span className="text-ink-300">MangaDex</span> fetch series info, covers, genres, and scores automatically.
-          You can pick a preset or configure each provider individually.
-        </p>
-      </div>
-
-      <div className="flex gap-3">
-        <Button variant="ghost" size="md" onClick={onSkip} className="flex-1">
-          Skip for now
-        </Button>
-        <Button size="lg" onClick={onConfigure} className="flex-1">
-          Configure Providers <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <p className="mt-3 text-center text-[11px] text-ink-500">
-        You can always configure providers later in Settings → Providers
-      </p>
     </div>
   )
 }

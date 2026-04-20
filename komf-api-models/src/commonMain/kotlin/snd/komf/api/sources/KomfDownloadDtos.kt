@@ -23,6 +23,13 @@ data class KomfDownloadQueueItemDto(
     val progress: Int? = null,
     val totalPages: Int? = null,
     val error: String? = null,
+    val bytesDownloaded: Long? = null,
+    val speedBps: Long? = null,
+    val etaSec: Long? = null,
+    val pausedAt: String? = null,
+    val position: Int = 0,
+    val libraryPath: String? = null,
+    val libraryId: String? = null,
 )
 
 @Serializable
@@ -33,6 +40,7 @@ enum class KomfDownloadItemStatus {
     IMPORTING,
     COMPLETED,
     ERROR,
+    PAUSED,
 }
 
 @Serializable
@@ -42,6 +50,8 @@ data class KomfDownloadStatusDto(
     val completedToday: Int,
     val failedCount: Int,
     val paused: Boolean = false,
+    val totalSpeedBps: Long = 0,
+    val totalEtaSec: Long? = null,
 )
 
 @Serializable
@@ -59,6 +69,17 @@ data class KomfDownloadedChapterDto(
     val pageCount: Int,
     val downloadedAt: String,
 )
+
+@Serializable
+data class KomfDownloadMoveRequestDto(
+    val direction: KomfDownloadMoveDirection,
+)
+
+@Serializable
+enum class KomfDownloadMoveDirection {
+    UP,
+    DOWN,
+}
 
 @Serializable
 data class KomfDownloadStatsDto(

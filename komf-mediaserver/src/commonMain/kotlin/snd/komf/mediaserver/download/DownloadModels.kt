@@ -25,6 +25,7 @@ enum class DownloadItemStatus {
     IMPORTING,
     COMPLETED,
     ERROR,
+    PAUSED,
 }
 
 data class DownloadItem(
@@ -42,6 +43,11 @@ data class DownloadItem(
     val progress: Int? = null,
     val totalPages: Int? = null,
     val error: String? = null,
+    val bytesDownloaded: Long? = null,
+    val speedBps: Long? = null,
+    val etaSec: Long? = null,
+    val pausedAt: Instant? = null,
+    val position: Int = 0,
     val createdAt: Instant,
     val updatedAt: Instant,
 )

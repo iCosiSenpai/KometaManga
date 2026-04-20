@@ -70,6 +70,13 @@ class DownloadService(
     fun cancelAll() = queueManager.cancelAll()
     fun getStatus() = queueManager.getStatus()
 
+    // Per-item controls
+    fun pauseItem(id: String) = queueManager.pauseItem(DownloadItemId(id))
+    fun resumeItem(id: String) = queueManager.resumeItem(DownloadItemId(id))
+    fun cancelItem(id: String) = queueManager.cancelItem(DownloadItemId(id))
+    fun retryItem(id: String) = queueManager.retryItem(DownloadItemId(id))
+    fun moveItem(id: String, direction: MoveDirection) = queueManager.moveItem(DownloadItemId(id), direction)
+
     // History operations
     fun getDownloadedChapters(limit: Long = 50, offset: Long = 0) =
         downloadedChaptersRepository.findAll(limit, offset)

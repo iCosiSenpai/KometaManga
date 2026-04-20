@@ -47,7 +47,7 @@ class ChapterDownloader(
         manga: MangaDetails,
         chapter: MangaChapter,
         outputDir: Path,
-        onPageDownloaded: suspend (currentPage: Int, totalPages: Int) -> Unit = { _, _ -> },
+        onPageDownloaded: suspend (currentPage: Int, totalPages: Int, bytesThisPage: Long) -> Unit = { _, _, _ -> },
     ): ChapterDownloadResult = withContext(Dispatchers.IO) {
         val pages = source.getChapterPages(chapter.id)
         if (pages.isEmpty()) {
@@ -73,7 +73,7 @@ class ChapterDownloader(
 
     private suspend fun downloadPages(
         pages: List<ChapterPage>,
-        onPageDownloaded: suspend (currentPage: Int, totalPages: Int) -> Unit,
+        onPageDownloaded: suspend (currentPage: Int, totalPages: Int, bytesThisPage: Long) -> Unit,
     ): List<DownloadedPage> = coroutineScope {
         val semaphore = Semaphore(downloadConfig.concurrentPageDownloads)
         val totalPages = pages.size
@@ -82,7 +82,7 @@ class ChapterDownloader(
             async {
                 semaphore.withPermit {
                     val data = downloadPage(page)
-                    onPageDownloaded(page.index + 1, totalPages)
+                    onPageDownloaded(page.index + 1, totalPages, data.data.size.toLong())
                     data
                 }
             }

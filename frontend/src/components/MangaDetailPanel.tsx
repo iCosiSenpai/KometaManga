@@ -17,7 +17,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { api, imageProxyUrl, type DownloadTarget } from '@/api/client'
-import type { MangaChapterDto, MangaSourceId } from '@/api/sources'
+import type { MangaChapterDto, MangaSearchResultDto, MangaSourceId } from '@/api/sources'
 import { deriveTargetName } from '@/utils/targets'
 import { Card } from '@/components/Card'
 import { Button } from '@/components/Button'
@@ -31,6 +31,7 @@ import { SOURCE_BRAND, langLabel, type SourceBrand } from '@/lib/brand'
 interface MangaDetailPanelProps {
   sourceId: MangaSourceId
   mangaId: string
+  variants?: MangaSearchResultDto[]
   initialTitle: string
   initialCoverUrl?: string | null
   initialLanguage?: string | null
@@ -43,6 +44,9 @@ interface MangaDetailPanelProps {
   ) => void
   downloadLoading?: boolean
 }
+
+const variantKey = (v: Pick<MangaSearchResultDto, 'sourceId' | 'id'>) => `${v.sourceId}::${v.id}`
+const titleKey = (title: string) => title.trim().toLowerCase()
 
 const STATUS_META: Record<
   'ONGOING' | 'COMPLETED' | 'HIATUS' | 'CANCELLED' | 'UNKNOWN',
@@ -70,8 +74,9 @@ function formatChapterUpdate(updatedAt: string | null) {
 }
 
 export function MangaDetailPanel({
-  sourceId,
-  mangaId,
+  sourceId: initialSourceId,
+  mangaId: initialMangaId,
+  variants,
   initialTitle,
   initialCoverUrl,
   initialLanguage,
@@ -87,6 +92,38 @@ export function MangaDetailPanel({
   const [chapterLimit, setChapterLimit] = useState(50)
   const { toast } = useToast()
   const queryClient = useQueryClient()
+
+  const hasVariants = Boolean(variants && variants.length > 1)
+
+  const [activeVariantId, setActiveVariantId] = useState<string>(() => {
+    if (!hasVariants) return variantKey({ sourceId: initialSourceId, id: initialMangaId })
+    try {
+      const saved = localStorage.getItem(`kometa.lastSourceForTitle.${titleKey(initialTitle)}`)
+      if (saved && variants!.some((v) => variantKey(v) === saved)) return saved
+    } catch { /* ignore */ }
+    return variantKey({ sourceId: initialSourceId, id: initialMangaId })
+  })
+
+  const activeVariant = useMemo(() => {
+    if (!hasVariants) return null
+    return variants!.find((v) => variantKey(v) === activeVariantId) ?? variants![0]!
+  }, [variants, activeVariantId, hasVariants])
+
+  const sourceId: MangaSourceId = activeVariant?.sourceId ?? initialSourceId
+  const mangaId: string = activeVariant?.id ?? initialMangaId
+  const displayTitle: string = activeVariant?.title ?? initialTitle
+  const displayCoverUrl: string | null | undefined = activeVariant?.coverUrl ?? initialCoverUrl
+
+  const handleSelectVariant = useCallback(
+    (v: MangaSearchResultDto) => {
+      const key = variantKey(v)
+      setActiveVariantId(key)
+      setSelectedChapters(new Set())
+      try { localStorage.setItem(`kometa.lastSourceForTitle.${titleKey(initialTitle)}`, key) }
+      catch { /* ignore */ }
+    },
+    [initialTitle],
+  )
 
   const sourceMeta = SOURCE_BRAND[sourceId]
 
@@ -159,8 +196,8 @@ export function MangaDetailPanel({
 
   const details = detailsQuery.data
   const chapters = chaptersQuery.data ?? []
-  const title = details?.title ?? initialTitle
-  const coverUrl = details?.coverUrl ?? initialCoverUrl
+  const title = details?.title ?? displayTitle
+  const coverUrl = details?.coverUrl ?? displayCoverUrl
   const existingRule = useMemo(
     () => (rulesQuery.data ?? []).find((rule) => rule.sourceId === sourceId && rule.mangaId === mangaId),
     [rulesQuery.data, sourceId, mangaId],
@@ -370,6 +407,9 @@ export function MangaDetailPanel({
         downloadTargets={downloadTargets}
         selectedTargetId={selectedTargetId}
         onSelectTarget={setSelectedTargetId}
+        variants={hasVariants ? variants : undefined}
+        activeVariantId={activeVariantId}
+        onSelectVariant={handleSelectVariant}
       />
 
       {(detailsQuery.isError || rulesQuery.isError) && (
@@ -597,6 +637,9 @@ function DetailHero({
   downloadTargets,
   selectedTargetId,
   onSelectTarget,
+  variants,
+  activeVariantId,
+  onSelectVariant,
 }: {
   sourceMeta: SourceMetaEntry
   sourceId: MangaSourceId
@@ -625,6 +668,9 @@ function DetailHero({
   downloadTargets: DownloadTarget[]
   selectedTargetId: string
   onSelectTarget: (id: string) => void
+  variants?: MangaSearchResultDto[]
+  activeVariantId: string
+  onSelectVariant: (variant: MangaSearchResultDto) => void
 }) {
   return (
     <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-ink-950 shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_32px_120px_rgba(0,0,0,0.45)]">
@@ -736,6 +782,43 @@ function DetailHero({
                     {pill}
                   </span>
                 ))}
+              </div>
+            )}
+
+            {variants && variants.length > 1 && (
+              <div className="pt-1">
+                <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-ink-500">
+                  Leggi da
+                </p>
+                <div
+                  role="tablist"
+                  aria-label="Sorgente del manga"
+                  className="mt-2 flex flex-wrap gap-1.5"
+                >
+                  {variants.map((variant) => {
+                    const key = `${variant.sourceId}::${variant.id}`
+                    const active = key === activeVariantId
+                    const brand = SOURCE_BRAND[variant.sourceId]
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => onSelectVariant(variant)}
+                        className={clsx(
+                          'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                          active
+                            ? 'border-accent-500/50 bg-accent-600/15 text-accent-200 shadow-[0_0_0_1px_rgba(239,68,68,0.15)]'
+                            : 'border-white/10 bg-white/5 text-ink-300 hover:border-white/20 hover:bg-white/10 hover:text-ink-100',
+                        )}
+                      >
+                        <SourceIcon sourceId={variant.sourceId} size={14} />
+                        <span>{brand.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             )}
 

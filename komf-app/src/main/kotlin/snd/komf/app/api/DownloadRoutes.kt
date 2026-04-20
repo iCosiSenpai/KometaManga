@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import snd.komf.api.sources.KomfDownloadItemStatus
+import snd.komf.api.sources.KomfDownloadMoveDirection
+import snd.komf.api.sources.KomfDownloadMoveRequestDto
 import snd.komf.api.sources.KomfDownloadQueueItemDto
 import snd.komf.api.sources.KomfDownloadRequestDto
 import snd.komf.api.sources.KomfDownloadStatusDto
@@ -23,9 +25,9 @@ import snd.komf.api.sources.KomfDownloadEvent
 import snd.komf.api.sources.KomfMangaSourceId
 import snd.komf.mediaserver.download.DownloadEvent
 import snd.komf.mediaserver.download.DownloadItem
-import snd.komf.mediaserver.download.DownloadItemStatus
 import snd.komf.mediaserver.download.DownloadService
 import snd.komf.mediaserver.download.DownloadedChapterRecord
+import snd.komf.mediaserver.download.MoveDirection
 
 class DownloadRoutes(
     private val downloadService: Flow<DownloadService>,
@@ -34,7 +36,6 @@ class DownloadRoutes(
     fun registerRoutes(routing: Route) {
         routing.route("/downloads") {
 
-            // SSE events stream
             sse("/events") {
                 val service = downloadService.first()
                 service.events.collect { event ->
@@ -46,7 +47,6 @@ class DownloadRoutes(
                 }
             }
 
-            // Start download
             post {
                 val service = downloadService.first()
                 val request = call.receive<KomfDownloadRequestDto>()
@@ -62,7 +62,6 @@ class DownloadRoutes(
                 call.respond(HttpStatusCode.Accepted, items.map { it.toDto() })
             }
 
-            // Queue status
             get("/status") {
                 val service = downloadService.first()
                 val status = service.getStatus()
@@ -72,16 +71,16 @@ class DownloadRoutes(
                     completedToday = status.completedToday,
                     failedCount = status.failedCount,
                     paused = status.paused,
+                    totalSpeedBps = status.totalSpeedBps,
+                    totalEtaSec = status.totalEtaSec,
                 ))
             }
 
-            // Queue items
             get("/queue") {
                 val service = downloadService.first()
                 call.respond(service.getQueueItems().map { it.toDto() })
             }
 
-            // Single queue item
             get("/queue/{id}") {
                 val service = downloadService.first()
                 val id = call.parameters["id"]
@@ -91,7 +90,6 @@ class DownloadRoutes(
                 call.respond(item.toDto())
             }
 
-            // Remove queue item
             delete("/queue/{id}") {
                 val service = downloadService.first()
                 val id = call.parameters["id"]
@@ -100,49 +98,83 @@ class DownloadRoutes(
                 call.respond(HttpStatusCode.NoContent)
             }
 
-            // Clear completed
+            // Per-item controls
+            post("/queue/{id}/pause") {
+                val service = downloadService.first()
+                val id = call.parameters["id"] ?: throw IllegalArgumentException("id is required")
+                service.pauseItem(id)
+                call.respond(HttpStatusCode.NoContent)
+            }
+
+            post("/queue/{id}/resume") {
+                val service = downloadService.first()
+                val id = call.parameters["id"] ?: throw IllegalArgumentException("id is required")
+                service.resumeItem(id)
+                call.respond(HttpStatusCode.NoContent)
+            }
+
+            post("/queue/{id}/cancel") {
+                val service = downloadService.first()
+                val id = call.parameters["id"] ?: throw IllegalArgumentException("id is required")
+                service.cancelItem(id)
+                call.respond(HttpStatusCode.NoContent)
+            }
+
+            post("/queue/{id}/retry") {
+                val service = downloadService.first()
+                val id = call.parameters["id"] ?: throw IllegalArgumentException("id is required")
+                service.retryItem(id)
+                call.respond(HttpStatusCode.NoContent)
+            }
+
+            post("/queue/{id}/move") {
+                val service = downloadService.first()
+                val id = call.parameters["id"] ?: throw IllegalArgumentException("id is required")
+                val body = call.receive<KomfDownloadMoveRequestDto>()
+                val direction = when (body.direction) {
+                    KomfDownloadMoveDirection.UP -> MoveDirection.UP
+                    KomfDownloadMoveDirection.DOWN -> MoveDirection.DOWN
+                }
+                service.moveItem(id, direction)
+                call.respond(HttpStatusCode.NoContent)
+            }
+
             post("/queue/clear-completed") {
                 val service = downloadService.first()
                 service.clearCompleted()
                 call.respond(HttpStatusCode.NoContent)
             }
 
-            // Clear errors
             post("/queue/clear-errors") {
                 val service = downloadService.first()
                 service.clearErrors()
                 call.respond(HttpStatusCode.NoContent)
             }
 
-            // Retry failed
             post("/queue/retry-failed") {
                 val service = downloadService.first()
                 service.retryFailed()
                 call.respond(HttpStatusCode.NoContent)
             }
 
-            // Pause queue processing
             post("/queue/pause") {
                 val service = downloadService.first()
                 service.pause()
                 call.respond(HttpStatusCode.NoContent)
             }
 
-            // Resume queue processing
             post("/queue/resume") {
                 val service = downloadService.first()
                 service.resume()
                 call.respond(HttpStatusCode.NoContent)
             }
 
-            // Cancel all queued items
             post("/queue/cancel-all") {
                 val service = downloadService.first()
                 service.cancelAll()
                 call.respond(HttpStatusCode.NoContent)
             }
 
-            // Download history
             get("/history") {
                 val service = downloadService.first()
                 val limit = (call.request.queryParameters["limit"]?.toLongOrNull() ?: 50).coerceIn(1, 500)
@@ -150,7 +182,6 @@ class DownloadRoutes(
                 call.respond(service.getDownloadedChapters(limit, offset).map { it.toDto() })
             }
 
-            // Download stats
             get("/stats") {
                 val service = downloadService.first()
                 val stats = service.getDownloadStats()
@@ -173,6 +204,13 @@ class DownloadRoutes(
         progress = progress,
         totalPages = totalPages,
         error = error,
+        bytesDownloaded = bytesDownloaded,
+        speedBps = speedBps,
+        etaSec = etaSec,
+        pausedAt = pausedAt?.toString(),
+        position = position,
+        libraryPath = libraryPath,
+        libraryId = libraryId,
     )
 
     private fun DownloadedChapterRecord.toDto() = KomfDownloadedChapterDto(
@@ -192,33 +230,59 @@ class DownloadRoutes(
 
     private fun DownloadEvent.toDto(): KomfDownloadEvent = when (this) {
         is DownloadEvent.QueuedEvent -> KomfDownloadEvent.QueuedEvent(
+            itemId = itemId,
             chapterId = chapterId,
             mangaTitle = mangaTitle,
             chapterNumber = chapterNumber,
         )
         is DownloadEvent.DownloadStartedEvent -> KomfDownloadEvent.DownloadStartedEvent(
+            itemId = itemId,
             chapterId = chapterId,
             totalPages = totalPages,
         )
         is DownloadEvent.PageDownloadedEvent -> KomfDownloadEvent.PageDownloadedEvent(
+            itemId = itemId,
             chapterId = chapterId,
             currentPage = currentPage,
             totalPages = totalPages,
+            bytesDownloaded = bytesDownloaded,
+            speedBps = speedBps,
+            etaSec = etaSec,
         )
         is DownloadEvent.PackagingEvent -> KomfDownloadEvent.PackagingEvent(
+            itemId = itemId,
             chapterId = chapterId,
         )
-        is DownloadEvent.ImportingEvent -> KomfDownloadEvent.PackagingEvent(
+        is DownloadEvent.ImportingEvent -> KomfDownloadEvent.ImportingEvent(
+            itemId = itemId,
             chapterId = chapterId,
         )
         is DownloadEvent.CompletedEvent -> KomfDownloadEvent.CompletedEvent(
+            itemId = itemId,
             chapterId = chapterId,
             filePath = filePath,
             fileSize = fileSize,
         )
         is DownloadEvent.ErrorEvent -> KomfDownloadEvent.ErrorEvent(
+            itemId = itemId,
             chapterId = chapterId,
             errorMessage = errorMessage,
+        )
+        is DownloadEvent.ItemPausedEvent -> KomfDownloadEvent.ItemPausedEvent(
+            itemId = itemId,
+            chapterId = chapterId,
+        )
+        is DownloadEvent.ItemResumedEvent -> KomfDownloadEvent.ItemResumedEvent(
+            itemId = itemId,
+            chapterId = chapterId,
+        )
+        is DownloadEvent.ItemCancelledEvent -> KomfDownloadEvent.ItemCancelledEvent(
+            itemId = itemId,
+            chapterId = chapterId,
+        )
+        is DownloadEvent.ReorderEvent -> KomfDownloadEvent.ReorderEvent(
+            itemId = itemId,
+            newPosition = newPosition,
         )
         is DownloadEvent.QueueProgressEvent -> KomfDownloadEvent.QueueProgressEvent(
             completedCount = completedCount,

@@ -30,6 +30,9 @@ sealed interface DownloadEvent {
         val chapterId: String,
         val currentPage: Int,
         val totalPages: Int,
+        val bytesDownloaded: Long,
+        val speedBps: Long? = null,
+        val etaSec: Long? = null,
     ) : DownloadEvent
 
     @Serializable
@@ -61,6 +64,34 @@ sealed interface DownloadEvent {
         val itemId: String,
         val chapterId: String,
         val errorMessage: String,
+    ) : DownloadEvent
+
+    @Serializable
+    @SerialName("ItemPausedEvent")
+    data class ItemPausedEvent(
+        val itemId: String,
+        val chapterId: String,
+    ) : DownloadEvent
+
+    @Serializable
+    @SerialName("ItemResumedEvent")
+    data class ItemResumedEvent(
+        val itemId: String,
+        val chapterId: String,
+    ) : DownloadEvent
+
+    @Serializable
+    @SerialName("ItemCancelledEvent")
+    data class ItemCancelledEvent(
+        val itemId: String,
+        val chapterId: String,
+    ) : DownloadEvent
+
+    @Serializable
+    @SerialName("ReorderEvent")
+    data class ReorderEvent(
+        val itemId: String,
+        val newPosition: Int,
     ) : DownloadEvent
 
     @Serializable

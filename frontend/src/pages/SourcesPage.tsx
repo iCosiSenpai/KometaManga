@@ -203,6 +203,7 @@ export function SourcesPage() {
     title: string
     coverUrl?: string | null
     language?: string | null
+    variants?: MangaSearchResultDto[]
   } | null>(null)
 
   useEffect(() => {
@@ -482,7 +483,7 @@ export function SourcesPage() {
   }, [filteredSources, healthMap])
 
   const handleMangaClick = useCallback(
-    (result: MangaSearchResultDto) => {
+    (result: MangaSearchResultDto, variants?: MangaSearchResultDto[]) => {
       startTransition(() => {
         setSelectedManga({
           sourceId: result.sourceId,
@@ -490,6 +491,7 @@ export function SourcesPage() {
           title: result.title,
           coverUrl: result.coverUrl,
           language: langFilter,
+          variants: variants && variants.length > 1 ? variants : undefined,
         })
       })
     },
@@ -528,6 +530,7 @@ export function SourcesPage() {
       <MangaDetailPanel
         sourceId={selectedManga.sourceId}
         mangaId={selectedManga.mangaId}
+        variants={selectedManga.variants}
         initialTitle={selectedManga.title}
         initialCoverUrl={selectedManga.coverUrl}
         initialLanguage={selectedManga.language}
@@ -743,7 +746,7 @@ export function SourcesPage() {
                 <MangaShelfCard
                   key={entry.key}
                   entry={entry}
-                  onOpenLead={() => handleMangaClick(entry.lead)}
+                  onOpenLead={() => handleMangaClick(entry.lead, entry.variants)}
                 />
               ))}
             </div>

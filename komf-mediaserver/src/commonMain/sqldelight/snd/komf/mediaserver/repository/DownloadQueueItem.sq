@@ -16,6 +16,11 @@ CREATE TABLE DownloadQueueItem (
     progress        INTEGER,
     totalPages      INTEGER,
     error           TEXT,
+    bytesDownloaded INTEGER,
+    speedBps        INTEGER,
+    etaSec          INTEGER,
+    pausedAt        INTEGER AS Instant,
+    position        INTEGER NOT NULL DEFAULT 0,
     createdAt       INTEGER AS Instant NOT NULL,
     updatedAt       INTEGER AS Instant NOT NULL,
     PRIMARY KEY (id)
@@ -23,18 +28,22 @@ CREATE TABLE DownloadQueueItem (
 CREATE INDEX dqi_status_idx ON DownloadQueueItem(status);
 CREATE INDEX dqi_source_idx ON DownloadQueueItem(sourceId);
 CREATE INDEX dqi_created_at_idx ON DownloadQueueItem(createdAt);
+CREATE INDEX dqi_position_idx ON DownloadQueueItem(position);
 
 findAll:
-SELECT * FROM DownloadQueueItem ORDER BY createdAt ASC;
+SELECT * FROM DownloadQueueItem ORDER BY position ASC, createdAt ASC;
 
 findByStatus:
-SELECT * FROM DownloadQueueItem WHERE status = ? ORDER BY createdAt ASC;
+SELECT * FROM DownloadQueueItem WHERE status = ? ORDER BY position ASC, createdAt ASC;
 
 get:
 SELECT * FROM DownloadQueueItem WHERE id = ?;
 
 countByStatus:
 SELECT COUNT() FROM DownloadQueueItem WHERE status = ?;
+
+maxPosition:
+SELECT COALESCE(MAX(position), 0) FROM DownloadQueueItem;
 
 save:
 INSERT OR REPLACE INTO DownloadQueueItem VALUES ?;
@@ -44,6 +53,15 @@ UPDATE DownloadQueueItem SET status = ?, error = ?, updatedAt = ? WHERE id = ?;
 
 updateProgress:
 UPDATE DownloadQueueItem SET progress = ?, totalPages = ?, updatedAt = ? WHERE id = ?;
+
+updateLiveStats:
+UPDATE DownloadQueueItem SET progress = ?, totalPages = ?, bytesDownloaded = ?, speedBps = ?, etaSec = ?, updatedAt = ? WHERE id = ?;
+
+updatePosition:
+UPDATE DownloadQueueItem SET position = ?, updatedAt = ? WHERE id = ?;
+
+updatePausedAt:
+UPDATE DownloadQueueItem SET pausedAt = ?, updatedAt = ? WHERE id = ?;
 
 delete:
 DELETE FROM DownloadQueueItem WHERE id = ?;
