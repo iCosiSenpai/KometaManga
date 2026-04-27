@@ -1,6 +1,6 @@
 [versions]
 app-version = "1.0.0"
-agp = "8.11.2"
+agp = "9.2.0"
 cache4k = "0.14.0"
 commons-text = "1.14.0"
 commons-compress = "1.28.0"
